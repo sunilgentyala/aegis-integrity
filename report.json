@@ -1,0 +1,262 @@
+{
+  "aegis_version": "1.0.0",
+  "generated_at": "2026-05-06T04:38:58.156080+00:00",
+  "submission": "C:\\IEEE\\AIDEN\\aiden_elsevier_paper_v2.docx",
+  "elapsed_seconds": 24.71,
+  "overall_risk": "CRITICAL",
+  "flags": [
+    "1 hallucinated citation(s) detected",
+    "3 citation metadata mismatch(es)",
+    "No prior works loaded"
+  ],
+  "scores": {
+    "plagiarism": 0.0,
+    "ai_content": 0.109,
+    "citation_issue_rate": 0.444,
+    "style_inconsistency": 0.0,
+    "self_recycling_pct": 0.0
+  },
+  "ngram_matches": [],
+  "semantic_matches": [],
+  "ai_detection": {
+    "verdict": "HUMAN",
+    "ensemble_score": 0.109,
+    "ai_paragraph_fraction": 0.0,
+    "detected_language": "en",
+    "esl_calibration_applied": false,
+    "summary": {
+      "verdict_distribution": {
+        "HUMAN": 2
+      },
+      "mean_perplexity": 67.81,
+      "mean_burstiness": 0.498,
+      "ai_paragraph_fraction": 0.0,
+      "detected_language": "en",
+      "esl_calibration_applied": false
+    },
+    "paragraphs": [
+      {
+        "text": "CONFIDENTIAL -- UNPUBLISHED MANUSCRIPT -- DO NOT DISTRIBUTE\nElsevier prior-publication policy applies.\nComputers & Security\nAIDEN: An Adaptive Intelli",
+        "verdict": "HUMAN",
+        "ensemble_score": 0.075,
+        "perplexity": 76.4,
+        "burstiness": 0.512
+      },
+      {
+        "text": "This paper introduces AIDEN, the Adaptive Intelligent DNS Engine for Neural-threat detection, a locally deployed resolution framework combining three ",
+        "verdict": "HUMAN",
+        "ensemble_score": 0.144,
+        "perplexity": 59.22,
+        "burstiness": 0.485
+      }
+    ]
+  },
+  "citation_integrity": [
+    {
+      "cite_key": "ref_0",
+      "verdict": "MISMATCH",
+      "confidence": 0.65,
+      "doi": "10.3390/s23073489",
+      "claimed_title": "Abu Al-Haija, M",
+      "resolved_title": "A Lightweight Double-Stage Scheme to Identify Malicious DNS over HTTPS Traffic Using a Hybrid Learni",
+      "issues": [
+        "Title mismatch (similarity 0.00): claimed 'Abu Al-Haija, M', actual 'A Lightweight Double-Stage Scheme to Identify Malicious DNS '"
+      ]
+    },
+    {
+      "cite_key": "ref_1",
+      "verdict": "HALLUCINATED",
+      "confidence": 0.95,
+      "doi": "10.48550/arXiv.2501.13540",
+      "claimed_title": "",
+      "resolved_title": "",
+      "issues": [
+        "DOI 10.48550/arXiv.2501.13540 returned HTTP 404 -- does not exist in Crossref"
+      ]
+    },
+    {
+      "cite_key": "ref_2",
+      "verdict": "VALID",
+      "confidence": 1.0,
+      "doi": "10.1109/TDSC.2024.3409545",
+      "claimed_title": "",
+      "resolved_title": "DNSGuard: In-Network Defense Against DNS Attacks",
+      "issues": []
+    },
+    {
+      "cite_key": "ref_3",
+      "verdict": "MISMATCH",
+      "confidence": 0.65,
+      "doi": "10.1016/j.iotcps.2025.01.001",
+      "claimed_title": "Ferrag et al., Generative AI in cybersecurity: A comprehensive review of LLM applications and vulner",
+      "resolved_title": "Generative AI in cybersecurity: A comprehensive review of LLM applications and vulnerabilities",
+      "issues": [
+        "Title mismatch (similarity 0.62): claimed 'Ferrag et al., Generative AI in cybersecurity: A comprehensi', actual 'Generative AI in cybersecurity: A comprehensive review of LL'"
+      ]
+    },
+    {
+      "cite_key": "ref_4",
+      "verdict": "VALID",
+      "confidence": 1.0,
+      "doi": "10.1109/TIFS.2024.3443596",
+      "claimed_title": "",
+      "resolved_title": "GraphTunnel: Robust DNS Tunnel Detection Based on DNS Recursive Resolution Graph",
+      "issues": []
+    },
+    {
+      "cite_key": "ref_5",
+      "verdict": "VALID",
+      "confidence": 1.0,
+      "doi": "10.1109/ACCESS.2025.3535943",
+      "claimed_title": "Hirsi et al., Comprehensive analysis of DDoS anomaly detection in software-defined networks, IEEE Ac",
+      "resolved_title": "Comprehensive Analysis of DDoS Anomaly Detection in Software-Defined Networks",
+      "issues": []
+    },
+    {
+      "cite_key": "ref_6",
+      "verdict": "VALID",
+      "confidence": 1.0,
+      "doi": "10.1109/TKDE.2023.3270293",
+      "claimed_title": "",
+      "resolved_title": "Deep Isolation Forest for Anomaly Detection",
+      "issues": []
+    },
+    {
+      "cite_key": "ref_7",
+      "verdict": "VALID",
+      "confidence": 1.0,
+      "doi": "10.3390/s25226884",
+      "claimed_title": "",
+      "resolved_title": "DNS-Sensor: A Sensor-Driven Architecture for Real-Time DNS Cache Poisoning Detection and Mitigation",
+      "issues": []
+    },
+    {
+      "cite_key": "ref_8",
+      "verdict": "MISMATCH",
+      "confidence": 0.7,
+      "doi": "10.1007/978-981-95-0378-0_12",
+      "claimed_title": "",
+      "resolved_title": "Leveraging GPT Embedding with Deep Learning for Malicious DGA-Generated Domain Detection",
+      "issues": [
+        "Year mismatch: claimed 2025, actual 2026"
+      ]
+    }
+  ],
+  "stylometric": {
+    "is_consistent": true,
+    "consistency_score": 1.0,
+    "author_deviation": null,
+    "flags": [],
+    "change_points": [
+      {
+        "segment": 0,
+        "delta": 0.039,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "CONFIDENTIAL -- UNPUBLISHED MANUSCRIPT -- DO NOT DISTRIBUTE Elsevier prior-publication policy applies. Computers & Secur"
+      },
+      {
+        "segment": 1,
+        "delta": 0.022,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "resolver attacks [6]. Evaluation against synthetic benchmarks yields a 0% false-positive rate on twelve legitimate enter"
+      },
+      {
+        "segment": 2,
+        "delta": 0.028,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "visible. Third, fine-tuned large language models can generate DGA output that evades heuristic detection by mimicking th"
+      },
+      {
+        "segment": 3,
+        "delta": 0.026,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "deployment model eliminates provisioning complexity for on-premises installations. 3. Related Work 3.1 DNS Anomaly Detec"
+      },
+      {
+        "segment": 4,
+        "delta": 0.025,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "Afek et al. surveyed the historical progression of cache poisoning attacks and proposed the POPS mitigation framework [2"
+      },
+      {
+        "segment": 5,
+        "delta": 0.021,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "loop at machine speed, reducing the effective window for a successful injection. Detection approaches that rely on local"
+      },
+      {
+        "segment": 6,
+        "delta": 0.018,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "how they are interconnected, and when they are active. This constitutes an operational intelligence leak that persists r"
+      },
+      {
+        "segment": 7,
+        "delta": 0.023,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "in split-horizon mode with two authoritative zones: ai.internal, serving AI microservice endpoints including LLM API gat"
+      },
+      {
+        "segment": 8,
+        "delta": 0.029,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "address. Table 1 lists the features and their relationship to DGA and tunneling signals. The Isolation Forest model was "
+      },
+      {
+        "segment": 9,
+        "delta": 0.024,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "key metrics. Table 3. Evaluation Results -- Bootstrap Model on Synthetic Benchmark The 27 feature extraction tests cover"
+      },
+      {
+        "segment": 10,
+        "delta": 0.021,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "retraining. 8.2 Velocity False Positives Velocity-based features carry an elevated false-positive risk for legitimate hi"
+      },
+      {
+        "segment": 11,
+        "delta": 0.022,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "sinkholing latency from seconds to milliseconds. Third, future work will integrate anomalous DNS activity as a risk sign"
+      },
+      {
+        "segment": 12,
+        "delta": 0.033,
+        "flagged": false,
+        "reason": "Within normal style range",
+        "preview": "References [1] Q. Abu Al-Haija, M. Alohaly, A. Odeh, A lightweight double-stage scheme to identify malicious DNS over HT"
+      }
+    ],
+    "document_profile": {
+      "avg_sentence_len": 23.72,
+      "ttr": 0.3255,
+      "readability_fk_grade": 17.24,
+      "passive_ratio": 0.156,
+      "hedge_density": 0.0,
+      "yule_k": 54.02
+    }
+  },
+  "self_plagiarism": {
+    "overall_overlap_pct": 0.0,
+    "risk_level": "LOW",
+    "source_breakdown": {},
+    "flags": [
+      "No prior works loaded"
+    ],
+    "cope_guidance": "Cannot assess without prior works corpus.",
+    "passages": []
+  }
+}

@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  aegis:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - aegis_data:/data
+    environment:
+      - AEGIS_INDEX_DIR=/data/index
+      - AEGIS_REPORT_DIR=/data/reports
+      - AEGIS_DEVICE=cpu
+      - AEGIS_CITATION_EMAIL=aegis-check@example.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  aegis_data:

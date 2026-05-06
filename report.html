@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AEGIS Integrity Report</title>
+<style>
+  body {font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         margin: 0; padding: 0; background: #f5f7fa; color: #2c3e50;}
+  .container {max-width: 1100px; margin: 0 auto; padding: 24px;}
+  h1 {font-size: 1.8rem; margin-bottom: 4px;}
+  h2 {font-size: 1.2rem; border-bottom: 2px solid #ecf0f1; padding-bottom: 6px;
+       margin-top: 32px;}
+  .badge {display: inline-block; padding: 6px 18px; border-radius: 20px;
+           color: #fff; font-weight: 700; font-size: 1.1rem;
+           background: #8e1a0e;}
+  .meta {color: #7f8c8d; font-size: 0.85rem; margin-bottom: 20px;}
+  .scores {display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0;}
+  .score-card {background: #fff; border-radius: 8px; padding: 14px 20px;
+               box-shadow: 0 1px 4px rgba(0,0,0,.08); min-width: 140px;}
+  .score-card .label {font-size: 0.75rem; color: #7f8c8d; text-transform: uppercase;}
+  .score-card .value {font-size: 1.5rem; font-weight: 700;}
+  .flags {background: #fef9e7; border-left: 4px solid #f39c12;
+           padding: 12px 16px; border-radius: 4px; margin: 16px 0;}
+  .flags ul {margin: 0; padding-left: 20px;}
+  table {width: 100%; border-collapse: collapse; font-size: 0.87rem;
+          background: #fff; border-radius: 8px; overflow: hidden;
+          box-shadow: 0 1px 4px rgba(0,0,0,.08);}
+  th {background: #2c3e50; color: #fff; padding: 10px 12px; text-align: left;}
+  td {padding: 8px 12px; border-bottom: 1px solid #ecf0f1; vertical-align: top;}
+  tr:last-child td {border-bottom: none;}
+  tr:hover td {background: #f8f9fa;}
+  .verdict {display: inline-block; padding: 2px 8px; border-radius: 10px;
+             color: #fff; font-size: 0.78rem; font-weight: 600;}
+  details summary {cursor: pointer; font-weight: 600; padding: 8px 0; color: #2980b9;}
+  .section {background: #fff; border-radius: 8px; padding: 18px 20px;
+             box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-top: 12px;}
+  .no-data {color: #95a5a6; font-style: italic;}
+  footer {margin-top: 40px; color: #bdc3c7; font-size: 0.78rem; text-align: center;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>AEGIS Academic Integrity Report</h1>
+  <div class="meta">
+    Generated: 2026-05-06T04:38:09.903691+00:00 &nbsp;|&nbsp;
+    File: <code>C:\IEEE\AIDEN\aiden_elsevier_paper_v2.docx</code> &nbsp;|&nbsp;
+    Analysis time: 22.14s
+  </div>
+
+  <span class="badge">Overall Risk: CRITICAL</span>
+
+  <div class="scores">
+    <div class="score-card"><div class="label">Plagiarism</div><div class="value">0.00</div></div>
+    <div class="score-card"><div class="label">AI Content</div><div class="value">0.11</div></div>
+    <div class="score-card"><div class="label">Citation Issues</div><div class="value">44%</div></div>
+    <div class="score-card"><div class="label">Style Inconsistency</div><div class="value">0.00</div></div>
+    <div class="score-card"><div class="label">Self-Recycling</div><div class="value">0.0%</div></div>
+  </div>
+
+  <div class="flags">
+    <strong>Flags:</strong>
+    <ul><li>1 hallucinated citation(s) detected</li><li>3 citation metadata mismatch(es)</li><li>No prior works loaded</li></ul>
+  </div>
+
+  <!-- N-gram similarity -->
+  <h2>N-Gram Similarity (MinHash LSH)</h2>
+  <div class="section">
+    <p class='no-data'>No significant n-gram matches found.</p>
+  </div>
+
+  <!-- Semantic similarity -->
+  <h2>Semantic Similarity (SBERT Dense Retrieval)</h2>
+  <div class="section">
+    <p class='no-data'>No semantic paraphrase matches found.</p>
+  </div>
+
+  <!-- AI detection -->
+  <h2>AI Content Detection</h2>
+  <div class="section"><p>Document verdict: <span class="verdict" style="background:#27ae60">HUMAN</span> &nbsp; Score: 0.109 &nbsp; AI paragraphs: 0% &nbsp; Language: en</p><details><summary>Per-paragraph scores (2 paragraphs)</summary><table><thead><tr><th>Excerpt</th><th>Verdict</th><th>Score</th><th>Perplexity</th><th>Burstiness</th></tr></thead><tbody><tr><td><small>CONFIDENTIAL -- UNPUBLISHED MANUSCRIPT -- DO NOT DISTRIBUTE
+Elsevier prior-publication policy applie</small></td><td><span class="verdict" style="background:#27ae60">HUMAN</span></td><td>0.075</td><td>76.4</td><td>0.512</td></tr><tr><td><small>This paper introduces AIDEN, the Adaptive Intelligent DNS Engine for Neural-threat detection, a loca</small></td><td><span class="verdict" style="background:#27ae60">HUMAN</span></td><td>0.144</td><td>59.2</td><td>0.485</td></tr></tbody></table></details></div>
+
+  <!-- Citation integrity -->
+  <h2>Citation Integrity (Crossref Verification)</h2>
+  <div class="section">
+    <table><thead><tr><th>Key</th><th>Verdict</th><th>DOI</th><th>Issues</th><th>Claimed title</th></tr></thead><tbody><tr><td>ref_0</td><td><span class="verdict" style="background:#e67e22">MISMATCH</span></td><td><small>10.3390/s23073489</small></td><td><small>Title mismatch (similarity 0.00): claimed 'Abu Al-Haija, M', actual 'A Lightweight Double-Stage Scheme to Identify Malicious DNS '</small></td><td><small>Abu Al-Haija, M</small></td></tr><tr><td>ref_1</td><td><span class="verdict" style="background:#c0392b">HALLUCINATED</span></td><td><small>10.48550/arXiv.2501.13540</small></td><td><small>DOI 10.48550/arXiv.2501.13540 returned HTTP 404 -- does not exist in Crossref</small></td><td><small></small></td></tr><tr><td>ref_2</td><td><span class="verdict" style="background:#27ae60">VALID</span></td><td><small>10.1109/TDSC.2024.3409545</small></td><td><small>None</small></td><td><small></small></td></tr><tr><td>ref_3</td><td><span class="verdict" style="background:#e67e22">MISMATCH</span></td><td><small>10.1016/j.iotcps.2025.01.001</small></td><td><small>Title mismatch (similarity 0.62): claimed 'Ferrag et al., Generative AI in cybersecurity: A comprehensi', actual 'Generative AI in cybersecurity: A comprehensive review of LL'</small></td><td><small>Ferrag et al., Generative AI in cybersecurity: A comprehensive review of LLM app</small></td></tr><tr><td>ref_4</td><td><span class="verdict" style="background:#27ae60">VALID</span></td><td><small>10.1109/TIFS.2024.3443596</small></td><td><small>None</small></td><td><small></small></td></tr><tr><td>ref_5</td><td><span class="verdict" style="background:#27ae60">VALID</span></td><td><small>10.1109/ACCESS.2025.3535943</small></td><td><small>None</small></td><td><small>Hirsi et al., Comprehensive analysis of DDoS anomaly detection in software-defin</small></td></tr><tr><td>ref_6</td><td><span class="verdict" style="background:#27ae60">VALID</span></td><td><small>10.1109/TKDE.2023.3270293</small></td><td><small>None</small></td><td><small></small></td></tr><tr><td>ref_7</td><td><span class="verdict" style="background:#27ae60">VALID</span></td><td><small>10.3390/s25226884</small></td><td><small>None</small></td><td><small></small></td></tr><tr><td>ref_8</td><td><span class="verdict" style="background:#e67e22">MISMATCH</span></td><td><small>10.1007/978-981-95-0378-0_12</small></td><td><small>Year mismatch: claimed 2025, actual 2026</small></td><td><small></small></td></tr></tbody></table>
+  </div>
+
+  <!-- Stylometric -->
+  <h2>Stylometric Analysis (Authorship Consistency)</h2>
+  <div class="section"><p>Consistent: <strong>Yes</strong> (score: 1.000) &nbsp;|&nbsp; Author deviation: N/A</p><p>Document profile &mdash; Avg sentence length: 23.72, TTR: 0.3255, FK Grade: 17.24, Passive ratio: 0.156, Hedge density: 0.0, Yule K: 54.02</p><p>No style flags.</p><details><summary>Segment change points</summary><table><thead><tr><th>Segment</th><th>Delta</th><th>Flagged</th><th>Preview</th></tr></thead><tbody><tr><td>Seg 0</td><td>0.039</td><td>No</td><td><small>CONFIDENTIAL -- UNPUBLISHED MANUSCRIPT -- DO NOT DISTRIBUTE Elsevier prior-publication policy applie</small></td></tr><tr><td>Seg 1</td><td>0.022</td><td>No</td><td><small>resolver attacks [6]. Evaluation against synthetic benchmarks yields a 0% false-positive rate on twe</small></td></tr><tr><td>Seg 2</td><td>0.028</td><td>No</td><td><small>visible. Third, fine-tuned large language models can generate DGA output that evades heuristic detec</small></td></tr><tr><td>Seg 3</td><td>0.026</td><td>No</td><td><small>deployment model eliminates provisioning complexity for on-premises installations. 3. Related Work 3</small></td></tr><tr><td>Seg 4</td><td>0.025</td><td>No</td><td><small>Afek et al. surveyed the historical progression of cache poisoning attacks and proposed the POPS mit</small></td></tr><tr><td>Seg 5</td><td>0.021</td><td>No</td><td><small>loop at machine speed, reducing the effective window for a successful injection. Detection approache</small></td></tr><tr><td>Seg 6</td><td>0.018</td><td>No</td><td><small>how they are interconnected, and when they are active. This constitutes an operational intelligence </small></td></tr><tr><td>Seg 7</td><td>0.023</td><td>No</td><td><small>in split-horizon mode with two authoritative zones: ai.internal, serving AI microservice endpoints i</small></td></tr><tr><td>Seg 8</td><td>0.029</td><td>No</td><td><small>address. Table 1 lists the features and their relationship to DGA and tunneling signals. The Isolati</small></td></tr><tr><td>Seg 9</td><td>0.024</td><td>No</td><td><small>key metrics. Table 3. Evaluation Results -- Bootstrap Model on Synthetic Benchmark The 27 feature ex</small></td></tr><tr><td>Seg 10</td><td>0.021</td><td>No</td><td><small>retraining. 8.2 Velocity False Positives Velocity-based features carry an elevated false-positive ri</small></td></tr><tr><td>Seg 11</td><td>0.022</td><td>No</td><td><small>sinkholing latency from seconds to milliseconds. Third, future work will integrate anomalous DNS act</small></td></tr><tr><td>Seg 12</td><td>0.033</td><td>No</td><td><small>References [1] Q. Abu Al-Haija, M. Alohaly, A. Odeh, A lightweight double-stage scheme to identify m</small></td></tr></tbody></table></details></div>
+
+  <!-- Self-plagiarism -->
+  <h2>Self-Plagiarism / Text Recycling</h2>
+  <div class="section"><p>Overlap: <strong>0.0%</strong> &nbsp; Risk: <span class="verdict" style="background:#27ae60">LOW</span></p><p>By source: N/A</p><p><em>COPE guidance:</em> Cannot assess without prior works corpus.</p></div>
+
+  <footer>AEGIS Academic Integrity Tool v1.0.0 &mdash;
+  Open-source, no data transmitted to third parties</footer>
+</div>
+</body>
+</html>
