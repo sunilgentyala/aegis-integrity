@@ -383,9 +383,18 @@ MIT License. See [LICENSE](LICENSE).
 
 ## Author
 
-**Sunil Gentyala** -- Independent Research, HCL America Inc., Dallas TX, USA
-Contact: sunil.gentyala@ieee.org | IEEE Member
+**Sunil Gentyala**
+Independent Research | HCL America Inc., Dallas TX, USA
+
+| Credential | Detail |
+|---|---|
+| IEEE Senior Member | Institute of Electrical and Electronics Engineers |
+| CISM | Certified Information Security Manager (ISACA) |
+| ISACA | Information Systems Audit and Control Association |
+
+Contact: sunil.gentyala@ieee.org
 GitHub: [sunilgentyala](https://github.com/sunilgentyala)
+LinkedIn: [linkedin.com/in/sunilgentyala](https://www.linkedin.com/in/sunilgentyala)
 Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.io/aegis-integrity)
 
 ---
