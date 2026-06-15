@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS -- Academic Integrity Checker</title>
+<meta name="description" content="Open-source, offline, bias-aware academic integrity checker. Detects plagiarism, AI content, citation hallucinations, LLM watermarks, ghostwriting, and essay mills.">
+<meta property="og:title" content="AEGIS Academic Integrity Checker">
+<meta property="og:description" content="The only open-source tool that closes all ten gaps in academic integrity analysis simultaneously.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1f2937;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --accent5: #ffa657;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --border: #30363d;
+    --card: #161b22;
+    --glow: rgba(88,166,255,0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-brand { font-weight: 700; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--accent); }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a { color: var(--muted); font-size: 0.9rem; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 7rem 2rem 5rem;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(88,166,255,0.12) 0%, transparent 70%);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='1' fill='%2358a6ff' opacity='0.08'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(88,166,255,0.1);
+    border: 1px solid rgba(88,166,255,0.3);
+    color: var(--accent);
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    max-width: 680px; margin: 0 auto 2.5rem;
+    font-size: 1.15rem; color: var(--muted);
+  }
+  .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 0.75rem 1.75rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0d1117;
+  }
+  .btn-primary:hover { background: #79c0ff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(88,166,255,0.4); text-decoration: none; color: #0d1117; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); text-decoration: none; }
+
+  /* BADGES */
+  .badges {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+    margin-top: 2.5rem;
+  }
+  .badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  .badge-blue { background: rgba(88,166,255,0.1); border-color: rgba(88,166,255,0.3); color: var(--accent); }
+  .badge-green { background: rgba(63,185,80,0.1); border-color: rgba(63,185,80,0.3); color: var(--accent2); }
+  .badge-orange { background: rgba(255,166,87,0.1); border-color: rgba(255,166,87,0.3); color: var(--accent5); }
+  .badge-purple { background: rgba(210,168,255,0.1); border-color: rgba(210,168,255,0.3); color: var(--accent4); }
+
+  /* SECTIONS */
+  section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; }
+  .section-title {
+    text-align: center; margin-bottom: 0.75rem;
+    font-size: 1.9rem; font-weight: 700;
+  }
+  .section-sub {
+    text-align: center; color: var(--muted); margin-bottom: 3.5rem;
+    max-width: 600px; margin-left: auto; margin-right: auto;
+  }
+
+  /* STATS ROW */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px; background: var(--border); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; margin: 3rem 0;
+  }
+  .stat {
+    background: var(--bg2); padding: 1.75rem 1.25rem; text-align: center;
+  }
+  .stat-number { font-size: 2.2rem; font-weight: 800; color: var(--accent); }
+  .stat-label { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+  /* DETECTOR GRID */
+  .detector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.25rem;
+  }
+  .detector-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .detector-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(88,166,255,0.1);
+  }
+  .detector-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--accent));
+  }
+  .detector-num {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem;
+  }
+  .detector-name {
+    font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text);
+  }
+  .detector-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+  .new-badge {
+    display: inline-block; margin-left: 0.5rem;
+    background: rgba(247,129,102,0.15);
+    border: 1px solid rgba(247,129,102,0.4);
+    color: var(--accent3);
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px; font-size: 0.68rem; font-weight: 700;
+    vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+
+  /* COMPARISON TABLE */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--bg3); }
+  th {
+    padding: 0.9rem 1rem; text-align: left;
+    font-size: 0.82rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); white-space: nowrap;
+  }
+  td {
+    padding: 0.8rem 1rem; border-top: 1px solid var(--border);
+    font-size: 0.88rem; white-space: nowrap;
+  }
+  tr:hover td { background: rgba(88,166,255,0.03); }
+  .check { color: var(--accent2); font-weight: 700; }
+  .cross { color: var(--accent3); }
+  .partial { color: var(--accent5); }
+  td.aegis { font-weight: 700; color: var(--accent); }
+  th.aegis { color: var(--accent); }
+
+  /* CODE BLOCK */
+  .code-tabs { display: flex; gap: 0; border-radius: 12px 12px 0 0; overflow: hidden; }
+  .code-tab {
+    padding: 0.6rem 1.2rem; background: var(--bg3);
+    border: 1px solid var(--border); border-bottom: none;
+    font-size: 0.82rem; color: var(--muted); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .code-tab.active { background: var(--bg2); color: var(--text); border-bottom: 1px solid var(--bg2); }
+  .code-block {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 0 12px 12px 12px;
+    padding: 1.5rem; overflow-x: auto;
+  }
+  pre { margin: 0; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.85rem; color: #cdd9e5; }
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #8b949e; }
+  .num { color: #79c0ff; }
+  .op { color: var(--accent2); }
+
+  /* INSTALL STEPS */
+  .steps { display: flex; flex-direction: column; gap: 1rem; }
+  .step {
+    display: flex; gap: 1.25rem; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.25rem 1.5rem;
+  }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3);
+    color: var(--accent); font-weight: 700; font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+  .step-content code { font-size: 0.82rem; color: var(--accent); background: rgba(88,166,255,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; }
+
+  /* WHY CARDS */
+  .why-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+  .why-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .why-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+  .why-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .why-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+  /* ARCH DIAGRAM */
+  .arch {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 2rem; overflow-x: auto;
+  }
+  .arch pre { font-size: 0.82rem; color: #cdd9e5; white-space: pre; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--accent); }
+  .footer-links { display: flex; gap: 2rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 0 1rem; }
+    .nav-links { display: none; }
+    section { padding: 3.5rem 1.25rem; }
+    .hero { padding: 5rem 1.25rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">&#9737; AEGIS</div>
+  <div class="nav-links">
+    <a href="#detectors">Detectors</a>
+    <a href="#comparison">Compare</a>
+    <a href="#install">Install</a>
+    <a href="#why">Why AEGIS</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity">GitHub</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">v2.0 -- June 2026</div>
+  <h1>Academic Integrity<br>That Sees Everything</h1>
+  <p class="hero-sub">
+    Open-source, offline, bias-aware analysis across 10 detection modules.
+    No cloud. No per-submission fees. No bias against international researchers.
+    The only tool that catches LLM watermarks, citation cartels, and essay mills.
+  </p>
+  <div class="hero-buttons">
+    <a href="https://github.com/sunilgentyala/aegis-integrity" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+      View on GitHub
+    </a>
+    <a href="#install" class="btn btn-outline">Quick Start</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/issues" class="btn btn-outline">Report Issue</a>
+  </div>
+  <div class="badges">
+    <span class="badge badge-blue">Python 3.9+</span>
+    <span class="badge badge-green">MIT License</span>
+    <span class="badge badge-orange">Offline First</span>
+    <span class="badge badge-purple">10 Detectors</span>
+    <span class="badge badge-blue">ESL Calibrated</span>
+    <span class="badge badge-green">REST API</span>
+    <span class="badge badge-orange">Docker Ready</span>
+    <span class="badge badge-purple">v2.0 Stable</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div style="max-width:1200px;margin:0 auto;padding:0 2rem;">
+  <div class="stats">
+    <div class="stat"><div class="stat-number">10</div><div class="stat-label">Detection Modules</div></div>
+    <div class="stat"><div class="stat-number">15</div><div class="stat-label">ESL Language Calibrations</div></div>
+    <div class="stat"><div class="stat-number">&lt;1e-6</div><div class="stat-label">Watermark False Positive Rate</div></div>
+    <div class="stat"><div class="stat-number">5</div><div class="stat-label">Citation Verdict Classes</div></div>
+    <div class="stat"><div class="stat-number">0</div><div class="stat-label">Data Sent to Cloud</div></div>
+    <div class="stat"><div class="stat-number">$0</div><div class="stat-label">Per-Submission Fee</div></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- DETECTORS -->
+<section id="detectors">
+  <div class="section-title">Ten Modules. Zero Blind Spots.</div>
+  <p class="section-sub">Every module runs independently and contributes to a unified risk score. Skip any you don't need via PipelineConfig.</p>
+
+  <div class="detector-grid">
+
+    <div class="detector-card" style="--card-accent:#58a6ff;">
+      <div class="detector-num">Module 01</div>
+      <div class="detector-name">Citation Hallucination Detection</div>
+      <div class="detector-desc">Resolves every DOI via Crossref REST API. Cross-checks author, year, and title against the live publication record. Catches the >50% fabrication rate in AI-generated reference lists. No other open-source tool does this.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#f78166;">
+      <div class="detector-num">Module 02</div>
+      <div class="detector-name">LLM Watermark Detection <span class="new-badge">NEW v2.0</span></div>
+      <div class="detector-desc">Implements Kirchenbauer (2023) green-list / red-list z-test without the watermark key. Detects watermarked GPT-4, Gemini, and other LLM output. False positive rate &lt; 1 in 1,000,000 at z &gt; 4.0. Also checks entropy and token rank skew for soft watermarks.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#d2a8ff;">
+      <div class="detector-num">Module 03</div>
+      <div class="detector-name">Citation Network Analysis <span class="new-badge">NEW v2.0</span></div>
+      <div class="detector-desc">Analyzes the full reference list structure: self-citation inflation (&gt;30% threshold), predatory journal pattern matching, year-clustering (LLM fabrication signature), OpenAlex quality lookup, and missing DOI rate analysis.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#3fb950;">
+      <div class="detector-num">Module 04</div>
+      <div class="detector-name">ESL-Calibrated AI Content Detection</div>
+      <div class="detector-desc">Fixes the 61.3% false-positive rate on non-native English writers (Stanford 2023 study). Per-language threshold multipliers for 15 languages. Paragraph-level scoring pinpoints injected AI sections. GPT-2 perplexity + burstiness + cross-perplexity ratio + stylometric ensemble.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#ffa657;">
+      <div class="detector-num">Module 05</div>
+      <div class="detector-name">Semantic Coherence Analysis <span class="new-badge">NEW v2.0</span></div>
+      <div class="detector-desc">Catches AI-polished text that passes perplexity filters. Measures discourse connector density ("Furthermore", "Moreover"), sentence length uniformity (CV &lt; 0.35 = suspicious), epistemic hedging rate, MTLD diversity score, and section template matching.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#58a6ff;">
+      <div class="detector-num">Module 06</div>
+      <div class="detector-name">Semantic / Paraphrase Plagiarism</div>
+      <div class="detector-desc">SBERT dense retrieval + CrossEncoder reranking catches concept-level paraphrase where no exact words are shared. BM25/TF-IDF-only tools miss this entirely. Model: paraphrase-MiniLM-L6-v2 (80 MB). Index: FAISS IndexFlatIP.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#3fb950;">
+      <div class="detector-num">Module 07</div>
+      <div class="detector-name">N-Gram Plagiarism (MinHash LSH)</div>
+      <div class="detector-desc">Dual index: word 3-gram (verbatim copy) and character 5-gram (obfuscation via typos or Unicode substitution). 128 MinHash permutations. Sub-linear query time over large corpora via LSH banding.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#d2a8ff;">
+      <div class="detector-num">Module 08</div>
+      <div class="detector-name">Stylometric Authorship Profiling</div>
+      <div class="detector-desc">Burrows' Delta with 60-dimensional feature vectors (10 scalar + 50 function-word frequency dimensions). Segments with Delta &gt; 0.40 from document baseline are flagged as potential ghostwritten sections. Catches essay mills that mix human and AI writing.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#f78166;">
+      <div class="detector-num">Module 09</div>
+      <div class="detector-name">Self-Plagiarism / Text Recycling</div>
+      <div class="detector-desc">Three-layer detection: character 5-gram Jaccard (verbatim), word 3-gram Jaccard (near-verbatim), SBERT cosine &ge; 0.88 (cross-language paraphrase recycling). Risk levels follow COPE text recycling guidelines at 15% / 30% thresholds.</div>
+    </div>
+
+    <div class="detector-card" style="--card-accent:#ffa657;">
+      <div class="detector-num">Module 10</div>
+      <div class="detector-name">Batch / Classroom Analysis <span class="new-badge">NEW v2.0</span></div>
+      <div class="detector-desc">Cross-document essay mill detection. Pairwise MinHash similarity matrix + rare vocabulary overlap + section sequence fingerprinting. Union-Find clustering groups submissions by suspected shared AI source. Statistically catches when a class all used the same AI prompt.</div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- COMPARISON -->
+<section id="comparison" style="max-width:1400px;">
+  <div class="section-title">How AEGIS Compares</div>
+  <p class="section-sub">AEGIS is the only tool -- open-source or commercial -- that covers all critical gaps in the 2026 academic integrity threat landscape.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>Turnitin</th>
+          <th>iThenticate</th>
+          <th>CopyLeaks</th>
+          <th>GPTZero</th>
+          <th>Originality.ai</th>
+          <th class="aegis">AEGIS v2.0</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Open-source / self-hostable</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Citation hallucination detection</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>LLM watermark detection</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Citation network / cartel analysis</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>ESL bias calibration (15 languages)</td><td class="cross">No</td><td class="cross">No</td><td class="partial">Limited</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Paragraph-level AI scoring</td><td class="cross">No</td><td class="cross">No</td><td class="check">Yes</td><td class="check">Yes</td><td class="partial">Partial</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Semantic / paraphrase plagiarism</td><td class="partial">Partial</td><td class="cross">No</td><td class="partial">Partial</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Ghostwriting detection (Burrows' Delta)</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Self-plagiarism (open corpus)</td><td class="partial">ScholarOne</td><td class="partial">Paid</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Batch / essay mill detection</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Semantic coherence AI-polish detection</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="partial">Partial</td><td class="aegis check">Yes</td></tr>
+        <tr><td>OpenAlex journal quality integration</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Per-sentence explainable reports</td><td class="cross">No</td><td class="cross">No</td><td class="partial">Partial</td><td class="partial">Partial</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Offline / air-gapped operation</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="aegis check">Yes</td></tr>
+        <tr><td>REST API (free)</td><td class="cross">No</td><td class="partial">Paid</td><td class="partial">Paid</td><td class="partial">Paid</td><td class="partial">Paid</td><td class="aegis check">Yes</td></tr>
+        <tr><td>Cost per submission</td><td class="cross">$2-5</td><td class="cross">$0.08+</td><td class="cross">$0.02+</td><td class="cross">$0.01+</td><td class="cross">$0.01+</td><td class="aegis check">$0.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="section-title">Get Started in 3 Steps</div>
+  <p class="section-sub">Full installation with all 10 detectors active. Minimal install (no PyTorch) available for citation + coherence only.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;" class="install-grid">
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Clone and install</h4>
+          <code>git clone https://github.com/sunilgentyala/aegis-integrity.git</code><br><br>
+          <code>pip install -e ".[ml,nlp,bib]"</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Download spaCy model</h4>
+          <code>python -m spacy download en_core_web_sm</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Run your first analysis</h4>
+          <code>aegis analyze paper.pdf --html report.html</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:rgba(63,185,80,0.15);border-color:rgba(63,185,80,0.3);color:var(--accent2);">&#9650;</div>
+        <div class="step-content">
+          <h4>Or use Docker (recommended)</h4>
+          <code>docker compose up --build</code>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="code-block">
+<pre><code><span class="cm"># Analyze a single paper</span>
+aegis analyze paper.pdf \
+  --html report.html \
+  --output report.json
+
+<span class="cm"># Against a reference corpus</span>
+aegis analyze paper.pdf \
+  --corpus ./corpus/ \
+  --html report.html
+
+<span class="cm"># Classroom batch scan (NEW v2.0)</span>
+aegis batch ./submissions/ \
+  --html batch_report.html
+
+<span class="cm"># Pairwise comparison</span>
+aegis compare draft_v1.pdf draft_v2.pdf
+
+<span class="cm"># Start REST API</span>
+aegis serve --port 8000
+</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:2.5rem;">
+    <div class="section-title" style="font-size:1.3rem;text-align:left;margin-bottom:1rem;">Python API Example</div>
+    <div class="code-block">
+<pre><code><span class="kw">from</span> aegis.core.pipeline <span class="kw">import</span> AEGISPipeline, PipelineConfig
+
+cfg = PipelineConfig(
+    citation_email=<span class="str">"you@university.edu"</span>,
+    run_watermark_detector=<span class="op">True</span>,   <span class="cm"># NEW v2.0</span>
+    run_citation_network=<span class="op">True</span>,     <span class="cm"># NEW v2.0</span>
+    run_coherence_analyzer=<span class="op">True</span>,   <span class="cm"># NEW v2.0</span>
+)
+pipeline = AEGISPipeline(config=cfg)
+pipeline.load_corpus([(<span class="str">"Smith2023"</span>, open(<span class="str">"smith2023.txt"</span>).read())])
+
+report = pipeline.analyze(<span class="str">"submission.pdf"</span>)
+<span class="fn">print</span>(report.overall_risk)            <span class="cm"># LOW | MEDIUM | HIGH | CRITICAL</span>
+<span class="fn">print</span>(report.watermark_result)         <span class="cm"># WatermarkResult (v2.0)</span>
+<span class="fn">print</span>(report.citation_network_result)  <span class="cm"># CitationNetworkResult (v2.0)</span>
+<span class="fn">print</span>(report.coherence_result)         <span class="cm"># CoherenceResult (v2.0)</span>
+</code></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- WHY -->
+<section id="why">
+  <div class="section-title">Why AEGIS Is the Right Choice</div>
+  <p class="section-sub">Six reasons research institutions, journals, and educators should switch to AEGIS.</p>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-icon">&#128274;</div>
+      <div class="why-title">Complete Privacy</div>
+      <div class="why-desc">Every competitor sends your manuscript to their cloud. AEGIS runs entirely on your hardware. For unpublished research, clinical data, or confidential submissions, this is the only responsible choice.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">&#127760;</div>
+      <div class="why-title">Zero ESL Bias</div>
+      <div class="why-desc">Stanford 2023 study: 61.3% false-positive rate against non-native English writers in all major detectors. AEGIS applies per-language calibration across 15 languages, making it safe for international venues.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">&#128269;</div>
+      <div class="why-title">Sees What Others Can't</div>
+      <div class="why-desc">LLM watermarks, citation cartels, essay mills, and AI-polished text that passes perplexity filters are invisible to every other tool. AEGIS covers all attack vectors in the 2024-2026 threat landscape.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">&#128270;</div>
+      <div class="why-title">Fully Explainable</div>
+      <div class="why-desc">No black-box scores. Every flag cites the exact sentence, the source it matched against, and the metric that triggered it. Defensible in any academic integrity committee hearing.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">&#127970;</div>
+      <div class="why-title">Institution-Ready</div>
+      <div class="why-desc">REST API for LMS integration, Docker for air-gapped deployment, batch mode for classroom scanning at scale, and persistent FAISS indices for high-throughput journal editorial systems.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">&#128176;</div>
+      <div class="why-title">Free, Forever</div>
+      <div class="why-desc">MIT license. No per-submission fees ($2-5 for Turnitin), no seat licenses, no vendor lock-in. AEGIS costs only the compute time on your own hardware.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ARCHITECTURE -->
+<section>
+  <div class="section-title">Architecture</div>
+  <p class="section-sub">Ten detectors run independently in sequence. Each result contributes to a unified risk score and explainable HTML report.</p>
+  <div class="arch">
+<pre>
+submission (PDF / DOCX / TEX / TXT)
+       |
+       v
+  DocumentParser              -- PyMuPDF / python-docx / TexSoup / striprtf
+       |
+  ┌────┴──────────────────────────────────────────────────────────────────┐
+  │                        AEGISPipeline v2.0                             │
+  │                                                                       │
+  │  NGramDetector             word 3-gram + char 5-gram MinHash LSH      │
+  │  SemanticDetector          SBERT + FAISS + CrossEncoder reranker      │
+  │  AIContentDetector         GPT-2 perplexity + burstiness + ESL (15L) │
+  │  CitationIntegrityDetector Crossref REST API (DOI + metadata check)   │
+  │  StylometricAnalyzer       Burrows' Delta; 60-dim feature vector      │
+  │  SelfPlagiarismDetector    SBERT + n-gram vs. prior works             │
+  │  LLMWatermarkDetector  [v2.0] Kirchenbauer z-test; entropy; rank skew │
+  │  CitationNetworkAnalyzer[v2.0] self-cite; predatory; OpenAlex         │
+  │  SemanticCoherenceAnalyzer[v2.0] connectors; uniformity; MTLD         │
+  │  BatchAnalyzer         [v2.0] pairwise matrix; essay mill clustering  │
+  └────────────────────────────┬──────────────────────────────────────────┘
+                               |
+                         AnalysisReport
+                        /              \
+                 JSON report        HTML report
+               (machine API)     (self-contained, offline)
+</pre>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    Built by <a href="https://github.com/sunilgentyala" target="_blank">Sunil Gentyala</a> --
+    Independent Research, HCL America Inc., Dallas TX, USA |
+    <a href="mailto:sunil.gentyala@ieee.org">sunil.gentyala@ieee.org</a> | IEEE Member
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/sunilgentyala/aegis-integrity" target="_blank">GitHub</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/blob/main/README.md" target="_blank">Documentation</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/issues" target="_blank">Issues</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/blob/main/LICENSE" target="_blank">MIT License</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/blob/backup-2026-06-15/README.md" target="_blank">v1.0 Archive</a>
+  </div>
+  <div style="margin-top:1rem;font-size:0.8rem;color:#484f58;">
+    AEGIS v2.0 -- Academic Integrity Engine with Generative-AI Scrutiny
+  </div>
+</footer>
+
+<style>
+@media (max-width: 900px) {
+  .install-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# AEGIS -- Academic Integrity Engine with Generative-AI Scrutiny
+# Install: pip install -r requirements.txt
+# After install: python -m spacy download en_core_web_sm
+
+# --- Document parsing ---
+PyMuPDF>=1.24.0          # PDF extraction (fitz)
+python-docx>=1.1.0       # DOCX parsing
+TexSoup>=0.3.1            # LaTeX source parsing
+striprtf>=0.0.26          # RTF parsing
+
+# --- NLP core ---
+nltk>=3.8.1
+spacy>=3.7.0              # POS tagging, sentence splitting, NER
+textstat>=0.7.3           # Readability metrics
+
+# --- Embeddings and similarity ---
+sentence-transformers>=3.0.0   # SBERT: paraphrase-MiniLM-L6-v2 + cross-encoder
+faiss-cpu>=1.8.0               # ANN vector search
+datasketch>=1.6.4              # MinHash LSH for n-gram shingling
+scikit-learn>=1.4.0            # TF-IDF, cosine similarity
+
+# --- AI detection ---
+transformers>=4.40.0      # GPT-2 for perplexity scoring
+torch>=2.2.0              # Required by transformers
+langdetect>=1.0.9         # Language detection for threshold calibration
+
+# --- Citation integrity (NOVEL FEATURE) ---
+habanero>=1.2.3           # Crossref REST API client (DOI validation)
+requests>=2.31.0          # HTTP for PubMed E-utilities
+bibtexparser>=1.4.0       # BibTeX reference parsing
+
+# --- Web API ---
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9   # File upload support
+
+# --- Report generation ---
+jinja2>=3.1.4
+markdown>=3.6
+
+# --- Utilities ---
+pydantic>=2.7.0
+python-dotenv>=1.0.1
+tqdm>=4.66.4
+click>=8.1.7              # CLI
+rich>=13.7.1              # Terminal output
