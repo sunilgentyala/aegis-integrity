@@ -37,6 +37,10 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import box
 
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 console = Console()
 
 RISK_COLORS = {
