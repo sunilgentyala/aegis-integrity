@@ -16,8 +16,8 @@ This addresses the LLM hallucinated citation epidemic:
 
 from __future__ import annotations
 import re
-import time
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
 
@@ -59,31 +59,44 @@ class CitationIntegrityDetector:
         verify_timeout: float = 8.0,
         min_title_similarity: float = 0.65,
         offline: bool = False,
+        max_workers: int = 8,
     ):
         self.email = email
         self.timeout = verify_timeout
         self.min_title_sim = min_title_similarity
         self.offline = offline
+        self.max_workers = max_workers
         self._session = None
 
     def _get_session(self):
         if self._session is None:
             import requests
-            self._session = requests.Session()
-            self._session.headers.update({
+            from requests.adapters import HTTPAdapter
+            session = requests.Session()
+            session.headers.update({
                 "User-Agent": f"AEGIS-IntegrityChecker/1.0 (mailto:{self.email})"
             })
+            adapter = HTTPAdapter(pool_connections=self.max_workers,
+                                   pool_maxsize=self.max_workers)
+            session.mount("https://", adapter)
+            session.mount("http://", adapter)
+            self._session = session
         return self._session
 
     def verify_references(
         self, refs: list  # list[ParsedReference]
     ) -> list[CitationVerdict]:
-        verdicts = []
-        for ref in refs:
-            verdict = self._verify_one(ref)
-            verdicts.append(verdict)
-            time.sleep(0.15)  # Crossref polite rate limit
-        return verdicts
+        """Verify references concurrently against Crossref.
+
+        Sequential per-reference lookups (each up to `verify_timeout` seconds)
+        used to take minutes for reference-heavy papers and could blow past
+        callers' overall timeouts. Crossref's polite pool tolerates a modest
+        number of concurrent connections, so we fan requests out instead.
+        """
+        if not refs:
+            return []
+        with ThreadPoolExecutor(max_workers=min(self.max_workers, len(refs))) as pool:
+            return list(pool.map(self._verify_one, refs))
 
     def _verify_one(self, ref) -> CitationVerdict:
         doi = ref.doi
