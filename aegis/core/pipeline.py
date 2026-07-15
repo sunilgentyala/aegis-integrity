@@ -30,11 +30,14 @@ from aegis.detectors.citation import CitationIntegrityDetector, CitationVerdict
 from aegis.detectors.stylometric import StylometricAnalyzer, StyleAnalysisResult
 from aegis.detectors.self_plagiarism import (
     SelfPlagiarismDetector, SelfPlagiarismResult)
-from aegis.detectors.watermark_detector import LLMWatermarkDetector, WatermarkResult
+from aegis.detectors.watermark_detector import (
+    LLMWatermarkDetector, WatermarkResult, WatermarkMode)
 from aegis.detectors.citation_network import CitationNetworkAnalyzer, CitationNetworkResult
 from aegis.detectors.coherence_analyzer import SemanticCoherenceAnalyzer, CoherenceResult
 
 logger = logging.getLogger(__name__)
+
+_RISK_LEVELS = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
 
 @dataclass
@@ -71,9 +74,14 @@ class PipelineConfig:
     use_sbert_self_plagiarism: bool = True
 
     # Watermark detector (v2.0)
+    watermark_mode: WatermarkMode = WatermarkMode.EXPERIMENTAL
     watermark_z_threshold: float = 4.0
     watermark_z_suspicious: float = 2.5
     watermark_min_tokens: int = 200
+    # Only ever applied when a WatermarkResult sets affects_overall_risk=True
+    # (currently only reachable by a validated VERIFIED_SCHEME run, which is
+    # not yet implemented). EXPERIMENTAL results never reach this path.
+    watermark_max_risk_increase_levels: int = 1
 
     # Citation network analyzer (v2.0)
     citation_network_self_cite_threshold: float = 0.30
@@ -187,6 +195,7 @@ class AEGISPipeline:
         ) if self.cfg.run_self_plagiarism else None
 
         self._watermark = LLMWatermarkDetector(
+            mode=self.cfg.watermark_mode,
             z_threshold=self.cfg.watermark_z_threshold,
             z_suspicious=self.cfg.watermark_z_suspicious,
             min_tokens=self.cfg.watermark_min_tokens,
@@ -322,7 +331,10 @@ class AEGISPipeline:
             logger.info("Running LLM watermark detector...")
             try:
                 report.watermark_result = self._watermark.detect(full_text)
-                report.watermark_score = report.watermark_result.confidence if report.watermark_result.detected else 0.0
+                wr = report.watermark_result
+                report.watermark_score = (
+                    wr.confidence if wr.evidence_status in ("experimental", "scheme_verified") else 0.0
+                )
             except Exception as exc:
                 logger.warning("Watermark detector failed: %s", exc)
 
@@ -419,12 +431,21 @@ class AEGISPipeline:
                     f"{len(paraphrases)} semantic paraphrase match(es) detected")
 
         # v2.0 detector flags
-        if report.watermark_result and report.watermark_result.detected:
-            flags.append(
-                f"LLM watermark detected: {report.watermark_result.verdict} "
-                f"(z={report.watermark_result.z_score:.2f}, "
-                f"confidence={report.watermark_result.confidence:.0%})"
-            )
+        if report.watermark_result:
+            wr = report.watermark_result
+            if wr.verdict == "STATISTICAL_ANOMALY":
+                flags.append(
+                    f"[Experimental] Watermark heuristic flagged a token-distribution "
+                    f"anomaly (z={wr.z_score}, confidence={wr.confidence:.0%}). "
+                    f"Not proof of a watermark or AI generation; does not affect "
+                    f"the overall risk score."
+                )
+            elif wr.verdict == "UNSUPPORTED_CONFIGURATION":
+                flags.append(
+                    "[Watermark] VERIFIED_SCHEME mode was requested but no "
+                    "known-scheme verifier is implemented; no watermark "
+                    "evidence was produced."
+                )
 
         if report.citation_network_result:
             for net_flag in report.citation_network_result.flags:
@@ -450,15 +471,9 @@ class AEGISPipeline:
         network_risk = (report.citation_network_result.overall_risk
                         if report.citation_network_result else "LOW")
 
-        watermark_hit = (
-            report.watermark_result is not None and
-            report.watermark_result.verdict == "WATERMARKED"
-        )
-
         if (report.plagiarism_score > 0.70 or
                 hallucinated_count > 0 or
-                sp_risk == "CRITICAL" or
-                watermark_hit):
+                sp_risk == "CRITICAL"):
             risk = "CRITICAL"
         elif (report.plagiarism_score > 0.40 or
               report.ai_score > 0.70 or
@@ -473,10 +488,28 @@ class AEGISPipeline:
               report.citation_score > 0.10 or
               report.style_score > 0.30 or
               network_risk == "MEDIUM" or
-              report.coherence_score > 0.50 or
-              (report.watermark_result and report.watermark_result.verdict == "SUSPICIOUS")):
+              report.coherence_score > 0.50):
             risk = "MEDIUM"
         else:
             risk = "LOW"
+
+        # A watermark signal may only ever raise risk by a configurable,
+        # capped number of levels, and only once the detector itself has
+        # validated a known scheme (affects_overall_risk=True). It can never
+        # independently force CRITICAL. EXPERIMENTAL and UNSUPPORTED_CONFIGURATION
+        # results always have affects_overall_risk=False and never reach here.
+        if report.watermark_result and report.watermark_result.affects_overall_risk:
+            wr = report.watermark_result
+            current_idx = _RISK_LEVELS.index(risk)
+            increase = max(0, min(1, self.cfg.watermark_max_risk_increase_levels))
+            new_idx = min(len(_RISK_LEVELS) - 1, current_idx + increase)
+            if new_idx > current_idx:
+                risk = _RISK_LEVELS[new_idx]
+                flags.append(
+                    f"[Verified watermark] Validated signal for scheme="
+                    f"{wr.watermark_scheme!r} raised risk by one level. This is "
+                    f"provenance evidence, requires manual review, and does not "
+                    f"by itself establish academic misconduct."
+                )
 
         return risk, flags

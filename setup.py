@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aegis-integrity",
-    version="2.0.0",
+    version="2.1.0",
     description=(
         "Open-source, offline, bias-aware academic integrity checker: "
         "plagiarism, AI content detection, LLM watermark detection, "

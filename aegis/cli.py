@@ -53,7 +53,7 @@ RISK_COLORS = {
 
 
 @click.group()
-@click.version_option("1.0.0", prog_name="aegis")
+@click.version_option("2.1.0", prog_name="aegis")
 def cli():
     """AEGIS Academic Integrity Checker -- open-source, bias-aware plagiarism analysis."""
 
@@ -79,6 +79,12 @@ def cli():
 @click.option("--no-semantic", is_flag=True, help="Skip SBERT semantic search.")
 @click.option("--no-stylometric", is_flag=True, help="Skip stylometric analysis.")
 @click.option("--no-self-plagiarism", is_flag=True, help="Skip self-plagiarism check.")
+@click.option("--watermark-mode",
+              type=click.Choice(["disabled", "experimental", "verified_scheme"]),
+              default="experimental", show_default=True,
+              help="disabled=skip; experimental=keyless heuristic, never affects "
+                   "risk score; verified_scheme=requires a known scheme (not yet "
+                   "implemented, reports UNSUPPORTED_CONFIGURATION).")
 @click.option("--device", default="cpu", show_default=True,
               help="PyTorch device (cpu / cuda).")
 @click.option("--email", default="aegis-check@example.com", show_default=True,
@@ -86,12 +92,13 @@ def cli():
 def analyze(
     submission, corpus, prior_works, index_dir,
     output, output_html, no_ai, no_citations, no_semantic,
-    no_stylometric, no_self_plagiarism, device, email,
+    no_stylometric, no_self_plagiarism, watermark_mode, device, email,
 ):
     """Run the full AEGIS analysis on SUBMISSION (PDF, DOCX, TEX, or TXT)."""
     from aegis.core.pipeline import AEGISPipeline, PipelineConfig
     from aegis.core.document import DocumentParser
     from aegis.corpus.indexer import CorpusIndexer
+    from aegis.detectors.watermark_detector import WatermarkMode
     from aegis.report.generator import ReportGenerator
 
     cfg = PipelineConfig(
@@ -102,6 +109,7 @@ def analyze(
         run_semantic=not no_semantic,
         run_stylometric=not no_stylometric,
         run_self_plagiarism=not no_self_plagiarism,
+        watermark_mode=WatermarkMode(watermark_mode),
     )
     pipeline = AEGISPipeline(config=cfg)
 
@@ -143,6 +151,14 @@ def analyze(
         f"Analysis time: {report.elapsed_seconds}s",
         title="AEGIS Result",
     ))
+
+    if report.watermark_result:
+        wr = report.watermark_result
+        badge = " [bold yellow]EXPERIMENTAL[/]" if wr.evidence_status == "experimental" else ""
+        console.print(
+            f"Watermark analysis: [cyan]{wr.mode.value}[/] -> {wr.verdict}{badge} "
+            f"(affects overall risk: {wr.affects_overall_risk})"
+        )
 
     if report.flags:
         console.print("[bold]Flags:[/]")
