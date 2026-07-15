@@ -48,7 +48,7 @@ Studies show >50% of AI-generated references are fabricated. No production tool 
 **Verdicts:** `VALID` | `MISMATCH` | `HALLUCINATED` | `UNRESOLVABLE` | `NO_DOI`
 
 ### 2. LLM Watermark Analysis -- Experimental (v2.1)
-AEGIS ships two distinct capabilities, and they are not the same thing:
+AEGIS ships two distinct capabilities here, and they should not be confused:
 
 - **Experimental token-distribution anomaly heuristic** (default, `WatermarkMode.EXPERIMENTAL`):
   a keyless statistic loosely modeled on the shape of the Kirchenbauer (2023) green-list z-test
@@ -129,7 +129,7 @@ submission (PDF / DOCX / TEX / TXT)
   DocumentParser              -- PyMuPDF / python-docx / TexSoup / striprtf
        |
   ┌────┴──────────────────────────────────────────────────────────────┐
-  │                        AEGISPipeline v2.0                         │
+  │  AEGISPipeline v2.1                                               │
   │                                                                   │
   │  NGramDetector             word 3-gram + char 5-gram MinHash LSH  │
   │  SemanticDetector          SBERT + FAISS + CrossEncoder reranker  │
@@ -137,7 +137,7 @@ submission (PDF / DOCX / TEX / TXT)
   │  CitationIntegrityDetector Crossref REST API (DOI resolution)     │
   │  StylometricAnalyzer       Burrows' Delta; 60-dim feature vector  │
   │  SelfPlagiarismDetector    SBERT + n-gram vs. prior works         │
-  │  LLMWatermarkDetector  [v2] Kirchenbauer z-test; entropy analysis │
+  │  LLMWatermarkDetector [v2.1] experimental, no real key            │
   │  CitationNetworkAnalyzer[v2] self-cite inflation; OpenAlex        │
   │  SemanticCoherenceAnalyzer[v2] discourse connectors; uniformity   │
   │  BatchAnalyzer         [v2] classroom-level essay mill detection  │
@@ -281,7 +281,7 @@ curl -X POST http://localhost:8000/batch \
 
 ---
 
-## Report Fields (v2.0)
+## Report Fields (v2.1)
 
 ```json
 {
@@ -452,6 +452,16 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v2.1.0 (July 2026)
+- **FIX:** Watermark heuristic could unconditionally force `overall_risk` to `CRITICAL`; it now
+  never affects the risk score in experimental mode and is capped at +1 level even in a
+  hypothetical validated-scheme mode
+- **NEW:** `WatermarkMode` (`disabled` / `experimental` / `verified_scheme`) and `--watermark-mode` CLI flag
+- **CHANGED:** Watermark verdicts renamed to `STATISTICAL_ANOMALY` / `NO_STATISTICAL_ANOMALY` / etc.;
+  the old definitive `WATERMARKED` verdict is gone
+- **FIX:** Removed unsupported false-positive-rate and GPT-4/Gemini-detection claims from
+  the README and GitHub Pages site
 
 ### v2.0.0 (June 2026)
 - **NEW:** LLM Watermark Detector (Kirchenbauer z-test + entropy + rank skew)
