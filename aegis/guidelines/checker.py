@@ -18,6 +18,19 @@ _AUTHOR_YEAR_CITATION_RE = re.compile(
     r"\([A-Z][A-Za-z\-]+(?:\s+(?:and|&)\s+[A-Z][A-Za-z\-]+|\s+et\s+al\.?)?,?\s+(?:19|20)\d{2}\)"
 )
 
+_CREDIT_STATEMENT_RE = re.compile(
+    r"credit\s+authorship\s+contribution\s+statement|author\s+contributions?\s*:?\s*\n",
+    re.IGNORECASE,
+)
+_CONFLICT_OF_INTEREST_RE = re.compile(
+    r"declaration\s+of\s+competing\s+interest|declaration\s+of\s+interest|"
+    r"conflicts?\s+of\s+interest",
+    re.IGNORECASE,
+)
+_DATA_AVAILABILITY_RE = re.compile(r"data\s+availability", re.IGNORECASE)
+_HIGHLIGHTS_HEADING_RE = re.compile(r"^\s*highlights\s*$", re.IGNORECASE | re.MULTILINE)
+_HIGHLIGHTS_BULLET_RE = re.compile(r"^\s*(?:[-•*]|\d+[.)])\s+(.*\S)\s*$", re.MULTILINE)
+
 
 @dataclass
 class ComplianceCheck:
@@ -73,6 +86,10 @@ class GuidelineComplianceChecker:
         checks.append(self._check_citation_marker_style(profile))
         checks.append(self._check_word_count(profile))
         checks.append(self._check_list_density(profile))
+        checks.append(self._check_credit_statement(profile))
+        checks.append(self._check_conflict_of_interest_statement(profile))
+        checks.append(self._check_data_availability_statement(profile))
+        checks.append(self._check_highlights(profile))
 
         if any(c.status == "NEEDS_REVIEW" for c in checks):
             overall = "NEEDS_REVIEW"
@@ -99,6 +116,22 @@ class GuidelineComplianceChecker:
             return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
                                     "No UK/US-marker spellings were found to classify.", source)
         detected = self.grammar.spelling_variant_detected
+        if profile.spelling_variant == "EITHER":
+            if detected == "MIXED":
+                return ComplianceCheck(
+                    rule, "NEEDS_REVIEW",
+                    f"Document mixes British and American spelling "
+                    f"({self.grammar.spelling_variant_counts}); {profile.display_name} "
+                    f'accepts either variant but states "American or British usage is '
+                    f'accepted, but not a mixture of these."',
+                    source,
+                )
+            return ComplianceCheck(
+                rule, "PASS",
+                f"Consistently uses {detected} English; {profile.display_name} "
+                f"accepts either variant as long as it is used consistently.",
+                source,
+            )
         if detected == "MIXED":
             return ComplianceCheck(
                 rule, "NEEDS_REVIEW",
@@ -275,3 +308,111 @@ class GuidelineComplianceChecker:
                 source,
             )
         return ComplianceCheck(rule, "PASS", "Prose paragraphs dominate over list items.", source)
+
+    def _check_credit_statement(self, profile: GuidelineProfile) -> ComplianceCheck:
+        rule = "CRediT authorship contribution statement"
+        source = profile.source_name
+        if not profile.require_credit_statement:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    f"{profile.display_name} does not mandate a CRediT "
+                                    f"statement in its sourced guidance.", source)
+        if _CREDIT_STATEMENT_RE.search(self.full_text):
+            return ComplianceCheck(rule, "PASS",
+                                    "A CRediT authorship contribution statement "
+                                    "(or equivalent author-contributions heading) was found.",
+                                    source)
+        return ComplianceCheck(
+            rule, "NEEDS_REVIEW",
+            f"No CRediT authorship contribution statement was found; "
+            f"{profile.display_name} requires one, placed above the acknowledgments "
+            f"section.",
+            source,
+        )
+
+    def _check_conflict_of_interest_statement(self, profile: GuidelineProfile) -> ComplianceCheck:
+        rule = "Declaration of Competing Interest"
+        source = profile.source_name
+        if not profile.require_conflict_of_interest_statement:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    f"{profile.display_name} does not mandate a "
+                                    f"competing-interest statement in its sourced "
+                                    f"guidance.", source)
+        if _CONFLICT_OF_INTEREST_RE.search(self.full_text):
+            return ComplianceCheck(rule, "PASS",
+                                    "A Declaration of Competing Interest (or conflict-of-"
+                                    "interest) statement was found.", source)
+        return ComplianceCheck(
+            rule, "NEEDS_REVIEW",
+            f"No Declaration of Competing Interest statement was found; "
+            f"{profile.display_name} requires every author to disclose any "
+            f"financial/personal relationships that could bias the work, or state "
+            f"that none exist.",
+            source,
+        )
+
+    def _check_data_availability_statement(self, profile: GuidelineProfile) -> ComplianceCheck:
+        rule = "Data Availability Statement"
+        source = profile.source_name
+        if not profile.require_data_availability_statement:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    f"{profile.display_name} does not mandate a data "
+                                    f"availability statement in its sourced guidance.",
+                                    source)
+        if _DATA_AVAILABILITY_RE.search(self.full_text):
+            return ComplianceCheck(rule, "PASS", "A Data Availability statement was found.",
+                                    source)
+        return ComplianceCheck(
+            rule, "NEEDS_REVIEW",
+            f"No Data Availability statement was found; an increasing number of "
+            f"{profile.display_name} journals require one (e.g. \"Data will be made "
+            f"available on request.\").",
+            source,
+        )
+
+    def _check_highlights(self, profile: GuidelineProfile) -> ComplianceCheck:
+        rule = "Highlights (bullet-point summary)"
+        source = profile.source_name
+        if profile.highlights_max_bullets is None:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    f"{profile.display_name} does not publish a "
+                                    f"Highlights requirement.", source)
+        heading = _HIGHLIGHTS_HEADING_RE.search(self.full_text)
+        if not heading:
+            return ComplianceCheck(
+                rule, "NOT_ENOUGH_DATA",
+                "No \"Highlights\" heading found in the manuscript body -- Highlights "
+                "are normally submitted as a separate file, so this is not itself "
+                "evidence they are missing; verify the submission system upload "
+                "directly.",
+                source,
+            )
+        window = self.full_text[heading.end():heading.end() + 1500]
+        next_heading = re.search(r"\n\s*[A-Z][A-Za-z ]{2,40}\n", window)
+        if next_heading:
+            window = window[:next_heading.start()]
+        bullets = [b.strip() for b in _HIGHLIGHTS_BULLET_RE.findall(window) if b.strip()]
+        if not bullets:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    "A \"Highlights\" heading was found but no bulleted "
+                                    "lines followed it.", source)
+        problems = []
+        if not (3 <= len(bullets) <= profile.highlights_max_bullets):
+            problems.append(f"{len(bullets)} bullet(s) found "
+                             f"(expected 3-{profile.highlights_max_bullets})")
+        too_long = [b for b in bullets if len(b) > profile.highlights_max_chars]
+        if too_long:
+            problems.append(f"{len(too_long)} bullet(s) exceed "
+                             f"{profile.highlights_max_chars} characters")
+        if problems:
+            return ComplianceCheck(
+                rule, "NEEDS_REVIEW",
+                f"Highlights section found but does not match the published format: "
+                f"{'; '.join(problems)}.",
+                source,
+            )
+        return ComplianceCheck(
+            rule, "PASS",
+            f"{len(bullets)} Highlights bullet(s), each within "
+            f"{profile.highlights_max_chars} characters.",
+            source,
+        )

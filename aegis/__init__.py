@@ -18,13 +18,13 @@ in existing plagiarism detection tools:
      reference detection, and notation-convention checks (offline, no ML)
  11. Grammar & language convention checking -- contractions, US/UK spelling
      consistency, subject/verb agreement, usage errors (offline, no ML)
- 12. Per-venue publisher guideline compliance -- IEEE, ACM, BCS, IET, and
-     ISACA checked SEPARATELY against each body's own sourced style
+ 12. Per-venue publisher guideline compliance -- IEEE, ACM, BCS, IET, ISACA,
+     and Elsevier checked SEPARATELY against each body's own sourced style
      guidance, not one generic merged rule set
 
 Authors: Sunil Gentyala, Rakesh Prakash, Akhila Kasturi
 License: MIT
 """
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __author__ = "Sunil Gentyala"

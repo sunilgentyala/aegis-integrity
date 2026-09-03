@@ -533,7 +533,7 @@ class ReportGenerator:
   <div class="section">{grammar_section}</div>
 
   <!-- Per-venue guideline compliance -->
-  <h2>Publisher Guideline Compliance (IEEE / ACM / BCS / IET / ISACA, checked separately)</h2>
+  <h2>Publisher Guideline Compliance (IEEE / ACM / BCS / IET / ISACA / Elsevier, checked separately)</h2>
   <div class="section">{guideline_section}</div>
 
   <footer>AEGIS Academic Integrity Tool v{AEGIS_VERSION} &mdash; open-source</footer>
@@ -987,7 +987,7 @@ class ReportGenerator:
     def _guideline_section(self, gc: Optional[dict]) -> str:
         if not gc:
             return ("<p class='no-data'>Guideline compliance was not requested for this "
-                    "run (opt-in per venue: IEEE, ACM, BCS, IET, ISACA).</p>")
+                    "run (opt-in per venue: IEEE, ACM, BCS, IET, ISACA, Elsevier).</p>")
         cards = []
         for venue, res in gc.items():
             rows = "".join(

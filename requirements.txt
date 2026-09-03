@@ -3,7 +3,9 @@
 # After install: python -m spacy download en_core_web_sm
 
 # --- Document parsing ---
-PyMuPDF>=1.24.0          # PDF extraction (fitz)
+# PyMuPDF floor raised past CVE-2026-3029 (path traversal / arbitrary file
+# write in embed-extract, affected 1.26.5-1.26.6, fixed 1.26.7).
+PyMuPDF>=1.26.7          # PDF extraction (fitz)
 python-docx>=1.1.0       # DOCX parsing
 TexSoup>=0.3.1            # LaTeX source parsing
 striprtf>=0.0.26          # RTF parsing
@@ -20,22 +22,47 @@ datasketch>=1.6.4              # MinHash LSH for n-gram shingling
 scikit-learn>=1.4.0            # TF-IDF, cosine similarity
 
 # --- AI detection ---
-transformers>=4.40.0      # GPT-2 for perplexity scoring
-torch>=2.2.0              # Required by transformers
+# transformers floor raised past CVE-2024-11394/CVE-2024-11392 (RCE via
+# unsafe deserialization in Trax/MobileViTV2 model loaders). Several more
+# transformers CVEs (Trainer class, custom chat-template paths, LightGlue
+# loading) have followed since; AEGIS's own AIContentDetector only calls
+# AutoModelForCausalLM.from_pretrained() against two official, pinned-
+# revision HF repos (gpt2, gpt2-medium; see BASE_MODEL_REVISION /
+# OBSERVER_MODEL_REVISION in aegis/detectors/ai_detector.py) -- it never
+# uses Trainer, custom pipelines, trust_remote_code, or a user-supplied
+# model path, so those code paths aren't reachable here regardless. Keep
+# this floor current and re-check advisories periodically (pip-audit).
+transformers>=4.48.0
+# torch floor raised past CVE-2025-32434 (torch.load remote code execution
+# even with weights_only=True, fixed in 2.6.0).
+torch>=2.6.0              # Required by transformers
 langdetect>=1.0.9         # Language detection for threshold calibration
 
 # --- Citation integrity (NOVEL FEATURE) ---
 habanero>=1.2.3           # Crossref REST API client (DOI validation)
-requests>=2.31.0          # HTTP for PubMed E-utilities
+# requests floor raised past CVE-2024-35195 (a Session that starts with
+# verify=False keeps ignoring cert verification for later requests to the
+# same host even after verify is corrected; yanked 2.32.0/2.32.1, use 2.32.2+).
+requests>=2.32.2          # HTTP for PubMed E-utilities
 bibtexparser>=1.4.0       # BibTeX reference parsing
 
 # --- Web API ---
-fastapi>=0.111.0
+fastapi>=0.115.0
 uvicorn[standard]>=0.29.0
-python-multipart>=0.0.9   # File upload support
+# python-multipart floor raised past CVE-2024-53981 (DoS via unbounded
+# per-byte logging around multipart boundaries) and CVE-2024-24762 (ReDoS
+# in Content-Type header parsing).
+python-multipart>=0.0.18   # File upload support
+# starlette pinned explicitly (not just left to fastapi's own transitive
+# floor) past CVE-2024-47874 (unbounded buffering of non-file multipart
+# form fields, DoS) and CVE-2025-54121 (UploadFile disk rollover blocking
+# the single-threaded event loop, DoS).
+starlette>=0.47.2
 
 # --- Report generation ---
-jinja2>=3.1.4
+# jinja2 floor raised past CVE-2024-56201/CVE-2024-56326/CVE-2025-27516
+# (sandbox breakout via the |attr filter reaching str.format, RCE-adjacent).
+jinja2>=3.1.6
 markdown>=3.6
 
 # --- Utilities ---

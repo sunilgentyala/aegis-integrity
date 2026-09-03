@@ -1,7 +1,7 @@
 # AEGIS Academic Integrity Checker
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.1.0-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -19,11 +19,11 @@
 
 ## How AEGIS Compares
 
-Every major integrity tool has blind spots. AEGIS v3.0 aims to close **fourteen** of them simultaneously.
+Every major integrity tool has blind spots. AEGIS v3.1 aims to close **fourteen** of them simultaneously.
 
 Based on each vendor's public documentation and pricing pages as of August 2026. "Not public" means the capability isn't documented publicly by that vendor -- not a confirmed absence. [Corrections welcome](https://github.com/sunilgentyala/aegis-integrity/issues).
 
-| Gap | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai | **AEGIS v3.0** |
+| Gap | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai | **AEGIS v3.1** |
 |-----|:--------:|:-----------:|:---------:|:-------:|:--------------:|:--------------:|
 | Open-source / self-hostable | No | No | No | No | No | **Yes** |
 | Citation hallucination detection | Not public | Not public | Not public | Not public | Not public | **Yes** |
@@ -41,7 +41,7 @@ Based on each vendor's public documentation and pricing pages as of August 2026.
 | Fully explainable per-sentence reports | Not public | Not public | Partial | Partial | Not public | **Yes** |
 | Mathematical formula checking (equation numbering, dangling references, notation) | Not public | Not public | Not public | Not public | Not public | **Yes** |
 | Grammar & language convention checking (contractions, US/UK spelling, agreement) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Per-venue publisher guideline compliance (IEEE/ACM/BCS/IET/ISACA, checked separately) | Not public | Not public | Not public | Not public | Not public | **Yes** |
+| Per-venue publisher guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier, checked separately) | Not public | Not public | Not public | Not public | Not public | **Yes** |
 | Offline / air-gapped operation | No | No | No | No | No | **Yes** |
 | REST API + CLI (free) | No | Paid | Paid | Paid | Paid | **Yes** |
 | Pricing model | Institutional (not public) | Institutional (not public) | Paid (self-serve) | Paid (self-serve) | Paid (self-serve) | **$0.00 (self-hosted)** |
@@ -180,8 +180,8 @@ in-process on regex + optional spaCy POS tagging (already an AEGIS dependency) -
 no Java runtime, no external grammar service, no new hard dependency. Also a
 compliance/quality signal, never part of `overall_risk`.
 
-### 14. Per-Venue Publisher Guideline Compliance (v3.0 -- novel)
-Runs the math and grammar findings above against **five publishing bodies'
+### 14. Per-Venue Publisher Guideline Compliance (v3.0 -- novel; Elsevier added v3.1)
+Runs the math and grammar findings above against **six publishing bodies'
 own sourced style guidance, checked SEPARATELY** rather than one generic merged
 rule set -- so a document that's fine by ACM's conventions but violates an
 IEEE-specific one (or vice versa) is visible per venue instead of averaged away:
@@ -193,12 +193,13 @@ IEEE-specific one (or vice versa) is visible per venue instead of averaged away:
 | **BCS** | *The Computer Journal* (OUP) General Instructions | No contraction/spelling rule published -- reported as inferred, not asserted |
 | **IET** | IET Research Journals Author Guide | Bare `"(1)"` equation references (not `"Eq. (1)"`); scientific notation, not `5E03` |
 | **ISACA** | ISACA Journal Article Submission Guidelines | **Third person required** ("avoid 'I' or 'you'"); 2,000-3,000 word target; endnotes, not numeric brackets |
+| **Elsevier** | Elsevier Guide for Authors / CRediT / Highlights / Declaration of Competing Interest policy pages | **Either US or UK spelling accepted, just not mixed**; requires a CRediT authorship statement, a Declaration of Competing Interest, and a Data Availability Statement; Highlights capped at 3-5 bullets x 85 characters |
 
 Results are `PASS` / `NEEDS_REVIEW` / `NOT_ENOUGH_DATA` -- advisory, never `FAIL`.
 These are style conventions, not academic-integrity findings; AEGIS does not
 claim to be a venue's editorial desk. Run via `aegis guidelines paper.pdf --venues
-IEEE,ACM,BCS,IET,ISACA` (fast, no ML models at all) or opt in from `aegis analyze
-... --guidelines all`.
+IEEE,ACM,BCS,IET,ISACA,ELSEVIER` (fast, no ML models at all) or opt in from `aegis
+analyze ... --guidelines all`.
 
 ---
 
@@ -226,7 +227,7 @@ submission (PDF / DOCX / TEX / TXT)
   │  TargetPublisherVerifier[v2.4] IEEE/ACM/Elsevier/IET/IETE/BCS     │
   │  MathFormulaChecker    [v3.0] equation numbering/refs/notation    │
   │  GrammarLanguageChecker[v3.0] contractions/spelling/agreement     │
-  │  GuidelineComplianceChecker[v3.0] IEEE/ACM/BCS/IET/ISACA, separate│
+  │  GuidelineComplianceChecker[v3.0] IEEE/ACM/BCS/IET/ISACA/Elsevier │
   └────────────────────────────┬──────────────────────────────────────┘
                                |
                           AnalysisReport
@@ -281,7 +282,7 @@ aegis analyze paper.pdf --output report.json --html report.html
 
 # Fast, offline-only scan: math + grammar + per-venue guideline compliance,
 # checked SEPARATELY for each requested venue -- no ML models at all:
-aegis guidelines paper.pdf --venues IEEE,ACM,BCS,IET,ISACA --html guidelines.html
+aegis guidelines paper.pdf --venues IEEE,ACM,BCS,IET,ISACA,ELSEVIER --html guidelines.html
 
 # Fold guideline compliance into the full analysis instead:
 aegis analyze paper.pdf --guidelines all --html report.html
@@ -594,6 +595,40 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.1.0 (September 2026)
+- **NEW:** Elsevier added as a sixth per-venue guideline profile
+  (`aegis.guidelines.profiles.GUIDELINE_PROFILES["ELSEVIER"]`), sourced from
+  Elsevier's own Guide for Authors / CRediT / Highlights / Declaration of
+  Competing Interest policy pages and cross-checked against a real
+  published ScienceDirect article. Unlike the other five venues, Elsevier
+  explicitly accepts **either** US or UK spelling and only flags a document
+  that mixes the two -- the checker's spelling rule was extended with a new
+  `"EITHER"` variant to represent this correctly instead of forcing a false
+  single-target verdict. Four new structural checks run only for venues
+  that require them (Elsevier, for now): a CRediT authorship contribution
+  statement, a Declaration of Competing Interest, a Data Availability
+  Statement, and a Highlights section capped at 3-5 bullets of 85
+  characters each.
+- **SECURITY:** Fixed a timing side-channel in the REST API's
+  `X-API-Key` check (`aegis.api.app.require_api_key`) -- it compared the
+  header to `AEGIS_API_KEY` with plain `!=`, which short-circuits on the
+  first mismatching character and so takes measurably longer to reject a
+  key that matches more leading characters, in principle letting an
+  attacker recover the key one character at a time. Now uses
+  `hmac.compare_digest`.
+- **SECURITY:** Raised minimum dependency versions past several since-
+  disclosed CVEs: `transformers` (RCE via unsafe deserialization,
+  CVE-2024-11394/11392), `torch` (`torch.load` RCE even with
+  `weights_only=True`, CVE-2025-32434), `PyMuPDF` (path traversal in
+  embed-extract, CVE-2026-3029), `requests` (Session cert-verification
+  bypass, CVE-2024-35195), `jinja2` (sandbox breakout via the `|attr`
+  filter, CVE-2024-56201/56326/CVE-2025-27516), `python-multipart` (DoS/
+  ReDoS, CVE-2024-53981/24762), and an explicit `starlette` floor (DoS via
+  unbounded multipart-field buffering and blocking event-loop rollover,
+  CVE-2024-47874/CVE-2025-54121) rather than relying on FastAPI's own
+  looser transitive floor. See `requirements.txt` / `setup.py` for the
+  per-package citations.
 
 ### v3.0.0 (August 2026)
 - **NEW:** Mathematical formula checking (`aegis.detectors.math_formula`).

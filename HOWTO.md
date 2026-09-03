@@ -204,7 +204,7 @@ checkers (no GPT-2, no SBERT, no Crossref calls), then evaluates the result
 against each requested publisher's own sourced style guidance **separately**:
 
 ```bash
-# All five venues, checked independently:
+# All six venues, checked independently:
 aegis guidelines paper.pdf --venues all
 
 # Just the venues you're actually targeting:
@@ -575,13 +575,15 @@ curl -X POST http://localhost:8000/analyze \
 - **Gap filled:** no plagiarism/AI-detection tool also checks mechanical grammar/usage
 - **Never affects `overall_risk`** -- compliance/quality signal only
 
-### 8.9 Guideline Compliance Checker (v3.0; no ML)
+### 8.9 Guideline Compliance Checker (v3.0; Elsevier added v3.1; no ML)
 
-- **Venues:** IEEE, ACM, BCS, IET, ISACA -- each checked **separately** against its own
-  sourced style guidance (`aegis/guidelines/profiles.py` documents every source)
-- **Rules checked:** spelling variant, contractions, first/second-person address (ISACA),
-  equation reference style, notation conventions, citation-marker style, word count,
-  bulleted-list density
+- **Venues:** IEEE, ACM, BCS, IET, ISACA, Elsevier -- each checked **separately** against
+  its own sourced style guidance (`aegis/guidelines/profiles.py` documents every source)
+- **Rules checked:** spelling variant (incl. Elsevier's "either US or UK, just not mixed"
+  rule), contractions, first/second-person address (ISACA), equation reference style,
+  notation conventions, citation-marker style, word count, bulleted-list density, and
+  (Elsevier only) CRediT authorship statement, Declaration of Competing Interest, Data
+  Availability Statement, and Highlights formatting (3-5 bullets x 85 characters)
 - **Verdicts:** `PASS` / `NEEDS_REVIEW` / `NOT_ENOUGH_DATA` per rule -- advisory, never `FAIL`
 - **Gap filled:** every other tool applies one generic rule set, if any, instead of the
   actual target venue's own documented conventions

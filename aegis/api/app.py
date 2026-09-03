@@ -31,6 +31,7 @@ set AEGIS_API_KEY when doing so.
 
 from __future__ import annotations
 import os
+import hmac
 import asyncio
 import tempfile
 import logging
@@ -85,8 +86,15 @@ def _get_pipeline() -> AEGISPipeline:
 
 def require_api_key(x_api_key: Optional[str] = Header(None)) -> None:
     """FastAPI dependency: no-op if AEGIS_API_KEY is unset (auth disabled);
-    otherwise requires a matching X-API-Key header on every protected route."""
-    if API_KEY and x_api_key != API_KEY:
+    otherwise requires a matching X-API-Key header on every protected route.
+
+    Uses hmac.compare_digest rather than `!=` so a mismatching header takes
+    the same amount of time to reject regardless of how many leading
+    characters match, closing a timing side-channel that would otherwise
+    let an attacker recover the key one character at a time."""
+    if not API_KEY:
+        return
+    if not x_api_key or not hmac.compare_digest(x_api_key, API_KEY):
         raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key header")
 
 

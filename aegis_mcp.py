@@ -105,9 +105,9 @@ def aegis_analyze_paper(
         prior_works_dir: Optional directory of your own prior papers for self-plagiarism.
         skip_ai_detection: Skip GPT-2 AI detection (faster). Default False.
         skip_citations: Skip Crossref citation lookup (offline mode). Default False.
-        check_guidelines: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA to run
-            per-venue guideline compliance for, checked SEPARATELY per venue, or
-            "all" for all five. Empty (default) skips this section.
+        check_guidelines: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER to
+            run per-venue guideline compliance for, checked SEPARATELY per venue, or
+            "all" for all six. Empty (default) skips this section.
         html_report: Also save a self-contained HTML report. Default True.
     """
     stem = Path(file_path).stem
@@ -181,8 +181,8 @@ def aegis_check_guidelines(file_path: str, venues: str = "all", html_report: boo
 
     Args:
         file_path: Absolute path to the paper file (PDF/DOCX/TEX/TXT).
-        venues: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA, or "all"
-            (default) to check all five, each reported separately.
+        venues: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER, or "all"
+            (default) to check all six, each reported separately.
         html_report: Also save a self-contained HTML report. Default True.
     """
     stem = Path(file_path).stem

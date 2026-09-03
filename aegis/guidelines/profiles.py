@@ -12,18 +12,36 @@ NOT_ENOUGH_DATA / lower-confidence NEEDS_REVIEW rather than a firm
 violation.
 
 Sources consulted (August 2026):
-  IEEE  -- IEEE Editorial Style Manual for Authors (2024), updated
-           29 July 2024. journals.ieeeauthorcenter.ieee.org
-  ACM   -- ACM formatting/reference guidance (Chicago Manual of Style base,
-           numeric citation, ACM Primary Article Template).
-           acm.org/publications/authors
-  BCS   -- The Computer Journal (BCS's flagship research journal,
-           published by Oxford University Press) General Instructions /
-           Manuscript Preparation. academic.oup.com/comjnl/pages
-  IET   -- IET Research Journals Author Guide.
-           digital-library.theiet.org/journals
-  ISACA -- ISACA Journal Article Submission Guidelines.
-           isaca.org/resources/isaca-journal/submit-an-article
+  IEEE     -- IEEE Editorial Style Manual for Authors (2024), updated
+              29 July 2024. journals.ieeeauthorcenter.ieee.org
+  ACM      -- ACM formatting/reference guidance (Chicago Manual of Style base,
+              numeric citation, ACM Primary Article Template).
+              acm.org/publications/authors
+  BCS      -- The Computer Journal (BCS's flagship research journal,
+              published by Oxford University Press) General Instructions /
+              Manuscript Preparation. academic.oup.com/comjnl/pages
+  IET      -- IET Research Journals Author Guide.
+              digital-library.theiet.org/journals
+  ISACA    -- ISACA Journal Article Submission Guidelines.
+              isaca.org/resources/isaca-journal/submit-an-article
+
+Sources consulted (September 2026):
+  ELSEVIER -- Elsevier "Your Paper Your Way" / Guide for Authors (spelling
+              consistency rule), CRediT author statement policy
+              (elsevier.com/researcher/author/policies-and-guidelines/
+              credit-author-statement), Highlights guide
+              (elsevier.com/researcher/author/tools-and-resources/highlights),
+              and Declaration of Competing Interest / Data Availability
+              Statement policy pages. Structural conventions (CRediT
+              placement, numbered-reference style, equation numbering)
+              additionally cross-checked against a real published
+              ScienceDirect article (Biomedical Signal Processing and
+              Control 115 (2026) 109428, doi:10.1016/j.bspc.2025.109428) --
+              that sample paper mixes British and American spelling
+              throughout (e.g. "regularisation" alongside
+              "characterizations"), which is a concrete illustration of
+              the exact inconsistency Elsevier's own guidance says not to
+              do, not a counterexample to the rule.
 """
 
 from __future__ import annotations
@@ -38,7 +56,7 @@ class GuidelineProfile:
     source_name: str
     source_url: str
 
-    spelling_variant: str                 # "US" | "UK"
+    spelling_variant: str                 # "US" | "UK" | "EITHER"
     spelling_variant_confidence: str      # "stated" | "inferred"
 
     allow_contractions: bool
@@ -56,6 +74,15 @@ class GuidelineProfile:
     discourage_bulleted_lists: bool
 
     notes: tuple[str, ...] = field(default_factory=tuple)
+
+    # Structural-element requirements (Elsevier-specific as of Sept 2026;
+    # default False/None for the other four venues, whose sourced author
+    # guidance does not mandate these specific sections/files).
+    require_credit_statement: bool = False
+    require_conflict_of_interest_statement: bool = False
+    require_data_availability_statement: bool = False
+    highlights_max_bullets: Optional[int] = None
+    highlights_max_chars: Optional[int] = None
 
 
 GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
@@ -188,9 +215,59 @@ GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
             "if AEGIS's AI-content detector also flags the same manuscript.",
         ),
     ),
+    "ELSEVIER": GuidelineProfile(
+        key="ELSEVIER",
+        display_name="Elsevier (ScienceDirect journals)",
+        source_name="Elsevier Guide for Authors / CRediT author statement / "
+                     "Highlights guide / Declaration of Competing Interest policy",
+        source_url="https://www.elsevier.com/researcher/author/policies-and-guidelines/"
+                    "credit-author-statement",
+        spelling_variant="EITHER", spelling_variant_confidence="stated",
+        allow_contractions=True, require_oxford_comma=False,
+        require_third_person=False, disallow_first_person_singular=False,
+        equation_ref_style="number-in-parens",
+        equation_ref_note='Displayed equations are numbered consecutively with the '
+                           'number in parentheses at the right margin, referenced as '
+                           '"Eq. (n)" or the bare number "(n)".',
+        citation_style="varies",
+        word_count_range=None, discourage_bulleted_lists=False,
+        require_credit_statement=True,
+        require_conflict_of_interest_statement=True,
+        require_data_availability_statement=True,
+        highlights_max_bullets=5,
+        highlights_max_chars=85,
+        notes=(
+            '"American or British usage is accepted, but not a mixture of these" -- '
+            "unlike the other four venues here, Elsevier explicitly permits either "
+            "variant and only requires internal consistency; there is no single "
+            '"correct" target spelling to check against.',
+            "A CRediT authorship contribution statement (using the 14-role CRediT "
+            "taxonomy: Conceptualization, Methodology, Software, Validation, Formal "
+            "analysis, Investigation, Resources, Data Curation, Writing - Original "
+            "Draft, Writing - Review & Editing, Visualization, Supervision, Project "
+            "administration, Funding acquisition) is required, placed above the "
+            "acknowledgments section.",
+            "A Declaration of Competing Interest statement is required from every "
+            "author, disclosing any financial/personal relationships that could bias "
+            "the work (or stating that none exist).",
+            "A Data Availability Statement is required by an increasing number of "
+            'Elsevier journals (e.g. "Data will be made available on request.").',
+            "Highlights: a separate 3-to-5 bullet-point summary, each bullet capped "
+            "at 85 characters including spaces, submitted for search-engine "
+            "discoverability. Some authors also carry this into the manuscript body "
+            "as a \"Highlights\" heading, which is what this check scans for.",
+            "Reference/citation style (numbered/Vancouver vs. Harvard/name-date) is "
+            "set per journal, not uniformly across Elsevier -- recorded here as "
+            '"varies" rather than asserting one convention, so this check reports '
+            "NOT_ENOUGH_DATA instead of a false verdict.",
+            "Equation numbering/reference convention cross-checked against a real "
+            "published ScienceDirect article (Biomedical Signal Processing and "
+            "Control 115 (2026) 109428).",
+        ),
+    ),
 }
 
-DEFAULT_GUIDELINE_VENUES: tuple[str, ...] = ("IEEE", "ACM", "BCS", "IET", "ISACA")
+DEFAULT_GUIDELINE_VENUES: tuple[str, ...] = ("IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER")
 
 
 def resolve_guideline_profiles(requested: Optional[list[str]]) -> list[GuidelineProfile]:

@@ -93,9 +93,9 @@ def cli():
 @click.option("--no-grammar", is_flag=True,
               help="Skip grammar & language convention checking.")
 @click.option("--guidelines", default=None,
-              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA to run per-venue "
-                   "guideline compliance for, checked SEPARATELY per venue "
-                   "(default: none -- opt-in). Pass 'all' for all five.")
+              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER to run "
+                   "per-venue guideline compliance for, checked SEPARATELY per venue "
+                   "(default: none -- opt-in). Pass 'all' for all six.")
 @click.option("--watermark-mode",
               type=click.Choice(["disabled", "experimental", "verified_scheme"]),
               default="experimental", show_default=True,
@@ -257,8 +257,8 @@ def analyze(
 @cli.command()
 @click.argument("submission", type=click.Path(exists=True))
 @click.option("--venues", default="all", show_default=True,
-              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA, or 'all'. "
-                   "Each venue is checked SEPARATELY against its own sourced "
+              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER, or "
+                   "'all'. Each venue is checked SEPARATELY against its own sourced "
                    "style guidance -- see aegis/guidelines/profiles.py.")
 @click.option("--output", "-o", default=None, type=click.Path(),
               help="Write JSON report to this path.")
@@ -267,7 +267,7 @@ def analyze(
 def guidelines(submission, venues, output, output_html):
     """
     Fast, offline-only scan: mathematical formula checks + grammar/language
-    checks + per-venue guideline compliance (IEEE/ACM/BCS/IET/ISACA).
+    checks + per-venue guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier).
 
     Unlike `analyze`, this runs no ML models (no GPT-2, no SBERT, no
     Crossref calls) -- just the pure-Python math/grammar/guideline

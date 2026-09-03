@@ -32,16 +32,19 @@ setup(
     packages=find_packages(exclude=["tests*"]),
     python_requires=">=3.10",
     install_requires=[
-        "PyMuPDF>=1.24.0",
+        # Security-floor rationale for the bumps below lives in
+        # requirements.txt (same package list, same CVE citations).
+        "PyMuPDF>=1.26.7",
         "python-docx>=1.1.0",
         "TexSoup>=0.3.1",
         "datasketch>=1.6.4",
         "scikit-learn>=1.4.0",
-        "requests>=2.31.0",
-        "fastapi>=0.111.0",
+        "requests>=2.32.2",
+        "fastapi>=0.115.0",
+        "starlette>=0.47.2",
         "uvicorn[standard]>=0.29.0",
-        "python-multipart>=0.0.9",
-        "jinja2>=3.1.4",
+        "python-multipart>=0.0.18",
+        "jinja2>=3.1.6",
         "pydantic>=2.7.0",
         "python-dotenv>=1.0.1",
         "tqdm>=4.66.4",
@@ -53,8 +56,8 @@ setup(
         "ml": [
             "sentence-transformers>=3.0.0",
             "faiss-cpu>=1.8.0",
-            "transformers>=4.40.0",
-            "torch>=2.2.0",
+            "transformers>=4.48.0",
+            "torch>=2.6.0",
             "langdetect>=1.0.9",
         ],
         "nlp": [

@@ -228,7 +228,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-badge"><span></span>v3.0.0 &nbsp;|&nbsp; Beta &mdash; Human Review Required &nbsp;|&nbsp; August 2026</div>
+  <div class="hero-badge"><span></span>v3.1.0 &nbsp;|&nbsp; Beta &mdash; Human Review Required &nbsp;|&nbsp; September 2026</div>
   <h1>The Integrity Checker<br>That Sees Everything</h1>
   <p class="hero-sub">
     Open-source. Offline. Bias-aware. 14 detection modules in a single pip install.
@@ -451,8 +451,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
 
     <div class="det-card" style="--dc:#ffa657">
       <div class="det-num">Module 14</div>
-      <div class="det-name">Per-Venue Guideline Compliance <span class="new-tag">NEW v3.0</span></div>
-      <div class="det-desc">Runs the math/grammar findings against IEEE, ACM, BCS, IET, and ISACA's own sourced style guidance <b>checked separately</b>, not one generic merged rule set -- e.g. ISACA's "avoid 'I' or 'you'" third-person rule, IET's bare "(1)" equation-reference convention, or IEEE's no-contractions rule. Every rule cites its source. Results are advisory (PASS / NEEDS_REVIEW / NOT_ENOUGH_DATA), never FAIL. Run via <code>aegis guidelines paper.pdf --venues IEEE,ACM,BCS,IET,ISACA</code>.</div>
+      <div class="det-name">Per-Venue Guideline Compliance <span class="new-tag">NEW v3.0</span> <span class="new-tag">+Elsevier v3.1</span></div>
+      <div class="det-desc">Runs the math/grammar findings against IEEE, ACM, BCS, IET, ISACA, and (added in v3.1) Elsevier's own sourced style guidance <b>checked separately</b>, not one generic merged rule set -- e.g. ISACA's "avoid 'I' or 'you'" third-person rule, IET's bare "(1)" equation-reference convention, IEEE's no-contractions rule, or Elsevier's "American or British usage is accepted, but not a mixture of these" rule plus its CRediT / Declaration of Competing Interest / Data Availability / Highlights structural requirements. Every rule cites its source. Results are advisory (PASS / NEEDS_REVIEW / NOT_ENOUGH_DATA), never FAIL. Run via <code>aegis guidelines paper.pdf --venues IEEE,ACM,BCS,IET,ISACA,ELSEVIER</code>.</div>
     </div>
 
   </div>
@@ -472,8 +472,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
       <a href="https://github.com/sunilgentyala/aegis-integrity" target="_blank" class="btn btn-primary">
         &#9733; Star the Repo
       </a>
-      <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.0.0" target="_blank" class="btn btn-outline">
-        &#128229; Download v3.0.0
+      <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.1.0" target="_blank" class="btn btn-outline">
+        &#128229; Download v3.1.0
       </a>
       <a href="https://github.com/sunilgentyala/aegis-integrity/issues" target="_blank" class="btn btn-outline">
         &#128172; Open an Issue
@@ -498,7 +498,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
           <th>CopyLeaks</th>
           <th>GPTZero</th>
           <th>Originality.ai</th>
-          <th class="ag">AEGIS v3.0</th>
+          <th class="ag">AEGIS v3.1</th>
         </tr>
       </thead>
       <tbody>
@@ -675,7 +675,7 @@ submission (PDF / DOCX / TEX / TXT)
   │  VenueVerificationDetector [v2.4] IEEE/ACM/Elsevier/IET/IETE/BCS check  │
   │  MathFormulaChecker        [v3.0] equation numbering/refs/notation     │
   │  GrammarLanguageChecker    [v3.0] contractions/spelling/agreement      │
-  │  GuidelineComplianceChecker[v3.0] IEEE/ACM/BCS/IET/ISACA, separately   │
+  │  GuidelineComplianceChecker[v3.0] IEEE/ACM/BCS/IET/ISACA/Elsevier      │
   └────────────────────────────┬────────────────────────────────────────────┘
                                |
                          AnalysisReport
@@ -707,7 +707,7 @@ submission (PDF / DOCX / TEX / TXT)
   <div style="margin-top:.4rem;color:var(--muted);font-size:.83rem">sunil.gentyala@ieee.org</div>
   <div class="footer-links">
     <a href="https://github.com/sunilgentyala/aegis-integrity" target="_blank">GitHub Repo</a>
-    <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.0.0" target="_blank">v3.0.0 Release</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.1.0" target="_blank">v3.1.0 Release</a>
     <a href="https://github.com/sunilgentyala/aegis-integrity/blob/main/README.md" target="_blank">Documentation</a>
     <a href="https://github.com/sunilgentyala/aegis-integrity/issues" target="_blank">Report an Issue</a>
     <a href="https://www.linkedin.com/in/sunilgentyala" target="_blank">LinkedIn</a>
@@ -715,7 +715,7 @@ submission (PDF / DOCX / TEX / TXT)
     <a href="https://github.com/sunilgentyala/aegis-integrity/blob/main/LICENSE" target="_blank">MIT License</a>
   </div>
   <div style="margin-top:1.25rem;font-size:.76rem;color:#484f58">
-    AEGIS v3.0 &nbsp;|&nbsp; Academic Integrity Engine with Generative-AI Scrutiny &nbsp;|&nbsp; MIT License &nbsp;|&nbsp; 2026
+    AEGIS v3.1 &nbsp;|&nbsp; Academic Integrity Engine with Generative-AI Scrutiny &nbsp;|&nbsp; MIT License &nbsp;|&nbsp; 2026
   </div>
 </footer>
 
