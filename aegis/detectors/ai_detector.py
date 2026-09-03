@@ -19,7 +19,8 @@ Methods:
     inspiration; GPT-2 base is the "observer", medium is the "scorer"
   - Stylometric feature ensemble: sentence length std, vocabulary richness,
     hedge phrase density, passive voice ratio, nominalization density,
-    GPT-4/GPT-5-era lexical-tell density (see GPT_TELL_PHRASES below)
+    GPT-4/GPT-5-era lexical-tell density (see GPT_TELL_PHRASES_STRONG /
+    GPT_TELL_PHRASES_WEAK below)
   - Language detection for ESL threshold calibration
 
 Why a lexical-tell signal, separate from perplexity:
@@ -76,20 +77,47 @@ HEDGE_PHRASES = [
 # transition/elevation vocabulary. See the module docstring for why this
 # is a separate signal from perplexity/burstiness, and why a hit is a
 # stylistic tell rather than proof of AI authorship.
-GPT_TELL_PHRASES = [
+#
+# Split into two tiers rather than one flat list. The original single list
+# mixed idiosyncratic AI catchphrases ("delve into", "tapestry of") with
+# ordinary formal-register connectives ("furthermore", "moreover", "in
+# conclusion") that are standard vocabulary in every academic-writing
+# curriculum -- exactly the kind of formal transition words ESL writing
+# courses specifically teach. Counting both tiers equally meant this
+# 25%-weighted signal could disproportionately penalize careful, formal
+# (often non-native) academic prose -- undermining the ESL bias correction
+# this detector is otherwise designed to provide (see ESL_THRESHOLD_
+# MULTIPLIER above). GPT_TELL_PHRASES_STRONG are phrases rare in ordinary
+# pre-LLM technical writing and counted at full weight; GPT_TELL_PHRASES_
+# WEAK are common formal-register vocabulary that LLMs still measurably
+# overuse (per the same Originality.ai/Pangram Labs analyses) but that
+# alone is weak evidence, so it is counted at WEAK_TELL_WEIGHT instead of
+# full weight -- see _gpt_tell_density.
+GPT_TELL_PHRASES_STRONG = [
     "delve into", "delves into", "delving into", "boasts", "underscores",
     "underscore", "in the realm of", "realm of", "testament to",
-    "a testament", "pivotal role", "navigate the complexities",
-    "navigating the complexities", "rapidly evolving", "ever-evolving",
-    "cutting-edge", "game-changer", "meticulously", "intricate",
-    "multifaceted", "holistic", "synergy", "leverage", "leveraging",
-    "seamless", "seamlessly", "robust", "unprecedented", "paradigm shift",
-    "harness the power", "unlock the potential", "at the forefront",
-    "foster", "bolster", "it is important to note", "it's important to note",
+    "a testament", "navigate the complexities", "navigating the complexities",
+    "tapestry of", "harness the power", "unlock the potential",
+    "game-changer", "meticulously",
+]
+GPT_TELL_PHRASES_WEAK = [
+    "pivotal role", "rapidly evolving", "ever-evolving", "cutting-edge",
+    "intricate", "multifaceted", "holistic", "synergy", "leverage",
+    "leveraging", "seamless", "seamlessly", "robust", "unprecedented",
+    "paradigm shift", "at the forefront", "foster", "bolster",
+    "it is important to note", "it's important to note",
     "it is worth noting", "it's worth noting", "in conclusion", "in summary",
     "furthermore", "moreover", "notably", "comprehensive understanding",
-    "nuanced", "tapestry of",
+    "nuanced",
 ]
+# Weak tells count for this fraction of a full hit -- enough to still
+# contribute (LLMs do measurably overuse this vocabulary) without letting
+# ordinary formal academic register dominate the tell-density signal.
+WEAK_TELL_WEIGHT = 0.35
+# Retained for anything that wants the full combined vocabulary (e.g.
+# highlighting every candidate tell in a report) -- density scoring uses
+# the two tiers above, not this flat list.
+GPT_TELL_PHRASES = GPT_TELL_PHRASES_STRONG + GPT_TELL_PHRASES_WEAK
 
 
 @dataclass
@@ -262,9 +290,11 @@ class AIContentDetector:
         ratio_score = max(0.0, 1.0 - (ratio / self.ratio_thresh))
         ratio_score = min(1.0, ratio_score)
 
-        # High GPT-tell density = AI-like. 3 tells per 100 words is treated
-        # as a strong signal -- these are multi-word phrases, so they occur
-        # far less densely in normal prose than single hedge words do.
+        # High GPT-tell density = AI-like. 3 weighted tells per 100 words
+        # (i.e. 3 strong hits, or a proportionally larger number of weak
+        # ones at WEAK_TELL_WEIGHT each) is treated as a strong signal --
+        # these are multi-word phrases, so they occur far less densely in
+        # normal prose than single hedge words do.
         tell_score = min(tell_density / 3.0, 1.0)
 
         # Ensemble (weighted average). style_score + tell_score are weighted
@@ -387,14 +417,18 @@ class AIContentDetector:
 
     def _gpt_tell_density(self, text: str) -> float:
         """
-        Count of GPT_TELL_PHRASES hits per 100 words. See module docstring
-        and GPT_TELL_PHRASES for what this targets and why it's a separate
-        signal from perplexity/burstiness.
+        Weighted GPT-tell hits per 100 words: GPT_TELL_PHRASES_STRONG count
+        fully, GPT_TELL_PHRASES_WEAK count at WEAK_TELL_WEIGHT. See module
+        docstring for why this is a separate signal from perplexity/
+        burstiness, and why the two tiers are weighted differently rather
+        than treating every phrase as equally strong evidence.
         """
         word_count = max(len(text.split()), 1)
         text_lower = text.lower()
-        hits = sum(text_lower.count(p) for p in GPT_TELL_PHRASES)
-        return hits / (word_count / 100)
+        strong_hits = sum(text_lower.count(p) for p in GPT_TELL_PHRASES_STRONG)
+        weak_hits = sum(text_lower.count(p) for p in GPT_TELL_PHRASES_WEAK)
+        weighted_hits = strong_hits + WEAK_TELL_WEIGHT * weak_hits
+        return weighted_hits / (word_count / 100)
 
     def _ensemble_verdict(self, score: float, threshold: float) -> str:
         if score < threshold * 0.5:

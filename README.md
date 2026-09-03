@@ -1,7 +1,7 @@
 # AEGIS Academic Integrity Checker
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.1.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.1.1-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -595,6 +595,32 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.1.1 (September 2026)
+- **FIX (AI-detector accuracy, ensemble weighting):** `GPT_TELL_PHRASES`
+  (the lexical-tell signal, 25% ensemble weight) mixed idiosyncratic AI
+  catchphrases ("delve into", "tapestry of", "testament to") with ordinary
+  formal-register connectives ("furthermore", "moreover", "in conclusion",
+  "robust", "leverage") that are standard vocabulary in every academic-
+  writing curriculum -- exactly what ESL writing courses teach as formal
+  transition words. Counting both tiers equally meant this signal could
+  disproportionately penalize careful, formal (often non-native) academic
+  prose, undermining the detector's own ESL bias correction
+  (`ESL_THRESHOLD_MULTIPLIER`). Split into `GPT_TELL_PHRASES_STRONG` (full
+  weight) and `GPT_TELL_PHRASES_WEAK` (`WEAK_TELL_WEIGHT = 0.35`) in
+  `aegis.detectors.ai_detector`; `_gpt_tell_density` now weights hits by
+  tier instead of counting every phrase equally.
+- **NOTED, not yet fixed:** `ESL_THRESHOLD_MULTIPLIER`'s non-English
+  entries are effectively unreachable in practice -- the calibration keys
+  off `langdetect(text)`, which (correctly) detects the language the
+  *text* is written in, not the author's native language, so it returns
+  `"en"` for essentially every real English-language submission,
+  including grammatically non-native-influenced English. Verified
+  directly: `langdetect("This paper propose a novel method for is more
+  efficient...")` still returns `"en"`. A real fix needs a genuine L2-
+  English-style heuristic (e.g. article/preposition error density), which
+  is a new detector, not a quick tweak -- left as a scoped follow-up
+  rather than guessed at without a labeled corpus to validate against.
 
 ### v3.1.0 (September 2026)
 - **NEW:** Elsevier added as a sixth per-venue guideline profile

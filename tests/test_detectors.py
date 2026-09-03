@@ -606,6 +606,59 @@ class TestAIDetectorHeuristics:
         no_tell_density = det._gpt_tell_density(HUMAN_PARA)
         assert tell_density > no_tell_density
 
+    def test_weak_tells_count_for_less_than_strong_tells(self):
+        """Formal-register connectives that are also ordinary pre-LLM
+        academic English ("furthermore", "robust", "leverage", ...) must
+        weigh less than idiosyncratic AI catchphrases ("delve into",
+        "tapestry of", ...) -- otherwise this signal disproportionately
+        penalizes careful/ESL formal prose that uses standard transition
+        words, undermining the detector's own ESL bias correction."""
+        from aegis.detectors.ai_detector import (
+            AIContentDetector, GPT_TELL_PHRASES_STRONG, GPT_TELL_PHRASES_WEAK,
+            WEAK_TELL_WEIGHT,
+        )
+        assert 0.0 < WEAK_TELL_WEIGHT < 1.0
+        det = AIContentDetector()
+        strong_text = "This delves into the topic and boasts a testament to rigor."
+        weak_text = "This robust approach leverages synergy and fosters a nuanced, holistic, seamless outcome."
+        # Sanity: each sample only hits its own tier.
+        assert not any(p in strong_text.lower() for p in GPT_TELL_PHRASES_WEAK)
+        assert not any(p in weak_text.lower() for p in GPT_TELL_PHRASES_STRONG)
+        strong_density = det._gpt_tell_density(strong_text)
+        weak_density = det._gpt_tell_density(weak_text)
+        assert strong_density > 0.0
+        assert weak_density > 0.0
+        # Same number of hits (3 each), but weak hits count for less.
+        assert weak_density < strong_density
+
+    def test_esl_style_formal_connectives_alone_do_not_saturate_tell_score(self):
+        """A realistically paragraph-length (~150-word), plainly human
+        passage that uses a few standard formal-academic connectives should
+        not spike tell_density anywhere near the 3-per-100-words threshold
+        that maps to a full tell_score of 1.0 -- only a paragraph that is
+        both short AND dense with tell phrases should do that."""
+        from aegis.detectors.ai_detector import AIContentDetector
+        det = AIContentDetector()
+        text = (
+            "The proposed architecture integrates a locally deployed CoreDNS "
+            "resolver with an Isolation Forest anomaly detection model, "
+            "trained on query logs collected over a six-month period from "
+            "three enterprise networks of varying size and traffic profile. "
+            "Furthermore, the system retains all query logs within the "
+            "enterprise boundary rather than forwarding them to a third-"
+            "party resolver, closing an observability gap that several "
+            "prior architectures left unaddressed. Notably, this design is "
+            "robust to the kind of DNS tunneling and cache-poisoning "
+            "attempts described in Section III, and, in summary, reduces "
+            "the enterprise's overall exposure to DGA-generated domains "
+            "without requiring any change to existing client configuration "
+            "or DNS resolver software on end-user devices across the "
+            "monitored network segments."
+        )
+        density = det._gpt_tell_density(text)
+        tell_score = min(density / 3.0, 1.0)
+        assert tell_score < 0.5
+
     def test_esl_calibration_raises_not_lowers_threshold(self):
         """A non-native-language document must never be flagged more
         aggressively than the same score would be for English text."""
