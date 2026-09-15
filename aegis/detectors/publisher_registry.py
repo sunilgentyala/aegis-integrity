@@ -163,12 +163,36 @@ def claimed_publisher(raw_citation_text: str) -> Optional[str]:
     the citation text itself (e.g. "IEEE Trans. on ...", "Proc. ACM ...").
     Returns None if no target-venue keyword is found -- most references
     won't claim any of these six venues, and that's not itself a signal.
+
+    Returns only the first keyword match (in TARGET_PUBLISHERS order) --
+    for a reference that names more than one venue (a jointly-sponsored
+    conference like "IEEE/ACM ... Conference"), use
+    claimed_publishers_all() instead so a mismatch check isn't fooled into
+    comparing against only one of the names actually present.
     """
     text_lower = (raw_citation_text or "").lower()
     for profile in TARGET_PUBLISHERS.values():
         if any(_keyword_present(text_lower, kw) for kw in profile.claim_keywords):
             return profile.key
     return None
+
+
+def claimed_publishers_all(raw_citation_text: str) -> set[str]:
+    """
+    Every target-venue keyword found in a raw reference string, not just
+    the first. A jointly-sponsored venue is routinely named as both
+    co-sponsors ("Proceedings of the IEEE/ACM 12th International
+    Conference on ...") and its DOI can legitimately resolve to either
+    co-sponsor's Crossref member -- checking against only the first-listed
+    name (what claimed_publisher() returns) produces a false
+    venue-mismatch flag when the DOI resolves to the second-listed one.
+    """
+    text_lower = (raw_citation_text or "").lower()
+    return {
+        profile.key
+        for profile in TARGET_PUBLISHERS.values()
+        if any(_keyword_present(text_lower, kw) for kw in profile.claim_keywords)
+    }
 
 
 def resolve_target_publishers(

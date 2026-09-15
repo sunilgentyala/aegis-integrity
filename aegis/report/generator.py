@@ -1,5 +1,5 @@
 """
-Report generator: produces JSON + styled HTML reports from AnalysisReport.
+Report generator: produces styled HTML reports from AnalysisReport.
 
 HTML output is self-contained (no external CDN calls) so it can be
 attached to an email or opened offline. Includes:
@@ -11,7 +11,6 @@ attached to an email or opened offline. Includes:
 """
 
 from __future__ import annotations
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -29,15 +28,6 @@ class ReportGenerator:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-
-    def generate_json(self, report: AnalysisReport, filename: Optional[str] = None) -> str:
-        """Serialize report to JSON. Returns absolute path."""
-        data = self._report_to_dict(report)
-        fname = filename or f"aegis_report_{self._stem(report)}.json"
-        path = self.output_dir / fname
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        return str(path)
 
     def generate_html(self, report: AnalysisReport, filename: Optional[str] = None) -> str:
         """Render HTML report. Returns absolute path."""

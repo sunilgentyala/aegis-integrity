@@ -109,11 +109,11 @@ Output is printed to the terminal. Risk levels: `LOW | MEDIUM | HIGH | CRITICAL`
 
 ```bash
 aegis analyze paper.pdf \
-    --output report.json \
-    --html  report.html
+    --html report.html
 ```
 
 `report.html` is self-contained -- no internet connection needed to open it.
+AEGIS only writes HTML reports; there is no JSON report file.
 
 ### 4.4 Analyze against a reference corpus
 
@@ -211,7 +211,7 @@ aegis guidelines paper.pdf --venues all
 aegis guidelines paper.pdf --venues IEEE,ACM
 
 # Save a report:
-aegis guidelines paper.pdf --venues all --output guidelines.json --html guidelines.html
+aegis guidelines paper.pdf --venues all --html guidelines.html
 ```
 
 Each venue reports `COMPLIANT`, `NEEDS_REVIEW`, or `NOT_ENOUGH_DATA` -- never
@@ -279,7 +279,6 @@ from aegis.report.generator import ReportGenerator
 
 gen = ReportGenerator(output_dir="./reports/")
 
-json_path = gen.generate_json(report)   # returns path to .json file
 html_path = gen.generate_html(report)   # returns path to .html file
 
 print(f"HTML report: {html_path}")

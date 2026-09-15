@@ -8,7 +8,6 @@ BatchAnalyzer detector into both interfaces.
 """
 
 import io
-import json
 
 from click.testing import CliRunner
 
@@ -54,25 +53,19 @@ class TestBatchCLI:
         assert "a" in result.output and "b" in result.output
         assert "Overall Risk" in result.output
 
-    def test_batch_writes_json_and_html(self, tmp_path):
+    def test_batch_writes_html(self, tmp_path):
         from aegis.cli import cli
         _write(tmp_path, "a.txt", DOC_A)
         _write(tmp_path, "b.txt", DOC_B)
 
-        json_path = tmp_path / "out.json"
         html_path = tmp_path / "out.html"
         runner = CliRunner()
         result = runner.invoke(cli, [
             "batch", str(tmp_path), "--pattern", "*.txt", "--no-ai",
-            "--json", str(json_path), "--html", str(html_path),
+            "--html", str(html_path),
         ])
         assert result.exit_code in (0, 1)  # risk-dependent, but must not crash
-        assert json_path.exists()
         assert html_path.exists()
-
-        data = json.loads(json_path.read_text(encoding="utf-8"))
-        assert "overall_risk" in data
-        assert "suspicious_pairs" in data
 
         html = html_path.read_text(encoding="utf-8")
         assert "AEGIS Batch" in html

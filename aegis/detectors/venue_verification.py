@@ -41,6 +41,7 @@ from aegis.detectors.publisher_registry import (
     PublisherProfile,
     classify_publisher,
     claimed_publisher,
+    claimed_publishers_all,
     resolve_target_publishers,
 )
 
@@ -136,7 +137,11 @@ class TargetPublisherVerifier:
                 counts[actual] += 1
 
             claimed = claimed_publisher(v.raw_text)
-            if claimed and claimed in target_keys and claimed != actual:
+            claimed_all = claimed_publishers_all(v.raw_text)
+            if (
+                claimed and claimed in target_keys and claimed != actual
+                and actual not in claimed_all
+            ):
                 profile = next(p for p in self.profiles if p.key == claimed)
                 flags.append(VenueFlag(
                     flag_type="VENUE_MISMATCH",

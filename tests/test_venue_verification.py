@@ -121,6 +121,30 @@ class TestTargetPublisherVerifierClaimChecks:
         assert flags[0].severity == "HIGH"
         assert flags[0].cite_key == "r1"
 
+    def test_no_mismatch_when_reference_names_both_joint_sponsors(self):
+        """Real bug: a jointly-sponsored venue is routinely named as both
+        co-sponsors ("Proceedings of the IEEE/ACM 12th International
+        Conference on ..."), and claimed_publisher() only ever returns the
+        FIRST keyword match (IEEE, checked before ACM in TARGET_PUBLISHERS
+        order) even when the DOI legitimately resolves to the other
+        co-sponsor's Crossref member (ACM, DOI prefix 10.1145). That
+        produced a false VENUE_MISMATCH ("reads as IEEE, but resolves to
+        ACM") against a reference whose own text already said "IEEE/ACM"
+        and whose DOI-resolved container-title also says "IEEE/ACM" --
+        no misattribution occurred at all."""
+        verifier = TargetPublisherVerifier(offline=True)
+        v = _verdict(
+            "r1", "10.1145/3773276.3776564",
+            'J. Zouari, "Toward Agentic IAM," in Proceedings of the '
+            "IEEE/ACM 12th International Conference on Big Data Computing, "
+            "Applications and Technologies (BDCAT '25), 2025.",
+            "Proceedings of the IEEE/ACM 12th International Conference on "
+            "Big Data Computing, Applications and Technologies",  # ACM member
+        )
+        counts, flags = verifier.check_citation_claims([v])
+        assert counts["ACM"] == 1
+        assert flags == []
+
     def test_hallucinated_verdicts_excluded_from_classification(self):
         verifier = TargetPublisherVerifier(offline=True)
         v = CitationVerdict(

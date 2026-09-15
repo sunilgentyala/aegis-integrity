@@ -260,6 +260,25 @@ class TestCitationIntegrityDetector:
         # In offline mode with a DOI, returns NO_DOI (cannot verify)
         assert verdicts[0].verdict in ("NO_DOI", "UNRESOLVABLE")
 
+    def test_short_generic_title_skips_title_lookup(self):
+        """Real bug: a spec/document reference with no DOI and a short,
+        generic extracted title (e.g. a citation literally titled
+        'Authorization,' for an MCP specification page) triggered a
+        Crossref title search that coincidentally word-matched an
+        unrelated paper also titled just "Authorization" (a book chapter
+        from a different field entirely), producing a fabricated-looking
+        MISMATCH/HALLUCINATED verdict against a reference that was never a
+        DOI-bearing publication. Short/generic titles must not be
+        title-searched at all."""
+        from unittest.mock import patch
+        from aegis.detectors.citation import CitationIntegrityDetector
+        det = CitationIntegrityDetector()
+        ref = self._make_ref(doi=None, title="Authorization")
+        with patch.object(det, "_lookup_by_title") as mock_lookup:
+            verdicts = det.verify_references([ref])
+        mock_lookup.assert_not_called()
+        assert verdicts[0].verdict == "NO_DOI"
+
     def test_string_similarity_identical(self):
         from aegis.detectors.citation import CitationIntegrityDetector
         det = CitationIntegrityDetector()
@@ -309,6 +328,30 @@ class TestCitationIntegrityDetector:
         )
         title = det._extract_title_from_raw(raw)
         assert title == "Detecting citation cartels in academic papers"
+
+    def test_title_extraction_handles_curly_single_quotes(self):
+        """Real bug: Word's smart-quote autocorrect renders IEEE-style
+        titles in single curly quotes ('Title,' in Venue...) rather than
+        double quotes. The naive quote-to-quote match found nothing (only
+        recognizes double quotes), and the ". "-split fallback fragmented
+        so badly on multi-author initials that it returned the trailing
+        DOI URL as the "title" instead. A mid-title apostrophe rendered
+        with the same closing-quote character ("You've") must not
+        truncate the match early."""
+        from aegis.detectors.citation import CitationIntegrityDetector
+        det = CitationIntegrityDetector()
+        raw = (
+            'K. Greshake, S. Abdelnabi, S. Mishra, C. Endres, T. Holz, and M. Fritz, '
+            '‘Not What You’ve Signed Up For: Compromising Real-World LLM-Integrated '
+            'Applications With Indirect Prompt Injection,’ in Proceedings of the 16th ACM '
+            'Workshop on Artificial Intelligence and Security, 2023, pp. 79-90. '
+            'https://doi.org/10.1145/3605764.3623985.'
+        )
+        title = det._extract_title_from_raw(raw)
+        assert title == (
+            "Not What You’ve Signed Up For: Compromising Real-World "
+            "LLM-Integrated Applications With Indirect Prompt Injection"
+        )
 
     def test_author_fragment_regex_matches_known_false_positives(self):
         """Exact fragments previously mis-extracted as titles in production."""
@@ -430,6 +473,26 @@ class TestCitationIntegrityDetector:
             ref = self._make_ref(doi="10.9999/totally-fake", title="A Paper")
             verdict = det._verify_one(ref)
         assert verdict.verdict == "HALLUCINATED"
+
+    def test_agency_check_rate_limited_is_unavailable_not_hallucinated(self):
+        """Real bug: verify_references() fans out one /works/{doi} call AND
+        one /agency call per reference concurrently (ThreadPoolExecutor),
+        so the secondary /agency lookup hits Crossref's rate limit far more
+        easily than the primary call on reference-heavy papers. A 429/5xx
+        here fell through the same code path as "agency lookup 404d" and
+        was reported as HALLUCINATED -- turning a live rate limit into a
+        false fabrication verdict against real, resolvable DOIs (verified
+        against real arXiv/DataCite DOIs during a production run)."""
+        from aegis.detectors.citation import CitationIntegrityDetector
+        det = CitationIntegrityDetector()
+        session = self._mock_session({
+            "/agency": (429, {}),
+            "": (404, {}),
+        })
+        with patch.object(det, "_get_session", return_value=session):
+            ref = self._make_ref(doi="10.48550/arXiv.2503.18666", title="A Paper")
+            verdict = det._verify_one(ref)
+        assert verdict.verdict == "UNAVAILABLE"
 
     def test_crossref_5xx_is_unavailable_not_hallucinated(self):
         from aegis.detectors.citation import CitationIntegrityDetector

@@ -108,14 +108,15 @@ def aegis_analyze_paper(
         check_guidelines: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER to
             run per-venue guideline compliance for, checked SEPARATELY per venue, or
             "all" for all six. Empty (default) skips this section.
-        html_report: Also save a self-contained HTML report. Default True.
+        html_report: Save a self-contained HTML report (the only report file AEGIS
+            writes). Default True.
     """
     stem = Path(file_path).stem
-    json_out = str(REPORT_DIR / f"{stem}_report.json")
-    args = ["analyze", file_path, "--output", json_out, "--index-dir", str(INDEX_DIR)]
+    html_out = str(REPORT_DIR / f"{stem}_report.html")
+    args = ["analyze", file_path, "--index-dir", str(INDEX_DIR)]
 
     if html_report:
-        args += ["--html", str(REPORT_DIR / f"{stem}_report.html")]
+        args += ["--html", html_out]
     if prior_works_dir:
         args += ["--prior-works", prior_works_dir]
     if skip_ai_detection:
@@ -126,8 +127,8 @@ def aegis_analyze_paper(
         args += ["--guidelines", check_guidelines]
 
     output = _run(args, timeout=900)
-    if Path(json_out).exists():
-        output += f"\n\nReport saved to: {json_out}"
+    if html_report and Path(html_out).exists():
+        output += f"\n\nReport saved to: {html_out}"
     return output
 
 
@@ -146,7 +147,7 @@ def aegis_compare_papers(file1: str, file2: str) -> str:
 
 
 @mcp.tool()
-def aegis_check_citations(file_path: str) -> str:
+def aegis_check_citations(file_path: str, html_report: bool = True) -> str:
     """Verify citation integrity in a paper (fast — citations module only).
 
     Checks each DOI via the Crossref REST API. Detects hallucinated DOIs,
@@ -155,15 +156,22 @@ def aegis_check_citations(file_path: str) -> str:
 
     Args:
         file_path: Absolute path to the paper file.
+        html_report: Save a self-contained HTML report (the only report file
+            AEGIS writes). Default True.
     """
     stem = Path(file_path).stem
-    json_out = str(REPORT_DIR / f"{stem}_citations.json")
+    html_out = str(REPORT_DIR / f"{stem}_citations.html")
     args = [
         "analyze", file_path,
         "--no-ai", "--no-semantic", "--no-stylometric", "--no-self-plagiarism",
-        "--output", json_out,
     ]
-    return _run(args, timeout=300)
+    if html_report:
+        args += ["--html", html_out]
+
+    output = _run(args, timeout=300)
+    if html_report and Path(html_out).exists():
+        output += f"\n\nReport saved to: {html_out}"
+    return output
 
 
 @mcp.tool()
@@ -183,17 +191,18 @@ def aegis_check_guidelines(file_path: str, venues: str = "all", html_report: boo
         file_path: Absolute path to the paper file (PDF/DOCX/TEX/TXT).
         venues: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER, or "all"
             (default) to check all six, each reported separately.
-        html_report: Also save a self-contained HTML report. Default True.
+        html_report: Save a self-contained HTML report (the only report file AEGIS
+            writes). Default True.
     """
     stem = Path(file_path).stem
-    json_out = str(REPORT_DIR / f"{stem}_guidelines.json")
-    args = ["guidelines", file_path, "--venues", venues, "--output", json_out]
+    html_out = str(REPORT_DIR / f"{stem}_guidelines.html")
+    args = ["guidelines", file_path, "--venues", venues]
     if html_report:
-        args += ["--html", str(REPORT_DIR / f"{stem}_guidelines.html")]
+        args += ["--html", html_out]
 
     output = _run(args, timeout=120)
-    if Path(json_out).exists():
-        output += f"\n\nReport saved to: {json_out}"
+    if html_report and Path(html_out).exists():
+        output += f"\n\nReport saved to: {html_out}"
     return output
 
 

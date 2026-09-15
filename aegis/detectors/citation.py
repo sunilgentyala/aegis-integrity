@@ -123,8 +123,16 @@ class CitationIntegrityDetector:
         claimed_title = ref.title or self._extract_title_from_raw(raw)
 
         if self.offline or not doi:
-            # Try title-based lookup if no DOI
-            if claimed_title and not self.offline:
+            # Try title-based lookup if no DOI -- but only when the title is
+            # specific enough to search on. A short/generic extracted title
+            # (e.g. a spec document cited as '"Authorization," Specification
+            # 2026-07-28' rather than a real paper) can coincidentally
+            # word-match an unrelated Crossref record with the same short
+            # title (a book chapter also just titled "Authorization"),
+            # producing a fabricated-looking MISMATCH/HALLUCINATED verdict
+            # against a reference that was never a DOI-bearing publication
+            # in the first place.
+            if claimed_title and not self.offline and len(claimed_title.split()) >= 4:
                 return self._lookup_by_title(ref, claimed_title)
             return CitationVerdict(
                 cite_key=ref.cite_key or "unknown",
@@ -330,7 +338,19 @@ class CitationIntegrityDetector:
                         ],
                         crossref_url=f"https://doi.org/{doi}",
                     )
-            # agency lookup also 404s (or errors) -> DOI does not exist anywhere
+            elif r.status_code != 404:
+                # A non-200, non-404 response (429 rate-limited, 5xx, etc.)
+                # is a transient service problem, not evidence the DOI is
+                # unregistered -- under the concurrent verification fan-out
+                # (verify_references() queries every reference's /agency
+                # endpoint in parallel) Crossref's own rate limit on this
+                # secondary lookup is hit far more easily than on the
+                # primary /works/{doi} call, and treating that as "checked,
+                # doesn't exist" turned real, resolvable arXiv/DataCite DOIs
+                # into false HALLUCINATED verdicts.
+                return self._unavailable(
+                    ref, doi, f"Agency check HTTP {r.status_code} (rate-limited or down)")
+            # else: agency lookup itself 404s -> DOI genuinely unregistered anywhere
         except _NETWORK_EXCEPTIONS as ex:
             return self._unavailable(ref, doi, f"Agency check failed: {ex}")
         except Exception:
@@ -467,6 +487,26 @@ class CitationIntegrityDetector:
         quoted = re.search(r'["“]([^"”]{10,300})["”]', raw)
         if quoted:
             return quoted.group(1).strip().rstrip(",")
+
+        # Word's smart-quote autocorrect renders titles in single curly
+        # quotes (e.g. 'Not What You've Signed Up For,' in Proceedings...)
+        # rather than double quotes -- common in IEEE-style reference lists
+        # produced from Word. A naive quote-to-quote match breaks on this
+        # style because the closing curly quote (U+2019) is the SAME
+        # character Word uses for an apostrophe inside the title itself
+        # ("You've"), so it would close the match after "You" instead of
+        # at the real end of the title. IEEE/ACM-style references always
+        # place a comma immediately before the closing quote at the true
+        # title boundary ("...Injection,' in Proceedings..."), and a
+        # mid-title apostrophe is never immediately preceded by a comma,
+        # so anchoring on ",<quote>" instead of a bare "<quote>" reliably
+        # skips those apostrophes. Try curly quotes first, then straight.
+        single_quoted = (
+            re.search(r"‘(.{10,300}?),[’']", raw)
+            or re.search(r"'(.{10,300}?),'", raw)
+        )
+        if single_quoted:
+            return single_quoted.group(1).strip()
 
         # Fallback for styles that don't quote the title: split on ". " and
         # skip any part that looks like a leftover author-initial fragment

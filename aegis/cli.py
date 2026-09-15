@@ -29,7 +29,6 @@ Usage examples:
 """
 
 from __future__ import annotations
-import json
 import sys
 from pathlib import Path
 
@@ -74,8 +73,6 @@ def cli():
               help="Author's own prior publications for self-plagiarism check. Repeatable.")
 @click.option("--index-dir", default=None, type=click.Path(),
               help="Persistent index directory (use pre-built index).")
-@click.option("--output", "-o", default=None, type=click.Path(),
-              help="Write JSON report to this path.")
 @click.option("--html", "output_html", default=None, type=click.Path(),
               help="Write HTML report to this path.")
 @click.option("--no-ai", is_flag=True, help="Skip AI content detection.")
@@ -108,7 +105,7 @@ def cli():
               help="Email for Crossref polite pool.")
 def analyze(
     submission, corpus, prior_works, index_dir,
-    output, output_html, no_ai, no_citations, no_semantic,
+    output_html, no_ai, no_citations, no_semantic,
     no_stylometric, no_self_plagiarism, no_venue_check, target_publishers,
     no_math, no_grammar, guidelines,
     watermark_mode, device, email,
@@ -233,18 +230,11 @@ def analyze(
             console.print(f"  [yellow]•[/] {flag}")
 
     # Write outputs
-    report_dir = str(Path(output).parent) if output else "."
-    reporter = ReportGenerator(report_dir)
-
-    if output:
-        path = reporter.generate_json(report, Path(output).name)
-        console.print(f"\nJSON report: [cyan]{path}[/]")
-
     if output_html:
         rdir = str(Path(output_html).parent)
-        rep2 = ReportGenerator(rdir)
-        path = rep2.generate_html(report, Path(output_html).name)
-        console.print(f"HTML report: [cyan]{path}[/]")
+        reporter = ReportGenerator(rdir)
+        path = reporter.generate_html(report, Path(output_html).name)
+        console.print(f"\nHTML report: [cyan]{path}[/]")
 
     # Exit code reflects risk
     sys.exit(0 if report.overall_risk in ("LOW", "MEDIUM") else 1)
@@ -260,11 +250,9 @@ def analyze(
               help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER, or "
                    "'all'. Each venue is checked SEPARATELY against its own sourced "
                    "style guidance -- see aegis/guidelines/profiles.py.")
-@click.option("--output", "-o", default=None, type=click.Path(),
-              help="Write JSON report to this path.")
 @click.option("--html", "output_html", default=None, type=click.Path(),
               help="Write HTML report to this path.")
-def guidelines(submission, venues, output, output_html):
+def guidelines(submission, venues, output_html):
     """
     Fast, offline-only scan: mathematical formula checks + grammar/language
     checks + per-venue guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier).
@@ -327,15 +315,10 @@ def guidelines(submission, venues, output, output_html):
         console.print(Panel.fit(t, title=f"[{color}]{venue}: {res.overall_status}[/]",
                                  subtitle=res.source_name))
 
-    if output or output_html:
-        report_dir = str(Path(output).parent) if output else str(Path(output_html).parent)
-        reporter = ReportGenerator(report_dir)
-        if output:
-            path = reporter.generate_json(report, Path(output).name)
-            console.print(f"\nJSON report: [cyan]{path}[/]")
-        if output_html:
-            path = reporter.generate_html(report, Path(output_html).name)
-            console.print(f"HTML report: [cyan]{path}[/]")
+    if output_html:
+        reporter = ReportGenerator(str(Path(output_html).parent))
+        path = reporter.generate_html(report, Path(output_html).name)
+        console.print(f"\nHTML report: [cyan]{path}[/]")
 
 
 # ---------------------------------------------------------------------------
@@ -402,14 +385,11 @@ def compare(doc_a, doc_b, label_a, label_b, no_sbert):
                    "high-AI-score cluster signal).")
 @click.option("--device", default="cpu", show_default=True,
               help="PyTorch device for AI scoring (cpu / cuda).")
-@click.option("--json", "output_json", default=None, type=click.Path(),
-              help="Write JSON report to this path.")
 @click.option("--html", "output_html", default=None, type=click.Path(),
               help="Write HTML report to this path.")
-def batch(directory, pattern, no_ai, device, output_json, output_html):
+def batch(directory, pattern, no_ai, device, output_html):
     """Cross-document essay-mill / classroom analysis over all files
     matching PATTERN in DIRECTORY."""
-    from dataclasses import asdict
     from aegis.core.document import DocumentParser
     from aegis.detectors.batch_analyzer import BatchAnalyzer
     from aegis.report.generator import ReportGenerator
@@ -466,17 +446,11 @@ def batch(directory, pattern, no_ai, device, output_json, output_html):
                        f"{p.combined_score:.3f}")
         console.print(t)
 
-    if output_json:
-        Path(output_json).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_json, "w", encoding="utf-8") as f:
-            json.dump(asdict(result), f, indent=2, ensure_ascii=False)
-        console.print(f"\nJSON report: [cyan]{output_json}[/]")
-
     if output_html:
         rdir = str(Path(output_html).parent) if Path(output_html).parent != Path("") else "."
         reporter = ReportGenerator(rdir)
         path = reporter.generate_batch_html(result, Path(output_html).name)
-        console.print(f"HTML report: [cyan]{path}[/]")
+        console.print(f"\nHTML report: [cyan]{path}[/]")
 
     sys.exit(0 if result.overall_risk in ("LOW", "MEDIUM") else 1)
 

@@ -231,10 +231,10 @@ submission (PDF / DOCX / TEX / TXT)
   └────────────────────────────┬──────────────────────────────────────┘
                                |
                           AnalysisReport
-                         /             \
-                  JSON report       HTML report
-                                  (self-contained,
-                                   offline-viewable)
+                               |
+                          HTML report
+                        (self-contained,
+                         offline-viewable)
 ```
 
 ---
@@ -278,7 +278,7 @@ install.bat
 
 ```bash
 # Full analysis (all 14 detectors):
-aegis analyze paper.pdf --output report.json --html report.html
+aegis analyze paper.pdf --html report.html
 
 # Fast, offline-only scan: math + grammar + per-venue guideline compliance,
 # checked SEPARATELY for each requested venue -- no ML models at all:
@@ -595,6 +595,67 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.1.3 (September 2026)
+- **FIX (plagiarism false positive):** the n-gram and semantic similarity
+  detectors ran on the full submission text, including its own References
+  section. A correctly formatted citation necessarily reproduces the cited
+  paper's own title/author string near-verbatim, so any two papers citing
+  the same source got flagged as plagiarizing each other's bibliography --
+  a real submission scored CRITICAL/0.93 plagiarism purely from routine
+  citation overlap. Both detectors now run on `ParsedDocument.body_text`
+  (References/Bibliography sections excluded); AI detection and citation
+  verification are unaffected.
+- **FIX (citation year mismatch false positive):** `DocumentParser.
+  _extract_year` took the *first* 4-digit "19xx"/"20xx"-shaped number
+  anywhere in a reference's raw text as its claimed publication year. That
+  picks up a page/article number that happens to look like a year (`"...,
+  p. 1947, 2025."` claimed 1947, not 2025) or a conference's event year
+  instead of its proceedings' actual publication year (`"...CRITIS 2016),
+  ... 2017."` claimed 2016, not 2017). Now strips a trailing DOI, ignores
+  any match immediately preceded by a page/volume/issue label or a
+  page-range dash, and takes the last surviving candidate.
+
+### v3.1.2 (September 2026)
+- **REMOVED:** JSON report file generation (`ReportGenerator.generate_json`,
+  `aegis analyze --output`/`-o`, `aegis guidelines --output`/`-o`, `aegis
+  batch --json`, and the corresponding MCP tool JSON output paths). The
+  JSON file duplicated the HTML report's data in a form nobody read; the
+  self-contained HTML report is now the only report file AEGIS writes.
+  The REST API's `GET /analyze?format=json` machine-readable response is
+  unaffected -- that's a live API contract, not a report file.
+- **FIX (citation false positive, short/generic titles):** a DOI-less
+  reference to a spec/document page (e.g. titled just "Authorization")
+  triggered a Crossref title search that coincidentally word-matched an
+  unrelated publication with the same short, generic title, producing a
+  fabricated-looking MISMATCH/HALLUCINATED verdict against a reference
+  that was never a DOI-bearing publication in the first place. Title
+  lookup is now skipped for extracted titles under 4 words.
+- **FIX (citation false positive, secondary-lookup rate limiting):** the
+  concurrent per-reference verification fan-out queries both a primary
+  `/works/{doi}` call and a secondary `/agency` call; the `/agency` call
+  hits Crossref's rate limit far more easily on reference-heavy papers,
+  and a 429/5xx response there fell through the same code path as a
+  genuine 404 (DOI unregistered), turning a transient rate limit into a
+  false HALLUCINATED verdict against real, resolvable DOIs. Non-404
+  failures on the agency check are now reported UNAVAILABLE, not
+  HALLUCINATED.
+- **FIX (citation title-extraction, Word smart quotes):** Word's
+  smart-quote autocorrect renders reference titles in single curly quotes
+  rather than double quotes; a naive quote-to-quote match broke because
+  the closing curly quote is the same character Word uses for an
+  apostrophe inside the title itself (e.g. "You've"), truncating the
+  match mid-title. Now anchors on a comma immediately before the closing
+  quote (the true title boundary in IEEE/ACM style), which a mid-title
+  apostrophe never precedes.
+- **FIX (venue-mismatch false positive, jointly-sponsored venues):** a
+  reference naming a jointly-sponsored venue (e.g. "IEEE/ACM ... Conference")
+  was checked against only the first-listed co-sponsor, so a DOI that
+  legitimately resolves to the second-listed co-sponsor's Crossref member
+  produced a false VENUE_MISMATCH flag even though the reference's own
+  text already named both sponsors. `claimed_publisher()` gained a
+  `claimed_publishers_all()` counterpart and the mismatch check now passes
+  if the resolved publisher is any of the venues actually claimed.
 
 ### v3.1.1 (September 2026)
 - **FIX (AI-detector accuracy, ensemble weighting):** `GPT_TELL_PHRASES`
