@@ -329,6 +329,13 @@ class AEGISPipeline:
         t0 = time.time()
         parsed = self._parser.parse(submission_path)
         full_text = parsed.full_text
+        # Plagiarism similarity (n-gram/semantic) must run on body text only.
+        # A correctly-formatted citation to a real paper necessarily reproduces
+        # that paper's own title/author string near-verbatim, so scanning the
+        # References section against an indexed corpus of other papers'
+        # reference lists flags routine bibliographic overlap as "plagiarism."
+        # See ParsedDocument.body_text.
+        plagiarism_text = parsed.body_text
         report = AnalysisReport(
             submission_path=submission_path,
             parsed_document=parsed,
@@ -344,7 +351,7 @@ class AEGISPipeline:
         else:
             logger.info("Running n-gram detector...")
             try:
-                report.ngram_matches = self._ngram.find_matches(full_text)
+                report.ngram_matches = self._ngram.find_matches(plagiarism_text)
                 _status("ngram", "completed")
             except Exception as exc:
                 logger.warning("N-gram detector failed: %s", exc)
@@ -358,7 +365,7 @@ class AEGISPipeline:
         else:
             logger.info("Running semantic detector...")
             try:
-                report.semantic_matches = self._semantic.find_matches(full_text)
+                report.semantic_matches = self._semantic.find_matches(plagiarism_text)
                 _status("semantic", "completed")
             except Exception as exc:
                 logger.warning("Semantic detector failed: %s", exc)
