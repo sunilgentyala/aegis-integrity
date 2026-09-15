@@ -377,5 +377,27 @@ class DocumentParser:
         return m.group(0).rstrip(".,;)") if m else None
 
     def _extract_year(self, text: str) -> Optional[str]:
-        m = re.search(r"\b(19|20)\d{2}\b", text)
-        return m.group(0) if m else None
+        # A reference entry can contain several 4-digit "19xx"/"20xx"-shaped
+        # numbers that are not the publication year: a page/article number
+        # ("p. 1947"), the second half of a page range ("pp. 2057-2064"), or
+        # a conference name that embeds the event year while the proceedings
+        # were published later ("CRITIS 2016" proceedings published 2017).
+        # Strip a trailing DOI first, since DOI suffixes often contain their
+        # own unrelated digit runs.
+        doi_m = re.search(r"\bDOI\s*:", text, re.IGNORECASE)
+        search_text = text[:doi_m.start()] if doi_m else text
+
+        candidates = []
+        for m in re.finditer(r"\b(19|20)\d{2}\b", search_text):
+            before = search_text[max(0, m.start() - 10):m.start()]
+            if re.search(r"(?:p\.|pp\.|vol\.|no\.|[-–—])\s*$",
+                         before, re.IGNORECASE):
+                continue
+            candidates.append(m.group(0))
+
+        if not candidates:
+            return None
+        # A correctly formatted citation states its publication year once,
+        # near the end of the entry (after the venue, which can itself embed
+        # an earlier year) -- prefer the last surviving candidate.
+        return candidates[-1]
