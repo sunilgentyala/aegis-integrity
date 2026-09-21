@@ -570,6 +570,15 @@ costs compute time only.
 
 ---
 
+## Docker (GitHub Packages)
+
+A prebuilt container image is published to the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/sunilgentyala/aegis-integrity:latest
+docker run --rm -p 8000:8000 -v aegis-data:/data ghcr.io/sunilgentyala/aegis-integrity
+```
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
