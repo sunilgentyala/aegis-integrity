@@ -67,7 +67,7 @@ setup(
             "textstat>=0.7.3",
         ],
         "mcp": [
-            "mcp>=1.0.0",
+            "mcp>=1.0.0,<2",  # 2.x renamed FastMCP to MCPServer
         ],
         "bib": [
             "bibtexparser>=1.4.0",

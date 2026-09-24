@@ -640,7 +640,7 @@ Independent Research | HCL America Inc., Dallas TX, USA
 
 Contact: sunil.gentyala@ieee.org
 GitHub: [sunilgentyala](https://github.com/sunilgentyala)
-LinkedIn: [linkedin.com/in/sunilgentyala](https://www.linkedin.com/in/sunilgentyala)
+LinkedIn: [linkedin.com/in/sunil-gentyala](https://www.linkedin.com/in/sunil-gentyala)
 Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.io/aegis-integrity)
 
 ---
