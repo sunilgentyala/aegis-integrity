@@ -228,7 +228,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-badge"><span></span>v3.1.3 &nbsp;|&nbsp; Beta &mdash; Human Review Required &nbsp;|&nbsp; September 2026</div>
+  <div class="hero-badge"><span></span>v3.2.0 &nbsp;|&nbsp; Beta: Human Review Required &nbsp;|&nbsp; September 2026</div>
   <h1>The Integrity Checker<br>That Sees Everything</h1>
   <p class="hero-sub">
     Open-source. Offline. Bias-aware. 14 detection modules in a single pip install.
@@ -257,6 +257,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
     <span class="badge b-orange">Docker Ready</span>
     <span class="badge b-red">Watermark Heuristic (Experimental)</span>
     <span class="badge b-purple">Essay Mill Detection</span>
+    <span class="badge b-green">Browser App (aegis ui)</span>
+    <span class="badge b-blue">Claude Plugin + Desktop Extension</span>
   </div>
 </div>
 
@@ -472,8 +474,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
       <a href="https://github.com/sunilgentyala/aegis-integrity" target="_blank" class="btn btn-primary">
         &#9733; Star the Repo
       </a>
-      <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.1.3" target="_blank" class="btn btn-outline">
-        &#128229; Download v3.1.3
+      <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.2.0" target="_blank" class="btn btn-outline">
+        &#128229; Download v3.2.0
       </a>
       <a href="https://github.com/sunilgentyala/aegis-integrity/issues" target="_blank" class="btn btn-outline">
         &#128172; Open an Issue
@@ -527,7 +529,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
 
 <!-- INSTALL -->
 <div class="sec" id="install">
-  <div class="sec-title">Install in 3 Steps</div>
+  <div class="sec-title">Install in 3 Steps (plus Claude)</div>
   <p class="sec-sub">All 14 detectors active after a single pip install. Minimal install (no PyTorch, no SBERT) also available -- math, grammar, and guideline compliance need no ML at all.</p>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start" class="install-grid">
@@ -544,15 +546,26 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
         <div class="step-n">2</div>
         <div class="step-c">
           <h4>Install with all modules</h4>
-          <code>pip install -e ".[ml,nlp,bib]"</code><br><br>
+          <code>pip install -e ".[ml,nlp,bib,mcp]"</code><br><br>
           <code>python -m spacy download en_core_web_sm</code>
         </div>
       </div>
       <div class="step">
         <div class="step-n">3</div>
         <div class="step-c">
-          <h4>Run your first analysis</h4>
-          <code>aegis analyze paper.pdf --html report.html</code>
+          <h4>Open the web app, or use the CLI</h4>
+          <code>aegis ui</code><br><br>
+          <code>aegis analyze paper.pdf --html report.html</code><br><br>
+          <small>Drag in a paper and get a plain-language report. <code>aegis doctor</code> shows which checks are ready and how to enable the rest.</small>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c">
+          <h4>Optional: use it inside Claude</h4>
+          <code>/plugin marketplace add sunilgentyala/aegis-integrity</code><br><br>
+          <code>/plugin install aegis-integrity@aegis-integrity</code><br><br>
+          <small>Claude Desktop: open the <code>.mcpb</code> file from the v3.2.0 release. Any MCP client can run <code>aegis-mcp</code>.</small>
         </div>
       </div>
       <div class="step" style="border-color:rgba(63,185,80,.25)">
@@ -709,7 +722,7 @@ submission (PDF / DOCX / TEX / TXT)
   <div style="margin-top:.4rem;color:var(--muted);font-size:.83rem">sunil.gentyala@ieee.org</div>
   <div class="footer-links">
     <a href="https://github.com/sunilgentyala/aegis-integrity" target="_blank">GitHub Repo</a>
-    <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.1.3" target="_blank">v3.1.3 Release</a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/releases/tag/v3.2.0" target="_blank">v3.2.0 Release</a>
     <a href="https://github.com/sunilgentyala/aegis-integrity/blob/main/README.md" target="_blank">Documentation</a>
     <a href="https://github.com/sunilgentyala/aegis-integrity/issues" target="_blank">Report an Issue</a>
     <a href="https://www.linkedin.com/in/sunilgentyala" target="_blank">LinkedIn</a>
