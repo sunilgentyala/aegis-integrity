@@ -72,6 +72,25 @@ _EQ_DEFINITION_LINE_RE = re.compile(
     re.MULTILINE,
 )
 
+# PDF extraction often puts a display equation's number on its own line,
+# after the (possibly multi-line) formula, e.g. "IQR = Q3 - Q1" then "(4)".
+# A lone "(N)" line is only taken as an equation number when the line
+# before it looks like math -- an operator/symbol, or a short formula
+# fragment -- so prose and list items ("(1) Collect the data") are never
+# swept in.
+_EQ_NUMBER_ONLY_LINE_RE = re.compile(
+    r"^[ \t]*\(\s*(\d{1,3}(?:\.\d{1,3})?)\s*\)[ \t]*$", re.MULTILINE)
+_MATHY_LINE_RE = re.compile(
+    r"[=<>+\-*/^()\[\]|≈≤≥−∑∏∫"
+    r"Α-ω∂∇√∈]")
+
+
+def _previous_nonblank_line(text: str, pos: int) -> str:
+    for line in reversed(text[:pos].splitlines()):
+        if line.strip():
+            return line.strip()
+    return ""
+
 
 @dataclass
 class MathIssue:
@@ -192,9 +211,15 @@ class MathFormulaChecker:
         un-compiled LaTeX source instead, no rendered number exists yet,
         so equations are numbered sequentially by appearance and the
         caller is told this is inferred, not verified."""
-        numbered_lines = _EQ_DEFINITION_LINE_RE.findall(full_text)
-        if numbered_lines:
-            return [(num, expr.strip()) for expr, num in numbered_lines], False
+        found = [(m.start(), m.group(2), m.group(1).strip())
+                 for m in _EQ_DEFINITION_LINE_RE.finditer(full_text)]
+        for m in _EQ_NUMBER_ONLY_LINE_RE.finditer(full_text):
+            prev = _previous_nonblank_line(full_text, m.start())
+            if prev and (_MATHY_LINE_RE.search(prev) or len(prev) <= 40):
+                found.append((m.start(), m.group(1), prev))
+        if found:
+            found.sort(key=lambda f: f[0])
+            return [(num, expr) for _, num, expr in found], False
         if eq_texts:
             return [(str(i + 1), t) for i, t in enumerate(eq_texts)], True
         return [], False

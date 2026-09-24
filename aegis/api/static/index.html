@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEGIS Integrity Checker</title>
+<meta name="description" content="Check a paper for copied text, AI-written passages, fabricated citations and style issues. Runs on your own computer.">
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f0f2f5; --border: #dde1e7;
+  --text: #1b1f24; --muted: #5b6573; --accent: #2f5bd3; --accent-ink: #ffffff;
+  --low: #1f7a4d; --low-bg: #e4f4ec; --med: #8a5a00; --med-bg: #fdf1d8;
+  --high: #b3261e; --high-bg: #fbe4e2; --crit: #7d1410; --crit-bg: #f6d3d0;
+  --info: #3a4a63; --info-bg: #e8edf5;
+  --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111418; --surface: #1a1f25; --surface-2: #222830; --border: #313944;
+    --text: #e7eaee; --muted: #9aa5b3; --accent: #7c9cf5; --accent-ink: #0e1420;
+    --low: #6fd3a0; --low-bg: #16301f; --med: #f2c46b; --med-bg: #33290f;
+    --high: #f28b82; --high-bg: #3a1a18; --crit: #ffb4ab; --crit-bg: #4a1512;
+    --info: #b8c6dc; --info-bg: #1f2835;
+    --shadow: none; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px 64px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 0 8px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand svg { flex: none; }
+.brand h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
+.brand small { color: var(--muted); font-size: 13px; }
+.pill { border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+.pill .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted); margin-right: 6px; vertical-align: 1px; }
+.privacy { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+  overflow-x: auto; }
+nav.tabs button { background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 10px 14px; font: inherit; color: var(--muted); cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
+.card h2 { font-size: 17px; margin: 0 0 4px; }
+.card h3 { font-size: 15px; margin: 0 0 8px; }
+.sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+.drop { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px 16px;
+  text-align: center; cursor: pointer; background: var(--surface-2); transition: border-color .15s, background .15s; }
+.drop:hover, .drop:focus-visible, .drop.over { border-color: var(--accent); outline: none; }
+.drop strong { display: block; font-size: 16px; margin-bottom: 4px; }
+.drop .file { margin-top: 10px; font-weight: 600; color: var(--accent); word-break: break-all; }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 18px 0 8px; }
+.mode { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer;
+  display: flex; gap: 10px; align-items: flex-start; background: var(--surface); }
+.mode:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.mode input { margin-top: 4px; accent-color: var(--accent); }
+.mode b { display: block; font-size: 14px; }
+.mode span { color: var(--muted); font-size: 13px; }
+details.adv { margin-top: 10px; }
+details.adv summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.grid-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 6px 16px; margin-top: 10px; }
+.grid-opts label, .venues label { font-size: 14px; display: flex; gap: 8px; align-items: center; }
+.venues { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
+  padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+.progress { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 14px; }
+.progress div { height: 100%; width: 35%; background: var(--accent); border-radius: 3px;
+  animation: slide 1.3s ease-in-out infinite; }
+@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+@media (prefers-reduced-motion: reduce) { .progress div { animation: none; width: 100%; opacity: .5; } }
+.note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.err { background: var(--high-bg); color: var(--high); border-radius: 10px; padding: 12px 14px; margin-top: 14px; }
+.verdict { display: flex; gap: 16px; align-items: center; border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; }
+.verdict .lvl { font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+.verdict .msg { font-size: 18px; font-weight: 600; margin: 2px 0; }
+.verdict .fine { font-size: 13px; opacity: .9; }
+.v-LOW { background: var(--low-bg); color: var(--low); }
+.v-MEDIUM { background: var(--med-bg); color: var(--med); }
+.v-HIGH { background: var(--high-bg); color: var(--high); }
+.v-CRITICAL { background: var(--crit-bg); color: var(--crit); }
+.v-UNKNOWN { background: var(--info-bg); color: var(--info); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.tile .k { font-size: 13px; color: var(--muted); }
+.tile .v { font-size: 24px; font-weight: 700; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.tile .h { font-size: 12px; color: var(--muted); }
+.bar { height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; border-radius: 3px; }
+ul.flags { margin: 0; padding-left: 20px; }
+ul.flags li { margin: 4px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.tbl { overflow-x: auto; }
+.badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.b-ok { background: var(--low-bg); color: var(--low); }
+.b-warn { background: var(--med-bg); color: var(--med); }
+.b-bad { background: var(--high-bg); color: var(--high); }
+.b-info { background: var(--info-bg); color: var(--info); }
+details.sec { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; }
+details.sec > summary { cursor: pointer; padding: 14px 18px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+details.sec > summary::-webkit-details-marker { display: none; }
+details.sec > summary::after { content: "+"; color: var(--muted); font-weight: 400; }
+details.sec[open] > summary::after { content: "\2212"; }
+details.sec > .body { padding: 0 18px 16px; }
+.snip { font-size: 13px; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+.fix { display: flex; gap: 6px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+.fix code { background: var(--surface-2); padding: 3px 6px; border-radius: 6px; word-break: break-all; }
+.copy { font-size: 12px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+dialog { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text);
+  padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog.wide { width: min(1100px, calc(100vw - 32px)); height: calc(100vh - 48px); }
+dialog::backdrop { background: rgba(10,14,20,.55); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); gap: 8px; }
+.dlg-body { padding: 16px 18px; overflow: auto; }
+dialog.wide .dlg-body { padding: 0; height: calc(100% - 58px); }
+dialog iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.hidden { display: none !important; }
+footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: center; }
+@media (max-width: 560px) { .verdict { flex-direction: column; align-items: flex-start; } .card { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 2 4 7v8c0 7.4 5.1 13.3 12 15 6.9-1.7 12-7.6 12-15V7L16 2z" fill="var(--accent)"/>
+        <path d="m11 16 3.5 3.5L21.5 12" fill="none" stroke="var(--accent-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div><h1>AEGIS Integrity Checker</h1><small id="version">Checking server…</small></div>
+    </div>
+    <button class="pill" id="statusBtn" type="button" aria-haspopup="dialog"><span class="dot" id="statusDot"></span><span id="statusText">Check setup</span></button>
+  </header>
+  <p class="privacy">Your files are analysed on this computer. Only reference details (titles, authors, DOIs) are sent to Crossref when citation checking is on.</p>
+
+  <div id="keyBox" class="card hidden">
+    <h2>API key required</h2>
+    <p class="sub">This AEGIS server is protected. Enter the key set in <code>AEGIS_API_KEY</code>.</p>
+    <div class="row" style="margin-top:0"><input id="keyInput" type="password" autocomplete="off" style="flex:1;min-width:200px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit"><button class="btn" id="keySave" type="button">Save key</button></div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="check">Check a paper</button>
+    <button role="tab" aria-selected="false" data-tab="compare">Compare two papers</button>
+    <button role="tab" aria-selected="false" data-tab="corpus">My comparison library</button>
+  </nav>
+
+  <!-- CHECK -->
+  <section id="tab-check">
+    <div class="card" id="checkForm">
+      <h2>Check a paper</h2>
+      <p class="sub">Looks for copied or paraphrased text, AI-written passages, fabricated or mismatched references, and style problems.</p>
+      <div class="drop" id="drop1" tabindex="0" role="button" aria-label="Choose a file to check">
+        <strong>Drop a file here, or click to choose</strong>
+        <span class="snip">PDF, Word (.docx), LaTeX (.tex) or plain text · up to 50 MB</span>
+        <div class="file" id="file1Name"></div>
+      </div>
+      <input type="file" id="file1" accept=".pdf,.docx,.tex,.txt" hidden>
+
+      <div class="modes" role="radiogroup" aria-label="What to check">
+        <label class="mode"><input type="radio" name="mode" value="full" checked><div><b>Full check</b><span>Everything. A few minutes; the first run downloads models.</span></div></label>
+        <label class="mode"><input type="radio" name="mode" value="offline"><div><b>Private / offline</b><span>Full check with no internet use at all. References aren't verified.</span></div></label>
+        <label class="mode"><input type="radio" name="mode" value="citations"><div><b>References only</b><span>Verify every reference against Crossref. Under a minute.</span></div></label>
+        <label class="mode"><input type="radio" name="mode" value="style"><div><b>Style &amp; formatting</b><span>Equations, grammar and publisher rules. Seconds, offline.</span></div></label>
+      </div>
+
+      <div>
+        <div class="note" style="margin-top:12px">Also check against publisher guidelines (optional):</div>
+        <div class="venues" id="venues">
+          <label><input type="checkbox" value="IEEE"> IEEE</label>
+          <label><input type="checkbox" value="ACM"> ACM</label>
+          <label><input type="checkbox" value="ELSEVIER"> Elsevier</label>
+          <label><input type="checkbox" value="IET"> IET</label>
+          <label><input type="checkbox" value="BCS"> BCS</label>
+          <label><input type="checkbox" value="ISACA"> ISACA</label>
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary>Advanced: choose individual checks</summary>
+        <div class="grid-opts" id="advOpts">
+          <label><input type="checkbox" data-opt="run_ai" checked> AI-written text</label>
+          <label><input type="checkbox" data-opt="run_citations" checked> Reference verification</label>
+          <label><input type="checkbox" data-opt="run_semantic" checked> Paraphrase matching</label>
+          <label><input type="checkbox" data-opt="run_stylometric" checked> Writing-style shifts</label>
+          <label><input type="checkbox" data-opt="run_coherence" checked> Coherence patterns</label>
+          <label><input type="checkbox" data-opt="run_watermark" checked> Watermark heuristic (experimental)</label>
+          <label><input type="checkbox" data-opt="run_citation_network" checked> Citation network</label>
+          <label><input type="checkbox" data-opt="run_venue_check" checked> Venue / duplicate-title check</label>
+          <label><input type="checkbox" data-opt="run_math" checked> Equations</label>
+          <label><input type="checkbox" data-opt="run_grammar" checked> Grammar</label>
+        </div>
+        <p class="note">Choosing a mode above resets these boxes.</p>
+      </details>
+
+      <div class="row">
+        <button class="btn" id="runBtn" type="button" disabled>Check paper</button>
+        <span class="note" id="runHint" style="margin:0">Choose a file first.</span>
+      </div>
+      <div id="running" class="hidden">
+        <div class="progress" aria-hidden="true"><div></div></div>
+        <p class="note" id="runMsg" role="status" aria-live="polite">Analysing…</p>
+      </div>
+      <div id="checkErr" class="err hidden" role="alert"></div>
+    </div>
+
+    <div id="results" class="hidden"></div>
+  </section>
+
+  <!-- COMPARE -->
+  <section id="tab-compare" class="hidden">
+    <div class="card">
+      <h2>Compare two papers</h2>
+      <p class="sub">Measures how much text two documents share: for example a conference paper and its journal extension. No library needed.</p>
+      <div class="two">
+        <div>
+          <div class="drop" id="dropA" tabindex="0" role="button" aria-label="Choose the first paper"><strong>First paper</strong><span class="snip">Drop or click</span><div class="file" id="fileAName"></div></div>
+          <input type="file" id="fileA" accept=".pdf,.docx,.tex,.txt" hidden>
+        </div>
+        <div>
+          <div class="drop" id="dropB" tabindex="0" role="button" aria-label="Choose the second paper"><strong>Second paper</strong><span class="snip">Drop or click</span><div class="file" id="fileBName"></div></div>
+          <input type="file" id="fileB" accept=".pdf,.docx,.tex,.txt" hidden>
+        </div>
+      </div>
+      <div class="row"><button class="btn" id="cmpBtn" type="button" disabled>Compare</button></div>
+      <div id="cmpRunning" class="hidden"><div class="progress" aria-hidden="true"><div></div></div><p class="note" role="status">Comparing…</p></div>
+      <div id="cmpErr" class="err hidden" role="alert"></div>
+    </div>
+    <div id="cmpResults" class="hidden"></div>
+  </section>
+
+  <!-- CORPUS -->
+  <section id="tab-corpus" class="hidden">
+    <div class="card">
+      <h2>My comparison library</h2>
+      <p class="sub">Copied-text checks compare a paper against the documents in this library: your earlier papers, a reference set, or earlier student submissions. Nothing is uploaded anywhere; the library lives in <code id="idxDir">…</code>.</p>
+      <div class="drop" id="dropC" tabindex="0" role="button" aria-label="Choose files to add to the library"><strong>Add papers to the library</strong><span class="snip">Drop one or more files, or click to choose</span><div class="file" id="fileCName"></div></div>
+      <input type="file" id="fileC" accept=".pdf,.docx,.tex,.txt" multiple hidden>
+      <div class="row"><button class="btn" id="addBtn" type="button" disabled>Add to library</button><span class="note" id="addMsg" style="margin:0" role="status" aria-live="polite"></span></div>
+      <div id="corpusErr" class="err hidden" role="alert"></div>
+    </div>
+    <div class="card">
+      <h3 id="corpusCount">Documents in the library</h3>
+      <div class="tbl"><table><thead><tr><th>Label</th><th>Words</th><th>Added</th></tr></thead><tbody id="corpusRows"></tbody></table></div>
+    </div>
+  </section>
+
+  <footer>AEGIS is a screening aid. A flag is a reason to look closer, not proof of misconduct. · <a href="/docs" style="color:inherit">API docs</a></footer>
+</div>
+
+<dialog id="statusDlg" aria-labelledby="statusTitle">
+  <div class="dlg-head"><strong id="statusTitle">What's ready on this computer</strong><button class="btn ghost" type="button" data-close>Close</button></div>
+  <div class="dlg-body" id="statusBody">Loading…</div>
+</dialog>
+<dialog id="reportDlg" class="wide" aria-labelledby="reportTitle">
+  <div class="dlg-head"><strong id="reportTitle">Full report</strong>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="dlHtml">Download report</button><button class="btn ghost" type="button" id="dlJson">Download data (JSON)</button><button class="btn ghost" type="button" data-close>Close</button></div></div>
+  <div class="dlg-body"><iframe id="reportFrame" sandbox title="Full AEGIS report"></iframe></div>
+</dialog>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else n.setAttribute(k, v);
+    }
+    for (const k of kids) if (k != null) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+    return n;
+  };
+
+  // ---- API key (only when the server asks for one) ----
+  const store = {
+    get() { try { return sessionStorage.getItem("aegis_key") || ""; } catch { return ""; } },
+    set(v) { try { sessionStorage.setItem("aegis_key", v); } catch {} },
+  };
+  async function api(path, opts = {}) {
+    const headers = Object.assign({}, opts.headers || {});
+    const key = store.get(); if (key) headers["X-API-Key"] = key;
+    const res = await fetch(path, Object.assign({}, opts, { headers }));
+    if (res.status === 401) { $("keyBox").classList.remove("hidden"); throw new Error("This server needs an API key. Enter it above and try again."); }
+    if (!res.ok) {
+      let msg = res.status + " " + res.statusText;
+      try { const j = await res.json(); if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
+      if (res.status === 503) msg = "AEGIS is busy with other checks. Wait for them to finish and try again.";
+      if (res.status === 413) msg = "That file is too large (limit 50 MB).";
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+  $("keySave").addEventListener("click", () => { store.set($("keyInput").value.trim()); $("keyBox").classList.add("hidden"); loadStatus(); loadCorpus(); });
+
+  // ---- Tabs ----
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("nav.tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+    ["check", "compare", "corpus"].forEach((t) => $("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
+    if (b.dataset.tab === "corpus") loadCorpus();
+  }));
+
+  // ---- Drop zones ----
+  function dropZone(zoneId, inputId, nameId, onChange) {
+    const zone = $(zoneId), input = $(inputId);
+    const show = () => {
+      const files = [...input.files];
+      $(nameId).textContent = files.length > 1 ? files.length + " files selected" : (files[0] ? files[0].name : "");
+      onChange(files);
+    };
+    zone.addEventListener("click", () => input.click());
+    zone.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+    zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("over"); });
+    zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+    zone.addEventListener("drop", (e) => {
+      e.preventDefault(); zone.classList.remove("over");
+      if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; show(); }
+    });
+    input.addEventListener("change", show);
+  }
+
+  // ---- Status / setup ----
+  const STATUS_BADGE = { ready: ["Ready", "b-ok"], limited: ["Limited", "b-warn"], missing: ["Not installed", "b-bad"] };
+  async function loadStatus() {
+    try {
+      const h = await (await fetch("/health")).json();
+      $("version").textContent = "Version " + h.version + " · running locally";
+      if (h.auth_required && !store.get()) { $("keyBox").classList.remove("hidden"); return; }
+      const s = await api("/status");
+      const missing = s.checks.filter((c) => c.status !== "ready").length;
+      $("statusText").textContent = s.summary;
+      $("statusDot").style.background = missing ? "var(--med)" : "var(--low)";
+      const body = $("statusBody"); body.textContent = "";
+      body.append(el("p", { class: "sub", text: "Checks marked Limited or Not installed are skipped or simplified. Run the command shown to enable them, then restart AEGIS." }));
+      const tb = el("tbody");
+      for (const c of s.checks) {
+        const [label, cls] = STATUS_BADGE[c.status] || [c.status, "b-info"];
+        const detail = el("td", {}, el("div", { text: c.detail }));
+        if (c.fix) {
+          const btn = el("button", { class: "copy", type: "button", text: "Copy" });
+          btn.addEventListener("click", () => { navigator.clipboard?.writeText(c.fix).then(() => { btn.textContent = "Copied"; }, () => {}); });
+          detail.append(el("div", { class: "fix" }, el("code", { text: c.fix }), btn));
+        }
+        tb.append(el("tr", {}, el("td", { text: c.name }), el("td", {}, el("span", { class: "badge " + cls, text: label })), detail));
+      }
+      body.append(el("div", { class: "tbl" }, el("table", {}, el("thead", {}, el("tr", {}, el("th", { text: "Capability" }), el("th", { text: "Status" }), el("th", { text: "Details" }))), tb)));
+    } catch (e) {
+      $("statusText").textContent = "Server not reachable";
+      $("statusDot").style.background = "var(--high)";
+      $("statusBody").textContent = e.message;
+    }
+  }
+  $("statusBtn").addEventListener("click", () => $("statusDlg").showModal());
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
+
+  // ---- Check a paper ----
+  let file1 = null;
+  dropZone("drop1", "file1", "file1Name", (f) => { file1 = f[0] || null; $("runBtn").disabled = !file1; $("runHint").textContent = file1 ? "Ready." : "Choose a file first."; });
+
+  const MODES = {
+    full: { run_ai: 1, run_citations: 1, run_semantic: 1, run_stylometric: 1, run_coherence: 1, run_watermark: 1, run_citation_network: 1, run_venue_check: 1, run_math: 1, run_grammar: 1 },
+    offline: { run_ai: 1, run_citations: 1, run_semantic: 1, run_stylometric: 1, run_coherence: 1, run_watermark: 1, run_citation_network: 1, run_venue_check: 0, run_math: 1, run_grammar: 1, offline: 1 },
+    citations: { run_ai: 0, run_citations: 1, run_semantic: 0, run_stylometric: 0, run_coherence: 0, run_watermark: 0, run_citation_network: 1, run_venue_check: 1, run_math: 0, run_grammar: 0 },
+    style: { run_ai: 0, run_citations: 0, run_semantic: 0, run_stylometric: 0, run_coherence: 0, run_watermark: 0, run_citation_network: 0, run_venue_check: 0, run_math: 1, run_grammar: 1 },
+  };
+  const currentMode = () => document.querySelector('input[name="mode"]:checked').value;
+  document.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListener("change", () => {
+    const m = MODES[currentMode()];
+    document.querySelectorAll("#advOpts input").forEach((cb) => { cb.checked = !!m[cb.dataset.opt]; });
+  }));
+
+  // The server doesn't stream progress, so these describe what a check
+  // involves rather than claiming which step is running right now.
+  const RUN_MSGS = ["Reading the document…", "Running the selected checks…", "Still working: AI scoring and reference lookups take the longest…", "Still working: long papers with many references can take a few minutes…"];
+  $("runBtn").addEventListener("click", async () => {
+    if (!file1) return;
+    const params = new URLSearchParams({ include_html: "true", run_self_plagiarism: "false" });
+    document.querySelectorAll("#advOpts input").forEach((cb) => params.set(cb.dataset.opt, String(cb.checked)));
+    if (MODES[currentMode()].offline) params.set("offline", "true");
+    const venues = [...document.querySelectorAll("#venues input:checked")].map((c) => c.value);
+    if (venues.length) params.set("guidelines", venues.join(","));
+    const fd = new FormData(); fd.append("file", file1);
+
+    $("checkErr").classList.add("hidden"); $("results").classList.add("hidden");
+    $("running").classList.remove("hidden"); $("runBtn").disabled = true;
+    const t0 = Date.now(); let i = 0;
+    const tick = setInterval(() => {
+      const secs = Math.round((Date.now() - t0) / 1000);
+      i = secs < 5 ? 0 : secs < 30 ? 1 : secs < 90 ? 2 : 3;
+      $("runMsg").textContent = RUN_MSGS[i] + " (" + secs + "s)" + (secs > 45 ? " · The first full check downloads AI models and can take several minutes." : "");
+    }, 1000);
+    try {
+      const data = await api("/analyze?" + params, { method: "POST", body: fd });
+      renderResults(data, file1.name);
+    } catch (e) {
+      $("checkErr").textContent = "The check didn't finish: " + e.message;
+      $("checkErr").classList.remove("hidden");
+    } finally {
+      clearInterval(tick); $("running").classList.add("hidden"); $("runBtn").disabled = false;
+    }
+  });
+
+  const RISK_TEXT = {
+    LOW: "No significant integrity concerns found.",
+    MEDIUM: "A few items are worth a closer look.",
+    HIGH: "Several signals need careful human review.",
+    CRITICAL: "Strong signals found. Review each flagged item before any decision.",
+    UNKNOWN: "Not enough information to give an overall rating.",
+  };
+  const DET_NAMES = {
+    ngram: "Copied text (library)", semantic: "Paraphrased text (library)", ai_content: "AI-written text",
+    citation: "Reference verification", citation_network: "Citation network", stylometric: "Writing-style shifts",
+    self_plagiarism: "Reuse of own earlier work", watermark: "Watermark heuristic", coherence: "Coherence patterns",
+    venue_verification: "Venue / duplicate-title check", math_check: "Equations", grammar_check: "Grammar",
+    guideline_compliance: "Publisher guidelines",
+  };
+  const ran = (st, k) => st && st[k] && st[k].status === "completed";
+  const pct = (x) => (x == null ? "–" : Math.round(x * 100) + "%");
+  const barColor = (x) => (x >= 0.6 ? "var(--high)" : x >= 0.3 ? "var(--med)" : "var(--low)");
+
+  function tile(label, value, frac, hint, active) {
+    const t = el("div", { class: "tile" }, el("div", { class: "k", text: label }), el("div", { class: "v", text: active ? value : "Not run" }));
+    if (active && frac != null) { const b = el("div", { class: "bar" }); const i = el("i"); i.style.width = Math.min(100, Math.max(2, frac * 100)) + "%"; i.style.background = barColor(frac); b.append(i); t.append(b); }
+    t.append(el("div", { class: "h", text: hint }));
+    return t;
+  }
+  function section(title, count, bodyNode, open = false) {
+    const d = el("details", { class: "sec" }); if (open) d.open = true;
+    d.append(el("summary", {}, el("span", { text: title }), count != null ? el("span", { class: "badge b-info", text: String(count) }) : null));
+    d.append(el("div", { class: "body" }, bodyNode)); return d;
+  }
+  function table(headers, rows) {
+    const tb = el("tbody");
+    rows.forEach((r) => tb.append(el("tr", {}, ...r.map((c) => (c instanceof Node ? el("td", {}, c) : el("td", { text: c == null ? "" : String(c) }))))));
+    return el("div", { class: "tbl" }, el("table", {}, el("thead", {}, el("tr", {}, ...headers.map((h) => el("th", { text: h })))), tb));
+  }
+  const VERDICT_CLS = { VALID: "b-ok", MISMATCH: "b-warn", HALLUCINATED: "b-bad", UNRESOLVABLE: "b-info", NO_DOI: "b-info", UNAVAILABLE: "b-info", NOT_FOUND_IN_CROSSREF: "b-info" };
+  const VERDICT_TEXT = { VALID: "Verified", MISMATCH: "Details don't match", HALLUCINATED: "Not found / likely fabricated", UNRESOLVABLE: "Couldn't check", NO_DOI: "No DOI given", UNAVAILABLE: "Lookup timed out; try again", NOT_FOUND_IN_CROSSREF: "Registered elsewhere; not checked" };
+  const PROBLEM_VERDICTS = new Set(["MISMATCH", "HALLUCINATED"]);
+
+  let lastData = null, lastName = "";
+  function renderResults(d, name) {
+    lastData = d; lastName = name;
+    const st = d.detector_status || {};
+    const out = $("results"); out.textContent = "";
+    const risk = d.overall_risk || "UNKNOWN";
+    out.append(el("div", { class: "verdict v-" + risk, role: "status" },
+      el("div", {}, el("div", { class: "lvl", text: "Overall: " + risk.toLowerCase() + " risk" }), el("div", { class: "msg", text: RISK_TEXT[risk] || RISK_TEXT.UNKNOWN }),
+        el("div", { class: "fine", text: name + " · checked in " + Math.round(d.elapsed_seconds || 0) + "s · A flag is a reason to look closer, not proof of misconduct." }))));
+
+    const s = d.scores || {};
+    const libRan = ran(st, "ngram") || ran(st, "semantic");
+    out.append(el("div", { class: "tiles" },
+      tile("Matching text", pct(s.plagiarism), s.plagiarism, libRan ? "Strongest match against your library" : (st.ngram && st.ngram.reason) || "Needs a comparison library", libRan),
+      tile("AI-like writing", pct(s.ai_content), s.ai_content, d.ai_detection && d.ai_detection.esl_calibration_applied ? "Calibrated for non-native English" : "Document-level score", ran(st, "ai_content")),
+      tile("Reference problems", pct(s.citation_issue_rate), s.citation_issue_rate, "Share of references with issues", ran(st, "citation")),
+      tile("Style shifts", pct(s.style_inconsistency), s.style_inconsistency, "Changes in writing style between sections", ran(st, "stylometric"))));
+
+    const flags = d.flags || [];
+    const flagBody = flags.length ? el("ul", { class: "flags" }, ...flags.map((f) => el("li", { text: f }))) : el("p", { text: "Nothing was flagged." });
+    out.append(section("What to look at", flags.length, flagBody, true));
+
+    const cits = d.citation_integrity || [];
+    if (cits.length) {
+      const ok = cits.filter((c) => c.verdict === "VALID").length;
+      const bad = cits.filter((c) => PROBLEM_VERDICTS.has(c.verdict)).length;
+      const unchecked = cits.length - ok - bad;
+      const order = (c) => (PROBLEM_VERDICTS.has(c.verdict) ? 0 : c.verdict === "VALID" ? 2 : 1);
+      cits.sort((a, b) => order(a) - order(b));
+      out.append(section("References: " + ok + " verified, " + bad + " with problems, " + unchecked + " not checked", cits.length, table(["Reference", "Result", "What we found"],
+        cits.map((c) => [el("div", {}, el("div", { text: (c.verdict === "VALID" && c.resolved_title) || c.claimed_title || c.cite_key || "(untitled)" }), c.doi ? el("div", { class: "snip mono", text: c.doi }) : null),
+          el("span", { class: "badge " + (VERDICT_CLS[c.verdict] || "b-info"), text: VERDICT_TEXT[c.verdict] || c.verdict }),
+          el("div", { class: "snip" }, c.resolved_title && c.resolved_title !== c.claimed_title ? el("div", { text: "Crossref title: " + c.resolved_title }) : null, ...(c.issues || []).map((x) => el("div", { text: x })))]))));
+    }
+
+    const ai = d.ai_detection;
+    if (ai) {
+      const AI_LABEL = { AI_DETECTED: ["Strongly AI-like", "b-bad"], AI_LIKELY: ["Possibly AI-written", "b-warn"] };
+      const flagged = (ai.paragraphs || []).filter((p) => AI_LABEL[p.verdict]);
+      const body = el("div", {}, el("p", { class: "snip", text: (ai.summary || "") + (ai.detected_language ? " · Language: " + ai.detected_language : "") }));
+      body.append(flagged.length ? table(["Paragraph (start)", "Result", "Score"], flagged.map((p) => [p.text + "…", el("span", { class: "badge " + AI_LABEL[p.verdict][1], text: AI_LABEL[p.verdict][0] }), pct(p.ensemble_score)])) : el("p", { text: "No paragraphs scored as AI-like." }));
+      out.append(section("AI-like writing by paragraph", flagged.length, body));
+    }
+
+    const matches = [...(d.ngram_matches || []).map((m) => [m.source, "Copied (" + pct(m.jaccard) + ")", m.submission_snippet, m.source_snippet]),
+      ...(d.semantic_matches || []).map((m) => [m.source, m.is_paraphrase ? "Paraphrase (" + pct(m.cosine) + ")" : "Similar (" + pct(m.cosine) + ")", m.submission_snippet, m.source_snippet])];
+    if (matches.length) out.append(section("Matching passages", matches.length, table(["Source", "Type", "In this paper", "In the source"], matches)));
+
+    const rows = Object.entries(st).map(([k, v]) => {
+      const badge = { completed: ["Ran", "b-ok"], disabled: ["Off", "b-info"], unavailable: ["Skipped", "b-warn"], failed: ["Failed", "b-bad"] }[v.status] || [v.status, "b-info"];
+      return [DET_NAMES[k] || k, el("span", { class: "badge " + badge[1], text: badge[0] }), v.reason || ""];
+    });
+    out.append(section("Which checks ran", rows.length, table(["Check", "Result", "Note"], rows)));
+
+    const net = d.network_activity;
+    if (net && Object.keys(net).length) {
+      const svc = net.external_services_contacted || [];
+      out.append(section("Internet use during this check", svc.length, el("ul", { class: "flags" },
+        el("li", { text: net.document_content_transmitted ? "Some document content was sent to an outside service." : "No document text left this computer." }),
+        el("li", { text: svc.length ? "Services contacted (reference details only): " + svc.join(", ") : "No outside services were contacted." }))));
+    }
+
+    const actions = el("div", { class: "row" });
+    const openBtn = el("button", { class: "btn", type: "button", text: "Open full report" });
+    openBtn.addEventListener("click", openReport);
+    const dl = el("button", { class: "btn ghost", type: "button", text: "Download data (JSON)" });
+    dl.addEventListener("click", downloadJson);
+    const again = el("button", { class: "btn ghost", type: "button", text: "Check another paper" });
+    again.addEventListener("click", () => { window.scrollTo({ top: 0, behavior: "smooth" }); $("file1").click(); });
+    actions.append(openBtn, dl, again);
+    out.append(actions);
+    out.classList.remove("hidden");
+    out.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function download(name, text, type) {
+    const a = el("a", { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  const stem = () => (lastName || "paper").replace(/\.[^.]+$/, "");
+  function downloadJson() { if (!lastData) return; const copy = Object.assign({}, lastData); delete copy.report_html; download(stem() + "_aegis.json", JSON.stringify(copy, null, 2), "application/json"); }
+  function openReport() {
+    if (!lastData || !lastData.report_html) return;
+    $("reportFrame").srcdoc = lastData.report_html; // sandboxed: no scripts, no same-origin access
+    $("reportDlg").showModal();
+  }
+  $("dlHtml").addEventListener("click", () => lastData && download(stem() + "_aegis_report.html", lastData.report_html, "text/html"));
+  $("dlJson").addEventListener("click", downloadJson);
+
+  // ---- Compare ----
+  let fa = null, fb = null;
+  const cmpReady = () => { $("cmpBtn").disabled = !(fa && fb); };
+  dropZone("dropA", "fileA", "fileAName", (f) => { fa = f[0] || null; cmpReady(); });
+  dropZone("dropB", "fileB", "fileBName", (f) => { fb = f[0] || null; cmpReady(); });
+  $("cmpBtn").addEventListener("click", async () => {
+    const fd = new FormData();
+    fd.append("file_a", fa); fd.append("file_b", fb);
+    fd.append("label_a", fa.name); fd.append("label_b", fb.name);
+    $("cmpErr").classList.add("hidden"); $("cmpResults").classList.add("hidden");
+    $("cmpRunning").classList.remove("hidden"); $("cmpBtn").disabled = true;
+    try {
+      const r = await api("/compare", { method: "POST", body: fd });
+      const out = $("cmpResults"); out.textContent = "";
+      const risk = r.risk_level || "UNKNOWN";
+      out.append(el("div", { class: "verdict v-" + risk }, el("div", {},
+        el("div", { class: "lvl", text: risk.toLowerCase() + " overlap" }),
+        el("div", { class: "msg", text: (r.overall_overlap_pct ?? 0).toFixed(1) + "% of the text is shared" }),
+        el("div", { class: "fine", text: r.label_a + " ↔ " + r.label_b }))));
+      if (r.cope_guidance) out.append(el("div", { class: "card" }, el("h3", { text: "Guidance" }), el("p", { style: "margin:0", text: r.cope_guidance })));
+      if ((r.flags || []).length) out.append(section("What to look at", r.flags.length, el("ul", { class: "flags" }, ...r.flags.map((f) => el("li", { text: f }))), true));
+      const ps = r.top_passages || [];
+      if (ps.length) out.append(section("Shared passages", ps.length, table(["Type", "First paper", "Second paper", "Overlap"], ps.map((p) => [p.type, p.text_a, p.text_b, pct(Math.max(p.char_jaccard || 0, p.word_jaccard || 0))])), true));
+      out.classList.remove("hidden");
+    } catch (e) {
+      $("cmpErr").textContent = "The comparison didn't finish: " + e.message; $("cmpErr").classList.remove("hidden");
+    } finally { $("cmpRunning").classList.add("hidden"); cmpReady(); }
+  });
+
+  // ---- Library ----
+  let libFiles = [];
+  dropZone("dropC", "fileC", "fileCName", (f) => { libFiles = f; $("addBtn").disabled = !f.length; });
+  async function loadCorpus() {
+    try {
+      const s = await api("/corpus/summary");
+      $("idxDir").textContent = s.index_dir;
+      $("corpusCount").textContent = s.document_count ? s.document_count + " document(s) in the library" : "The library is empty";
+      const tb = $("corpusRows"); tb.textContent = "";
+      if (!s.documents.length) tb.append(el("tr", {}, el("td", { colspan: "3", class: "snip", text: "Add papers above. Until then, copied-text checks have nothing to compare against." })));
+      s.documents.forEach((m) => tb.append(el("tr", {}, el("td", { text: m.label }), el("td", { text: String(m.word_count) }), el("td", { text: (m.added_at || "").slice(0, 10) }))));
+    } catch (e) { $("corpusErr").textContent = e.message; $("corpusErr").classList.remove("hidden"); }
+  }
+  $("addBtn").addEventListener("click", async () => {
+    $("corpusErr").classList.add("hidden"); $("addBtn").disabled = true;
+    try {
+      for (let i = 0; i < libFiles.length; i++) {
+        $("addMsg").textContent = "Adding " + (i + 1) + " of " + libFiles.length + ": " + libFiles[i].name;
+        const fd = new FormData(); fd.append("file", libFiles[i]);
+        await api("/corpus/add", { method: "POST", body: fd });
+      }
+      $("addMsg").textContent = "Rebuilding the search index…";
+      await api("/corpus/build", { method: "POST" });
+      $("addMsg").textContent = "Added " + libFiles.length + " document(s).";
+      libFiles = []; $("fileC").value = ""; $("fileCName").textContent = "";
+      loadCorpus(); loadStatus();
+    } catch (e) {
+      $("addMsg").textContent = ""; $("corpusErr").textContent = "Couldn't add to the library: " + e.message; $("corpusErr").classList.remove("hidden");
+    } finally { $("addBtn").disabled = !libFiles.length; }
+  });
+
+  loadStatus();
+})();
+</script>
+</body>
+</html>

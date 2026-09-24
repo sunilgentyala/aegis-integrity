@@ -1,0 +1,15 @@
+{
+  "name": "aegis-integrity",
+  "description": "AEGIS: open-source, offline-first academic integrity checking for Claude.",
+  "owner": {
+    "name": "Sunil Gentyala",
+    "url": "https://github.com/sunilgentyala"
+  },
+  "plugins": [
+    {
+      "name": "aegis-integrity",
+      "source": "./claude-plugin",
+      "description": "Check papers for copied text, AI-written passages, fabricated citations and publisher-style problems, on your own computer."
+    }
+  ]
+}

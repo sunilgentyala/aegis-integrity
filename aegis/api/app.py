@@ -9,6 +9,8 @@ Endpoints:
   POST /compare           -- direct pairwise comparison (no corpus needed)
   POST /batch             -- cross-document essay-mill / classroom analysis
   GET  /health            -- liveness check (no auth required)
+  GET  /status            -- which checks can run here, and how to enable the rest
+  GET  /                  -- browser UI (also opened by `aegis ui`)
 
 All file uploads are handled via multipart/form-data.
 Results are returned as JSON (or HTML when ?format=html is appended).
@@ -40,11 +42,13 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, Header, HTTPException, Query, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from aegis import __version__ as AEGIS_VERSION
 from aegis.core.pipeline import AEGISPipeline, PipelineConfig
 from aegis.corpus.indexer import CorpusIndexer
+from aegis.paths import default_index_dir, default_report_dir, load_env_file
 from aegis.report.generator import ReportGenerator
 
 logger = logging.getLogger(__name__)
@@ -53,8 +57,9 @@ logger = logging.getLogger(__name__)
 # Initialisation
 # ---------------------------------------------------------------------------
 
-INDEX_DIR = os.environ.get("AEGIS_INDEX_DIR", "./aegis_index")
-REPORT_DIR = os.environ.get("AEGIS_REPORT_DIR", "./aegis_reports")
+load_env_file()
+INDEX_DIR = str(default_index_dir())
+REPORT_DIR = str(default_report_dir())
 DEVICE = os.environ.get("AEGIS_DEVICE", "cpu")
 CITATION_EMAIL = os.environ.get("AEGIS_CITATION_EMAIL", "aegis-check@example.com")
 API_KEY = os.environ.get("AEGIS_API_KEY")
@@ -147,9 +152,27 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 
 
+_STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/", include_in_schema=False)
+def web_app():
+    """The browser UI (single self-contained page, no external assets)."""
+    return FileResponse(_STATIC_DIR / "index.html", media_type="text/html")
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "index_dir": INDEX_DIR}
+    return {"status": "ok", "version": AEGIS_VERSION, "auth_required": bool(API_KEY)}
+
+
+@app.get("/status", dependencies=[Depends(require_api_key)])
+def status(offline: bool = Query(False, description="Skip the Crossref connectivity test")):
+    """Which checks can run on this server, and how to enable the rest."""
+    from aegis import doctor
+    checks = doctor.run_checks(offline=offline)
+    return {"version": AEGIS_VERSION, "summary": doctor.summary_line(checks),
+            "checks": doctor.as_dicts(checks)}
 
 
 @app.get("/corpus/summary", dependencies=[Depends(require_api_key)])
@@ -172,7 +195,7 @@ async def corpus_add(
         tmp.write(content)
         tmp_path = tmp.name
     try:
-        assigned_label = _indexer.add_document(tmp_path, label=label)
+        assigned_label = await run_in_threadpool(_indexer.add_document, tmp_path, label=label)
         return {"status": "added", "label": assigned_label}
     finally:
         os.unlink(tmp_path)
@@ -205,6 +228,16 @@ async def analyze(
     run_semantic: bool = Query(True),
     run_stylometric: bool = Query(True),
     run_self_plagiarism: bool = Query(True),
+    run_watermark: bool = Query(True),
+    run_coherence: bool = Query(True),
+    run_venue_check: bool = Query(True),
+    run_citation_network: bool = Query(True),
+    run_math: bool = Query(True),
+    run_grammar: bool = Query(True),
+    offline: bool = Query(False, description="Make no network calls at all "
+                          "(disables Crossref/OpenAlex lookups)"),
+    guidelines: str = Query("", description="Comma-separated IEEE,ACM,BCS,IET,ISACA,ELSEVIER or 'all'"),
+    include_html: bool = Query(False, description="Also return the full HTML report in the JSON"),
     prior_works: Optional[str] = Form(
         None,
         description="JSON list of prior-work texts: [[label, text], ...]",
@@ -213,9 +246,16 @@ async def analyze(
     """
     Run the full AEGIS analysis on an uploaded document.
 
-    Returns JSON by default; use ?format=html for a browser-viewable report.
+    Returns JSON by default; use ?format=html for a browser-viewable report,
+    or ?include_html=true to get both in one call.
     """
     import json as _json
+    from aegis.guidelines.profiles import DEFAULT_GUIDELINE_VENUES
+
+    if guidelines.strip().lower() == "all":
+        guideline_venues = tuple(DEFAULT_GUIDELINE_VENUES)
+    else:
+        guideline_venues = tuple(v.strip().upper() for v in guidelines.split(",") if v.strip())
 
     suffix = Path(file.filename).suffix if file.filename else ".bin"
     content = await _read_upload_capped(file)
@@ -233,6 +273,16 @@ async def analyze(
                 run_semantic=run_semantic,
                 run_stylometric=run_stylometric,
                 run_self_plagiarism=run_self_plagiarism,
+                run_watermark_detector=run_watermark,
+                run_coherence_analyzer=run_coherence,
+                run_venue_verification=run_venue_check and not offline,
+                run_citation_network=run_citation_network,
+                run_math_check=run_math,
+                run_grammar_check=run_grammar,
+                citation_offline=offline,
+                citation_network_offline=offline,
+                venue_offline=offline,
+                guideline_venues=guideline_venues,
             )
             pipeline = AEGISPipeline(config=cfg)
 
@@ -258,7 +308,10 @@ async def analyze(
                 except Exception as exc:
                     logger.warning("Could not parse prior_works: %s", exc)
 
-            report = pipeline.analyze(tmp_path)
+            # The pipeline is CPU-bound and synchronous; run it off the event
+            # loop so /health and the web UI stay responsive during a scan.
+            report = await run_in_threadpool(pipeline.analyze, tmp_path)
+            report.submission_path = file.filename or report.submission_path
 
     finally:
         os.unlink(tmp_path)
@@ -268,7 +321,12 @@ async def analyze(
         with open(html_path, encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
 
-    return JSONResponse(_reporter._report_to_dict(report))
+    data = _reporter._report_to_dict(report)
+    if include_html:
+        html_path = _reporter.generate_html(report)
+        data["report_html"] = Path(html_path).read_text(encoding="utf-8")
+        data["report_path"] = html_path
+    return JSONResponse(data)
 
 
 @app.post("/compare", dependencies=[Depends(require_api_key)])
@@ -296,15 +354,15 @@ async def compare_pair(
                 tmp.write(content)
                 tmp_paths.append(tmp.name)
 
-        text_a = parser.parse(tmp_paths[0]).full_text
-        text_b = parser.parse(tmp_paths[1]).full_text
+        text_a = (await run_in_threadpool(parser.parse, tmp_paths[0])).full_text
+        text_b = (await run_in_threadpool(parser.parse, tmp_paths[1])).full_text
     finally:
         for p in tmp_paths:
             if os.path.exists(p):
                 os.unlink(p)
 
     detector = SelfPlagiarismDetector(use_sbert=False)
-    result = detector.compare_documents(text_a, label_a, text_b, label_b)
+    result = await run_in_threadpool(detector.compare_documents, text_a, label_a, text_b, label_b)
 
     return {
         "label_a": label_a,

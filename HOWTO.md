@@ -6,6 +6,7 @@ Complete step-by-step instructions for installing, configuring, and using every 
 
 ## Table of Contents
 
+0. [The Easy Way: Web App, Claude and `aegis doctor`](#0-the-easy-way-web-app-claude-and-aegis-doctor)
 1. [Prerequisites](#1-prerequisites)
 2. [Installation](#2-installation)
 3. [Configuration](#3-configuration)
@@ -21,11 +22,43 @@ Complete step-by-step instructions for installing, configuring, and using every 
 
 ---
 
+## 0. The Easy Way: Web App, Claude and `aegis doctor`
+
+**Web app.** `aegis ui` starts AEGIS on `http://127.0.0.1:8765/` and opens it
+in your browser (Windows: double-click `start-aegis.bat`). Everything in this
+guide's CLI section is available there:
+
+| Tab | What it does | CLI equivalent |
+|-----|--------------|----------------|
+| Check a paper | Full / Private (offline) / References only / Style & formatting, optional publisher guidelines, advanced per-check toggles | `aegis analyze`, `aegis guidelines` |
+| Compare two papers | Shared-text percentage and passages between two files | `aegis compare` |
+| My comparison library | Add papers to the corpus, see what's indexed | `aegis index add/build/summary` |
+
+The status pill in the top-right corner opens the same readiness table as
+`aegis doctor`. The web app listens on 127.0.0.1 only.
+
+**Claude.** Install with the `mcp` extra, then in Claude Code run
+`/plugin marketplace add sunilgentyala/aegis-integrity` and
+`/plugin install aegis-integrity@aegis-integrity`. For Claude Desktop, open the
+`.mcpb` file from the Releases page and choose the Python where AEGIS is
+installed. Other MCP clients can run `aegis-mcp`.
+
+**`aegis doctor`.** Shows which capabilities are ready and the command that
+fixes each one that isn't. Add `--warm-up` to download the AI models now,
+`--offline` to skip the Crossref connectivity test.
+
+**Where AEGIS keeps data.** `~/.aegis/index` (comparison library) and
+`~/.aegis/reports` (HTML reports), shared by the CLI, web app and Claude.
+`AEGIS_INDEX_DIR` / `AEGIS_REPORT_DIR`, or an existing `./aegis_index` /
+`./aegis_reports` in the current folder, take precedence.
+
+---
+
 ## 1. Prerequisites
 
 | Requirement | Minimum version | Notes |
 |-------------|-----------------|-------|
-| Python | 3.9 | 3.11 recommended |
+| Python | 3.10 | 3.11 recommended |
 | pip | 22.0 | |
 | RAM | 4 GB | 8 GB recommended with ML models |
 | Disk | 1 GB | +1.5 GB if using gpt2-medium |
@@ -82,6 +115,10 @@ AEGIS_CITATION_EMAIL=you@uni.edu    # required by Crossref polite-pool ToS
 ```
 
 All four variables can also be passed as arguments on the command line.
+AEGIS reads `./.env` in the folder you run it from and `~/.aegis/.env`;
+variables already set in the environment win. Setting a real
+`AEGIS_CITATION_EMAIL` matters: without one, Crossref may throttle lookups
+and references show as "timed out" (`aegis doctor` flags this).
 
 ---
 
@@ -721,6 +758,18 @@ deploy:
 ---
 
 ## 12. Troubleshooting
+
+Start with `aegis doctor`: it names the missing piece and the fix.
+
+### The first full check is very slow or times out
+
+The AI-detection and paraphrase models (~700 MB) download on first use. Run
+`aegis doctor --warm-up` once so later checks start immediately.
+
+### Many references show "Lookup timed out"
+
+Crossref is throttling anonymous lookups. Set `AEGIS_CITATION_EMAIL` in
+`~/.aegis/.env` and re-run.
 
 ### `ModuleNotFoundError: No module named 'sentence_transformers'`
 

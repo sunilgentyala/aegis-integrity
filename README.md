@@ -1,7 +1,7 @@
 # AEGIS Academic Integrity Checker
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.1.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.2.0-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -14,6 +14,48 @@
 > Analyzes plagiarism, AI-generated content, citation hallucinations, ghostwriting, predatory references, and essay mill patterns in a single pipeline -- plus an experimental token-distribution heuristic for LLM watermark research.
 > **Plagiarism detection is corpus-based, not a live web/database crawl:** AEGIS compares your document against a corpus of papers *you supply* (your own prior works, a downloaded reference set, etc. -- see [Building a Corpus Index](HOWTO.md#9-building-a-corpus-index)). With no corpus loaded, plagiarism modules correctly report "no prior works loaded" rather than silently finding nothing to flag -- that isn't a scan failure.
 > Results are a supporting signal for human review, not a determination of misconduct.
+
+---
+
+## Get Started
+
+Pick the way you want to use AEGIS. All three run on your own computer.
+
+**1. In your browser (easiest).** Install once, then open the web app:
+```bash
+pip install "aegis-integrity[ml] @ git+https://github.com/sunilgentyala/aegis-integrity"
+aegis ui
+```
+Drag in a PDF, Word, LaTeX or text file, choose *Full check*, *Private / offline*,
+*References only* or *Style & formatting*, and get a plain-language report:
+an overall rating, what to look at, every reference with its verification
+result, and a downloadable full report. A *Compare two papers* tab and a
+*My comparison library* tab cover self-plagiarism and building the corpus.
+On Windows, `install.bat` sets everything up and `start-aegis.bat` opens the
+web app with a double-click.
+
+**2. Inside Claude Code.** Install the package with the `mcp` extra, then add the plugin:
+```bash
+pip install "aegis-integrity[mcp,ml] @ git+https://github.com/sunilgentyala/aegis-integrity"
+```
+```
+/plugin marketplace add sunilgentyala/aegis-integrity
+/plugin install aegis-integrity@aegis-integrity
+```
+Then ask in plain words ("check references in ~/drafts/paper.pdf", "is this
+ready for an Elsevier journal?"), or use the `/integrity-check` and
+`/submission-check` skills.
+
+**3. In Claude Desktop.** Install the package as in option 2, download
+`aegis-integrity-<version>.mcpb` from the
+[Releases](https://github.com/sunilgentyala/aegis-integrity/releases) page and
+open it. In the extension settings, choose the Python where AEGIS is
+installed. Any other MCP client can run the `aegis-mcp` command directly.
+
+**Not sure what works on your machine?** Run `aegis doctor`. It lists every
+capability, whether it's ready, and the one command that fixes it.
+`aegis doctor --warm-up` downloads the AI models ahead of time so your first
+full check doesn't wait on them.
 
 ---
 
@@ -256,7 +298,7 @@ python -m spacy download en_core_web_sm
 **Docker (recommended for production / air-gapped environments):**
 ```bash
 docker compose up --build
-# API available at http://localhost:8000 (bound to localhost only by default)
+# Web app at http://localhost:8000/ ; API at the same address (bound to localhost only by default)
 # Swagger UI at http://localhost:8000/docs
 ```
 The container runs as a non-root user and its healthcheck needs no extra
@@ -604,6 +646,75 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.2.0 (September 2026)
+- **NEW (web app):** `aegis ui` opens a browser app at `http://127.0.0.1:8765/`
+  (also served at `/` by `aegis serve` and Docker). Drag-and-drop checking
+  with four modes (Full, Private/offline, References only, Style &
+  formatting), publisher-guideline selection, a plain-language verdict,
+  score tiles that say "Not run" instead of showing a misleading 0%, a
+  reference table sorted problems-first, a "which checks ran" panel, a
+  plain-English "internet use" summary, the full HTML report in a
+  sandboxed viewer, and JSON/HTML downloads. Also *Compare two papers* and
+  *My comparison library* tabs. Single self-contained page: no CDN, fonts
+  or trackers, so it works offline; all document text is inserted with
+  `textContent`, never as HTML.
+- **NEW (`aegis doctor`):** lists every capability (document reading,
+  corpus, paraphrase and AI detection, non-native-English calibration,
+  Crossref, spaCy, MCP) as Ready / Limited / Not installed, with the exact
+  command that fixes each. `--warm-up` pre-downloads the models; `--plain`
+  for scripts. The same data backs `GET /status`, the web app's status
+  panel and the MCP `aegis_status` tool.
+- **NEW (Claude integration):** installable `aegis-mcp` server (was a
+  root-level script with hardcoded `C:\Gitrepos` paths that only worked on
+  one machine); a Claude Code plugin + marketplace (`claude-plugin/`,
+  `.claude-plugin/marketplace.json`) with `integrity-check`,
+  `submission-check` and `aegis-setup` skills; and a Claude Desktop
+  extension (`mcpb/`). `aegis_mcp.py` remains as a backward-compatible
+  launcher for existing configs.
+- **NEW (API):** `/analyze` accepts `offline=true` (no network calls at all),
+  `guidelines=`, `include_html=true`, and toggles for every detector.
+  `/health` reports `auth_required` and no longer exposes the server's
+  index path to unauthenticated callers.
+- **FIX (API responsiveness):** `/analyze`, `/compare` and `/corpus/add` ran
+  CPU-bound work directly on the async event loop, so one analysis froze
+  every other request (including `/health`) for minutes. That work now runs
+  in a thread pool.
+- **FIX (plagiarism false positive):** the n-gram detector reported every
+  MinHash LSH candidate, including unrelated paragraphs at 8-14% exact
+  Jaccard, far below its own 25%/40% thresholds. On a published journal
+  paper this produced six "copied" passages pairing lung-cancer text with
+  network-security text and raised the overall risk to MEDIUM. Candidates
+  are now kept only if their exact Jaccard meets the threshold.
+- **FIX (citation false positives on two-column PDFs):** a DOI wrapped
+  across lines (`10.1016/j.` + newline + `ebiom...`) was cut to `10.1016/j`
+  and reported **HALLUCINATED**; running page headers ("... Control 115
+  (2026) ...") inside the reference list were read as publication years;
+  author lists or page ranges guessed as titles produced MISMATCH even when
+  the reference contained the real title; and an online-first year was
+  called a mismatch with the print year. Wrapped DOIs are rejoined (page
+  numbers and following words are not), repeated header/footer lines are
+  stripped from references, a title is accepted when the resolved title
+  appears in the reference text, and any of Crossref's print/online/issued
+  years is accepted. A one-year difference Crossref can't explain (it often
+  stores only the online-first date) is now a note on a verified reference,
+  not a MISMATCH; larger gaps still are. The first year of a page range
+  ("(2022) 2049-2065") is no longer read as the publication year. On the
+  test paper: 12 -> 17 references verified, 1 -> 0 false HALLUCINATED,
+  6 -> 0 false MISMATCH.
+- **FIX (equation false positives on PDFs):** equation numbers that PDF
+  extraction places on their own line were not recognised, so every
+  "equation (N)" reference was reported as dangling (28 of 28 on the test
+  paper). Standalone "(N)" lines now count when the preceding line looks
+  like math. The equation checker also now skips the References section,
+  which is found by heading line when section detection misses it.
+- **FIX (configuration):** the `.env` file created by `install.bat` was never
+  read by the CLI or API; `./.env` and `~/.aegis/.env` are now loaded, and
+  `aegis analyze --email` honours `AEGIS_CITATION_EMAIL`.
+- **CHANGED:** default data location is `~/.aegis/{index,reports}` so the
+  CLI, web app and MCP server share one library. An existing
+  `./aegis_index` / `./aegis_reports` in the working directory, or
+  `AEGIS_INDEX_DIR` / `AEGIS_REPORT_DIR`, still take precedence.
 
 ### v3.1.3 (September 2026)
 - **FIX (plagiarism false positive):** the n-gram and semantic similarity

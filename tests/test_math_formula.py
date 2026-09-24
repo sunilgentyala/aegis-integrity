@@ -11,6 +11,20 @@ class TestTextHeuristicExtraction:
         assert result.equations_found == 2
         assert result.equation_numbers == ["1", "2"]
 
+    def test_equation_number_on_its_own_line(self):
+        # Two-column journal PDFs often extract the number on the next line.
+        text = ("The bound is shown in equation (1).\nIQR = Q3 − Q1\n(1) \n"
+                "and the loss in equation (2):\nθjxij\n(2) \nwhere θ is a weight.")
+        result = MathFormulaChecker().analyze("paper.pdf", "pdf", text)
+        assert result.equation_numbers == ["1", "2"]
+        assert result.reference_issues == []
+
+    def test_list_items_are_not_equation_numbers(self):
+        text = ("The procedure has three steps, each described in turn below in detail.\n"
+                "(1)\nCollect the data from every participating site in the study.\n")
+        result = MathFormulaChecker().analyze("paper.pdf", "pdf", text)
+        assert result.equations_found == 0
+
     def test_no_equations_found_in_plain_prose(self):
         text = "This paper discusses several ideas without any formulas at all."
         result = MathFormulaChecker().analyze("paper.pdf", "pdf", text)

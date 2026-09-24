@@ -1,0 +1,68 @@
+{
+  "manifest_version": "0.3",
+  "name": "aegis-integrity",
+  "display_name": "AEGIS Integrity Checker",
+  "version": "3.2.0",
+  "description": "Check papers for copied text, AI-written passages, fabricated citations and publisher-style problems, on your own computer.",
+  "long_description": "AEGIS is an open-source academic integrity checker. It finds copied and paraphrased text against your own comparison library, scores AI-like writing with calibration for non-native English writers, verifies every reference against Crossref, and checks equations, grammar and IEEE/ACM/Elsevier/IET/BCS/ISACA style rules. Documents are analysed locally; only reference metadata is sent to Crossref. Requires the AEGIS Python package: pip install \"aegis-integrity[mcp,ml] @ git+https://github.com/sunilgentyala/aegis-integrity\".",
+  "author": {
+    "name": "Sunil Gentyala",
+    "url": "https://github.com/sunilgentyala"
+  },
+  "homepage": "https://sunilgentyala.github.io/aegis-integrity",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunilgentyala/aegis-integrity"
+  },
+  "license": "MIT",
+  "keywords": ["academic-integrity", "plagiarism", "citations", "ai-detection", "research"],
+  "server": {
+    "type": "python",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "${user_config.python}",
+      "args": ["${__dirname}/server/main.py"],
+      "env": {
+        "AEGIS_INDEX_DIR": "${user_config.library_dir}",
+        "AEGIS_CITATION_EMAIL": "${user_config.crossref_email}",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  },
+  "user_config": {
+    "python": {
+      "type": "file",
+      "title": "Python with AEGIS installed",
+      "description": "The python executable where you ran pip install aegis-integrity[mcp] (for a virtual environment, its python.exe / bin/python).",
+      "required": true,
+      "default": "python"
+    },
+    "library_dir": {
+      "type": "directory",
+      "title": "Comparison library folder",
+      "description": "Where AEGIS keeps the index of papers it compares against for copied text.",
+      "required": false,
+      "default": "${HOME}/.aegis/index"
+    },
+    "crossref_email": {
+      "type": "string",
+      "title": "Contact email for Crossref",
+      "description": "Sent to Crossref with reference lookups so they are not throttled. Optional.",
+      "required": false,
+      "default": ""
+    }
+  },
+  "tools": [
+    {"name": "aegis_analyze_paper", "description": "Full integrity check of a paper."},
+    {"name": "aegis_check_citations", "description": "Verify every reference against Crossref."},
+    {"name": "aegis_check_guidelines", "description": "Fast offline equations, grammar and publisher-style check."},
+    {"name": "aegis_compare_papers", "description": "Measure shared text between two papers."},
+    {"name": "aegis_index_add", "description": "Add a paper to the comparison library."},
+    {"name": "aegis_index_summary", "description": "List the comparison library."},
+    {"name": "aegis_status", "description": "Show which checks are ready and how to fix the rest."}
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {"python": ">=3.10"}
+  }
+}

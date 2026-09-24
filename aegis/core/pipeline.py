@@ -519,8 +519,11 @@ class AEGISPipeline:
         else:
             logger.info("Running math formula checker...")
             try:
+                # Body text only: reference-list entries such as
+                # "Appl. Sci. 11 (7)" or "Commun. 35 (05)" otherwise read as
+                # numbered equations and produce bogus numbering flags.
                 report.math_result = self._math_checker.analyze(
-                    submission_path, parsed.format, full_text)
+                    submission_path, parsed.format, plagiarism_text)
                 _status("math_check", "completed")
             except Exception as exc:
                 logger.warning("Math formula checker failed: %s", exc)

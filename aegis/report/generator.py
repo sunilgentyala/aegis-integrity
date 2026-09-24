@@ -11,6 +11,7 @@ attached to an email or opened offline. Includes:
 """
 
 from __future__ import annotations
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -1029,4 +1030,7 @@ class ReportGenerator:
 
     @staticmethod
     def _stem(report: AnalysisReport) -> str:
-        return Path(report.submission_path).stem.replace(" ", "_")
+        # submission_path can be a browser-supplied upload name, so keep only
+        # characters that are valid in file names on every OS.
+        stem = Path(report.submission_path).stem.replace(" ", "_")
+        return re.sub(r"[^A-Za-z0-9._-]", "", stem) or "submission"

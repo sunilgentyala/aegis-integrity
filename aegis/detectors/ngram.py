@@ -114,9 +114,15 @@ class NGramDetector:
 
             # Word 3-gram candidates
             word_candidates = self._word_lsh.query(w_mh)
+            # LSH is a probabilistic pre-filter: it returns candidates that
+            # only *might* exceed the threshold. Keep a candidate only if its
+            # exact Jaccard actually does, otherwise unrelated paragraphs that
+            # happened to collide in a band are reported as copied text.
             for key in word_candidates:
                 label, src_para = self._word_index[key]
                 j = self._jaccard(para, src_para, mode="word")
+                if j < self.word_threshold:
+                    continue
                 results.append(NGramMatch(
                     query_segment=para[:400],
                     source_label=label,
@@ -132,6 +138,8 @@ class NGramDetector:
                     continue
                 label, src_para = self._char_index[key]
                 j = self._jaccard(para, src_para, mode="char")
+                if j < self.char_threshold:
+                    continue
                 results.append(NGramMatch(
                     query_segment=para[:400],
                     source_label=label,

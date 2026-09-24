@@ -14,7 +14,7 @@ echo.
 :: Check Python
 python --version >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Python not found. Install Python 3.9+ from https://python.org
+    echo [ERROR] Python not found. Install Python 3.10+ from https://python.org
     pause
     exit /b 1
 )
@@ -78,8 +78,9 @@ echo   optional extras - see README for:
 echo     pip install -e ".[ml,nlp,bib]"
 echo.
 echo Quick start:
+echo   Double-click start-aegis.bat   (opens the web app in your browser)
+echo   aegis doctor                   (shows which checks are ready)
 echo   aegis analyze paper.pdf --html report.html
-echo   aegis serve --port 8000
 echo.
 echo To activate the environment next time:
 echo   .venv\Scripts\activate

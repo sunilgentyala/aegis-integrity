@@ -26,5 +26,5 @@ Authors: Sunil Gentyala, Rakesh Prakash, Akhila Kasturi
 License: MIT
 """
 
-__version__ = "3.1.3"
+__version__ = "3.2.0"
 __author__ = "Sunil Gentyala"

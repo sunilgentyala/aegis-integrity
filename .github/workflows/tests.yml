@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies (full install, matches production)
         run: |
-          pip install -e ".[ml,nlp,bib]" pytest pytest-cov httpx2
+          pip install -e ".[ml,nlp,bib,mcp]" pytest pytest-cov httpx2
         # httpx2: starlette.testclient (used by tests/test_api.py) requires
         # it at import time on the Starlette version this resolves to --
         # not declared in setup.py since it's only needed for testing, not

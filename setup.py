@@ -30,6 +30,7 @@ setup(
     },
     license="MIT",
     packages=find_packages(exclude=["tests*"]),
+    package_data={"aegis.api": ["static/*.html"]},
     python_requires=">=3.10",
     install_requires=[
         # Security-floor rationale for the bumps below lives in
@@ -65,6 +66,9 @@ setup(
             "spacy>=3.7.0",
             "textstat>=0.7.3",
         ],
+        "mcp": [
+            "mcp>=1.0.0",
+        ],
         "bib": [
             "bibtexparser>=1.4.0",
             "habanero>=1.2.3",
@@ -73,6 +77,7 @@ setup(
     entry_points={
         "console_scripts": [
             "aegis=aegis.cli:cli",
+            "aegis-mcp=aegis.mcp_server:main",
         ],
     },
     classifiers=[

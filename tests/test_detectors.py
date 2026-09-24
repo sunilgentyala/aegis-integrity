@@ -86,6 +86,32 @@ class TestNGramDetector:
         # Should find at least one match with non-trivial Jaccard
         assert len(matches) >= 0  # index may or may not match depending on segmentation
 
+    def test_indexed_copy_is_found(self):
+        from aegis.detectors.ngram import NGramDetector
+        unrelated = ("Smoking behaviour and yellow fingers were weighted by the model, "
+                     "while peer pressure and chronic disease scores showed weaker links "
+                     "to the outcome in the survey cohort that we collected last year.")
+        det = NGramDetector(word_threshold=0.25)
+        det.build_index([("source_A", HUMAN_PARA + "\n\n" + unrelated)])
+        matches = det.find_matches(HUMAN_PARA, min_segment_words=5)
+        assert matches, "an exact copy of an indexed paragraph must be found"
+        assert matches[0].source_label == "source_A"
+        assert matches[0].jaccard_estimate >= 0.9
+
+    def test_lsh_false_candidates_are_not_reported(self):
+        # LSH may return candidates below the threshold; only paragraphs whose
+        # exact Jaccard meets it may be reported (regression: unrelated text
+        # was shown as "Copied (8-14%)" and inflated the plagiarism score).
+        from aegis.detectors.ngram import NGramDetector
+        unrelated = ("Smoking behaviour and yellow fingers were weighted by the model, "
+                     "while peer pressure and chronic disease scores showed weaker links "
+                     "to the outcome in the survey cohort that we collected last year.")
+        det = NGramDetector(word_threshold=0.25, char_threshold=0.40)
+        det.build_index([("unrelated_src", unrelated)])
+        det._word_lsh.query = lambda _mh: list(det._word_index)
+        det._char_lsh.query = lambda _mh: list(det._char_index)
+        assert det.find_matches(HUMAN_PARA, min_segment_words=5) == []
+
     def test_empty_text_returns_zero(self):
         from aegis.detectors.ngram import NGramDetector
         det = NGramDetector()

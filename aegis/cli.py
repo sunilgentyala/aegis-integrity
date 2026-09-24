@@ -58,7 +58,13 @@ RISK_COLORS = {
 @click.group()
 @click.version_option(AEGIS_VERSION, prog_name="aegis")
 def cli():
-    """AEGIS Academic Integrity Checker -- open-source, bias-aware plagiarism analysis."""
+    """AEGIS Academic Integrity Checker -- open-source, bias-aware plagiarism analysis.
+
+    New here? Run `aegis ui` to use AEGIS in your browser, or `aegis doctor`
+    to see which checks are ready on this computer.
+    """
+    from aegis.paths import load_env_file
+    load_env_file()
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +108,7 @@ def cli():
 @click.option("--device", default="cpu", show_default=True,
               help="PyTorch device (cpu / cuda).")
 @click.option("--email", default="aegis-check@example.com", show_default=True,
+              envvar="AEGIS_CITATION_EMAIL",
               help="Email for Crossref polite pool.")
 def analyze(
     submission, corpus, prior_works, index_dir,
@@ -531,7 +538,8 @@ def serve(host, port, reload):
     except ImportError:
         console.print("[red]uvicorn not installed:[/] pip install uvicorn[standard]")
         sys.exit(1)
-    console.print(f"Starting AEGIS API on [cyan]http://{host}:{port}[/]")
+    console.print(f"Starting AEGIS API on [cyan]http://{host}:{port}[/]  "
+                  f"(web app at [cyan]http://{host}:{port}/[/])")
     uvicorn.run(
         "aegis.api.app:app",
         host=host,
@@ -539,6 +547,63 @@ def serve(host, port, reload):
         reload=reload,
         log_level="info",
     )
+
+
+# ---------------------------------------------------------------------------
+# ui (web app in the browser)
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.option("--port", default=8765, show_default=True)
+@click.option("--no-browser", is_flag=True, help="Don't open a browser tab automatically.")
+def ui(port, no_browser):
+    """Open the AEGIS web app: drag in a paper, get a plain-language report.
+
+    Runs only on this computer (127.0.0.1). Press Ctrl+C to stop.
+    """
+    import threading
+    import webbrowser
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]uvicorn not installed:[/] pip install uvicorn[standard]")
+        sys.exit(1)
+    url = f"http://127.0.0.1:{port}/"
+    console.print(Panel.fit(
+        f"AEGIS is running at [bold cyan]{url}[/]\n"
+        "Your documents stay on this computer. Press [bold]Ctrl+C[/] to stop.",
+        title="AEGIS web app"))
+    if not no_browser:
+        threading.Timer(1.5, webbrowser.open, args=(url,)).start()
+    uvicorn.run("aegis.api.app:app", host="127.0.0.1", port=port, log_level="warning")
+
+
+# ---------------------------------------------------------------------------
+# doctor (readiness check)
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.option("--offline", is_flag=True, help="Skip the Crossref connectivity test.")
+@click.option("--plain", is_flag=True, help="Plain-text output (for scripts and AI assistants).")
+@click.option("--warm-up", is_flag=True,
+              help="Download the ML models now so the first real check is fast.")
+def doctor(offline, plain, warm_up):
+    """Show which checks are ready on this computer and how to enable the rest."""
+    from aegis import doctor as doc
+
+    if warm_up:
+        doc.warm_up(log=console.print)
+    checks = doc.run_checks(offline=offline)
+    if plain:
+        click.echo(doc.as_plain_text(checks))
+        return
+    style = {doc.READY: "[green]Ready[/]", doc.LIMITED: "[yellow]Limited[/]",
+             doc.MISSING: "[red]Not installed[/]"}
+    t = Table("Capability", "Status", "Details / how to fix", box=box.SIMPLE, show_lines=True)
+    for c in checks:
+        detail = c.detail + (f"\n[cyan]{c.fix}[/]" if c.fix else "")
+        t.add_row(c.name, style[c.status], detail)
+    console.print(Panel.fit(t, title=f"AEGIS {AEGIS_VERSION}: {doc.summary_line(checks)}"))
 
 
 # ---------------------------------------------------------------------------

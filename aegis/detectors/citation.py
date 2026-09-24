@@ -184,11 +184,15 @@ class CitationIntegrityDetector:
         ]
 
         pub_year = None
+        # Online-first and print-issue years often differ by one (online
+        # Nov 2022, issue 2023); a citation giving either one is correct.
+        all_years: set[str] = set()
         for date_field in ("published-print", "published-online", "issued"):
             dp = data.get(date_field, {}).get("date-parts", [[]])
-            if dp and dp[0]:
-                pub_year = str(dp[0][0])
-                break
+            if dp and dp[0] and dp[0][0]:
+                all_years.add(str(dp[0][0]))
+                if pub_year is None:
+                    pub_year = str(dp[0][0])
 
         journal_title = None
         container = data.get("container-title", [])
@@ -200,11 +204,13 @@ class CitationIntegrityDetector:
         return self._build_comparison_verdict(
             ref, doi, raw, claimed_year, claimed_authors, claimed_title,
             resolved_title, resolved_authors, pub_year, journal_title, crossref_url,
+            accepted_years=all_years,
         )
 
     def _build_comparison_verdict(
         self, ref, doi, raw, claimed_year, claimed_authors, claimed_title,
         resolved_title, resolved_authors, resolved_year, resolved_journal, source_url,
+        accepted_years: set[str] | None = None,
     ) -> CitationVerdict:
         """Shared claimed-vs-resolved comparison, usable against metadata
         resolved from Crossref or from DataCite (or any future source that
@@ -214,15 +220,38 @@ class CitationIntegrityDetector:
         confidence = 1.0
 
         # Year check
-        if claimed_year and resolved_year and claimed_year != resolved_year:
-            issues.append(f"Year mismatch: claimed {claimed_year}, actual {resolved_year}")
-            verdict = "MISMATCH"
-            confidence -= 0.3
+        if (claimed_year and resolved_year and claimed_year != resolved_year
+                and claimed_year not in (accepted_years or ())):
+            try:
+                gap = abs(int(claimed_year) - int(resolved_year))
+            except ValueError:
+                gap = None
+            if gap == 1:
+                # Crossref often records only one of the online-first and
+                # print-issue dates; a one-year difference is a note for the
+                # author, not evidence the reference is wrong.
+                issues.append(
+                    f"Year differs by one (cited {claimed_year}, Crossref "
+                    f"{resolved_year}); usually an online-first vs. print date")
+                confidence -= 0.05
+            else:
+                issues.append(f"Year mismatch: claimed {claimed_year}, actual {resolved_year}")
+                verdict = "MISMATCH"
+                confidence -= 0.3
 
         # Title check (fuzzy)
         if claimed_title and resolved_title:
             title_sim = self._string_similarity(
                 claimed_title.lower(), resolved_title.lower())
+            # The claimed title is a heuristic guess from the raw reference
+            # and often grabs the author list or page range instead ("395-409,
+            # Aug"). If the resolved title is present in the raw reference
+            # itself, the reference does cite this work; only the guess was
+            # wrong. A fabricated reference that borrows a real DOI still
+            # fails, since its text names a different title.
+            if title_sim < self.min_title_sim and \
+                    self._containment(resolved_title, raw) >= 0.8:
+                title_sim = 1.0
             if title_sim < self.min_title_sim:
                 issues.append(
                     f"Title mismatch (similarity {title_sim:.2f}): "
@@ -522,6 +551,18 @@ class CitationIntegrityDetector:
                 continue
             return part
         return None
+
+    @staticmethod
+    def _containment(title: str, raw: str) -> float:
+        """Fraction of the title's content words that appear in raw text
+        (hyphenation and line breaks from PDF extraction are undone first)."""
+        words = set(re.findall(r"\b[a-z]{3,}\b", title.lower()))
+        if len(words) < 3:
+            return 0.0
+        flat = re.sub(r"-\s*\n\s*", "", raw.lower())
+        flat = re.sub(r"\s+", " ", flat)
+        present = set(re.findall(r"\b[a-z]{3,}\b", flat))
+        return len(words & present) / len(words)
 
     def _string_similarity(self, a: str, b: str) -> float:
         """Normalized Levenshtein-based similarity for short strings."""

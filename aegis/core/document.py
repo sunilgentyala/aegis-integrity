@@ -32,6 +32,13 @@ class ParsedReference:
     line_number: Optional[int]
 
 
+_REFERENCES_HEADING_RE = re.compile(
+    r"^[ \t]*(?:\d+\.?[ \t]+)?(?:references|bibliography|works cited|literature cited)"
+    r"[ \t]*:?[ \t]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
 @dataclass
 class ParsedDocument:
     path: str
@@ -47,12 +54,25 @@ class ParsedDocument:
     @property
     def body_text(self) -> str:
         """Full text excluding references section."""
+        def _is_ref(title: str) -> bool:
+            t = title.lower()
+            return "reference" in t or "bibliograph" in t
+
+        if self.sections and any(_is_ref(s.title) for s in self.sections):
+            body_sections = [s for s in self.sections if not _is_ref(s.title)]
+            return "\n\n".join(s.text for s in body_sections) or self.full_text
+        # Section detection can miss the heading entirely (e.g. two-column
+        # journal PDFs where table labels are mistaken for headings), in
+        # which case cut at the last standalone "References" heading line.
+        # The last one is used because the word also appears in running
+        # text and in tables of contents; it must also sit past the first
+        # third of the document so a front-matter heading can't empty it.
+        headings = list(_REFERENCES_HEADING_RE.finditer(self.full_text))
+        if headings and headings[-1].start() > len(self.full_text) // 3:
+            return self.full_text[:headings[-1].start()]
         if not self.sections:
             return self.full_text
-        body_sections = [s for s in self.sections
-                         if "reference" not in s.title.lower()
-                         and "bibliograph" not in s.title.lower()]
-        return "\n\n".join(s.text for s in body_sections) or self.full_text
+        return "\n\n".join(s.text for s in self.sections) or self.full_text
 
     @property
     def word_count(self) -> int:
@@ -357,6 +377,19 @@ class DocumentParser:
         if not ref_match:
             return []
         ref_block = ref_match.group(1)
+        # Drop running headers/footers (journal name + year, author running
+        # head, page numbers) that PDF extraction interleaves into the
+        # reference list; left in, "... Control 115 (2026) 109428" becomes
+        # part of a reference and its year is read as the publication year.
+        line_counts: dict[str, int] = {}
+        for line in text.splitlines():
+            key = line.strip()
+            if len(key) > 8:
+                line_counts[key] = line_counts.get(key, 0) + 1
+        ref_block = "\n".join(
+            line for line in ref_block.splitlines()
+            if line_counts.get(line.strip(), 0) < 3
+        )
         # Split on numbered entries [1] or (1) or line starts
         entries = re.split(r"\n\s*(?:\[\d+\]|\(\d+\)|(?:\d+\.))\s+", ref_block)
         for i, entry in enumerate(entries):
@@ -373,8 +406,18 @@ class DocumentParser:
         return refs
 
     def _extract_doi(self, text: str) -> Optional[str]:
-        m = re.search(r"10\.\d{4,}/\S+", text)
-        return m.group(0).rstrip(".,;)") if m else None
+        # A DOI can wrap across lines in PDF text ("10.1016/j. \nebiom.2022.1").
+        # Rejoin a piece that ends in a DOI separator when the next line
+        # continues like a DOI suffix: starts lowercase/digit, 4+ characters,
+        # and contains a letter or dot. A following word such as "Accessed"
+        # or a bare page number ("15") from a page footer is never glued on.
+        m = re.search(
+            r"10\.\d{4,}/\S+"
+            r"(?:(?<=[./_-])[ \t]*\n[ \t]*(?=[a-z0-9]\S{3,})(?=\S*[a-z.])\S+)*",
+            text)
+        if not m:
+            return None
+        return re.sub(r"\s+", "", m.group(0)).rstrip(".,;)")
 
     def _extract_year(self, text: str) -> Optional[str]:
         # A reference entry can contain several 4-digit "19xx"/"20xx"-shaped
@@ -392,6 +435,9 @@ class DocumentParser:
             before = search_text[max(0, m.start() - 10):m.start()]
             if re.search(r"(?:p\.|pp\.|vol\.|no\.|[-–—])\s*$",
                          before, re.IGNORECASE):
+                continue
+            # ...or the start of a page range: "(2022) 2049-2065".
+            if re.match(r"\s*[-–—]\s*\d", search_text[m.end():m.end() + 4]):
                 continue
             candidates.append(m.group(0))
 
