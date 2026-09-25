@@ -621,6 +621,24 @@ docker pull ghcr.io/sunilgentyala/aegis-integrity:latest
 docker run --rm -p 8000:8000 -v aegis-data:/data ghcr.io/sunilgentyala/aegis-integrity
 ```
 
+## How to Cite
+
+If you use AEGIS in your research, please cite the software:
+
+```bibtex
+@software{gentyala2026aegis,
+  author    = {Gentyala, Sunil},
+  title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
+  year      = {2026},
+  version   = {3.2.0},
+  url       = {https://github.com/sunilgentyala/aegis-integrity}
+}
+```
+
+Machine-readable metadata is in [`CITATION.cff`](CITATION.cff); GitHub shows it under "Cite this repository".
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
