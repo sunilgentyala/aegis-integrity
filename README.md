@@ -65,28 +65,28 @@ Every major integrity tool has blind spots. AEGIS v3.3 aims to close **fourteen*
 
 Based on each vendor's public documentation and pricing pages as of August 2026. "Not public" means the capability isn't documented publicly by that vendor -- not a confirmed absence. [Corrections welcome](https://github.com/sunilgentyala/aegis-integrity/issues).
 
-| Gap | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai | **AEGIS v3.3** |
-|-----|:--------:|:-----------:|:---------:|:-------:|:--------------:|:--------------:|
-| Open-source / self-hostable | No | No | No | No | No | **Yes** |
-| Citation hallucination detection | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| IEEE/ACM/Elsevier/IET/IETE/BCS -scoped venue-claim + duplicate-title check | Yes (full-text, paid Similarity Check membership) | Yes (full-text, paid Similarity Check membership) | Not public | Not public | Not public | **Yes (metadata-only via Crossref, free)** |
-| LLM watermark token-distribution heuristic (experimental, keyless) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Citation network analysis (cartels, predatory) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| ESL / non-native bias calibration (15 languages) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Paragraph-level AI scoring | Not public | Not public | Yes | Yes | Partial | **Yes** |
-| Semantic / paraphrase plagiarism (SBERT) | Partial | Not public | Partial | Not public | Not public | **Yes** |
-| Stylometric ghostwriting detection (Burrows' Delta) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Self-plagiarism against open corpus | Not public | Paid | Not public | Not public | Not public | **Yes** |
-| Batch classroom / essay mill detection | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Semantic coherence AI-polish detection | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| OpenAlex journal quality integration | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Fully explainable per-sentence reports | Not public | Not public | Partial | Partial | Not public | **Yes** |
-| Mathematical formula checking (equation numbering, dangling references, notation) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Grammar & language convention checking (contractions, US/UK spelling, agreement) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Per-venue publisher guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier, checked separately) | Not public | Not public | Not public | Not public | Not public | **Yes** |
-| Offline / air-gapped operation | No | No | No | No | No | **Yes** |
-| REST API + CLI (free) | No | Paid | Paid | Paid | Paid | **Yes** |
-| Pricing model | Institutional (not public) | Institutional (not public) | Paid (self-serve) | Paid (self-serve) | Paid (self-serve) | **$0.00 (self-hosted)** |
+| Gap | **AEGIS v3.3** | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai |
+|-----|:--------------:|:--------:|:-----------:|:---------:|:-------:|:--------------:|
+| Open-source / self-hostable | **Yes** | No | No | No | No | No |
+| Citation hallucination detection | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| IEEE/ACM/Elsevier/IET/IETE/BCS -scoped venue-claim + duplicate-title check | **Yes (metadata-only via Crossref, free)** | Yes (full-text, paid Similarity Check membership) | Yes (full-text, paid Similarity Check membership) | Not public | Not public | Not public |
+| LLM watermark token-distribution heuristic (experimental, keyless) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Citation network analysis (cartels, predatory) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| ESL / non-native bias calibration (15 languages) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Paragraph-level AI scoring | **Yes** | Not public | Not public | Yes | Yes | Partial |
+| Semantic / paraphrase plagiarism (SBERT) | **Yes** | Partial | Not public | Partial | Not public | Not public |
+| Stylometric ghostwriting detection (Burrows' Delta) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Self-plagiarism against open corpus | **Yes** | Not public | Paid | Not public | Not public | Not public |
+| Batch classroom / essay mill detection | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Semantic coherence AI-polish detection | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| OpenAlex journal quality integration | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Fully explainable per-sentence reports | **Yes** | Not public | Not public | Partial | Partial | Not public |
+| Mathematical formula checking (equation numbering, dangling references, notation) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Grammar & language convention checking (contractions, US/UK spelling, agreement) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Per-venue publisher guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier, checked separately) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Offline / air-gapped operation | **Yes** | No | No | No | No | No |
+| REST API + CLI (free) | **Yes** | No | Paid | Paid | Paid | Paid |
+| Pricing model | **$0.00 (self-hosted)** | Institutional (not public) | Institutional (not public) | Paid (self-serve) | Paid (self-serve) | Paid (self-serve) |
 
 ---
 
