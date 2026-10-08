@@ -23,7 +23,7 @@ Pick the way you want to use AEGIS. All three run on your own computer.
 
 **1. In your browser (easiest).** Install once, then open the web app:
 ```bash
-pip install "aegis-integrity[ml] @ git+https://github.com/sunilgentyala/aegis-integrity"
+pip install "aegis-integrity[ml]"
 aegis ui
 ```
 Drag in a PDF, Word, LaTeX or text file, choose *Full check*, *Private / offline*,
@@ -36,7 +36,7 @@ web app with a double-click.
 
 **2. Inside Claude Code.** Install the package with the `mcp` extra, then add the plugin:
 ```bash
-pip install "aegis-integrity[mcp,ml] @ git+https://github.com/sunilgentyala/aegis-integrity"
+pip install "aegis-integrity[mcp,ml]"
 ```
 ```
 /plugin marketplace add sunilgentyala/aegis-integrity
