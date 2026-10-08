@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: If you use this software in your research, please cite it as below.
 type: software
 title: 'AEGIS: Offline, Bias-Aware Academic Integrity Checker'
-version: 3.2.0
+version: 3.3.0
 date-released: '2026-09-24'
 authors:
 - family-names: Gentyala
@@ -15,7 +15,7 @@ url: https://sunilgentyala.github.io/aegis-integrity/
 license: MIT
 abstract: 'Open-source, offline, bias-aware academic integrity checker: plagiarism, AI-text
   detection, citation verification, publisher-style checks. Browser app, CLI, REST API, Claude
-  plugin. v3.2'
+  plugin. v3.3'
 keywords:
 - academic-integrity
 - ai-detection

@@ -187,6 +187,30 @@ class ReportGenerator:
                 ],
             }
 
+        # IEEE PSPB 8.2.4.D plagiarism level
+        if r.ieee_plagiarism_result:
+            ip = r.ieee_plagiarism_result
+            d["ieee_plagiarism"] = {
+                "basis": ip.basis,
+                "indicative_level": ip.indicative_level,
+                "level_label": ip.level_label,
+                "portion": ip.portion,
+                "risk_level": ip.risk_level,
+                "uncredited_pct": ip.uncredited_pct,
+                "credited_undelineated_pct": ip.credited_undelineated_pct,
+                "credited_delineated_pct": ip.credited_delineated_pct,
+                "paraphrase_uncredited_pct": ip.paraphrase_uncredited_pct,
+                "sources_involved": ip.sources_involved,
+                "reuse_findings": ip.reuse_findings,
+                "illustration_findings": ip.illustration_findings,
+                "guidance": ip.guidance,
+                "passages": [
+                    {"source": p.source_label, "kind": p.kind,
+                     "words": p.words, "text": p.text[:200]}
+                    for p in ip.passages[:30]
+                ],
+            }
+
         # Watermark analysis (experimental heuristic / verified-scheme hook)
         if r.watermark_result:
             wr = r.watermark_result
@@ -385,6 +409,7 @@ class ReportGenerator:
         ai_section = self._ai_section(data.get("ai_detection"))
         stylo_section = self._stylo_section(data.get("stylometric"))
         self_plag_section = self._self_plag_section(data.get("self_plagiarism"))
+        ieee_plag_section = self._ieee_plag_section(data.get("ieee_plagiarism"))
         watermark_section = self._watermark_section(data.get("watermark"))
         citation_network_section = self._citation_network_section(data.get("citation_network"))
         coherence_section = self._coherence_section(data.get("coherence"))
@@ -511,6 +536,10 @@ class ReportGenerator:
   <!-- Self-plagiarism -->
   <h2>Self-Plagiarism / Text Recycling</h2>
   <div class="section">{self_plag_section}</div>
+
+  <!-- IEEE plagiarism level -->
+  <h2>IEEE Plagiarism Level (PSPB 8.2.4.D)</h2>
+  <div class="section">{ieee_plag_section}</div>
 
   <!-- Watermark analysis -->
   <h2>LLM Watermark Analysis</h2>
@@ -762,6 +791,39 @@ class ReportGenerator:
             f"<p>By source: {breakdown}</p>"
             f"<p><em>COPE guidance:</em> {self._esc(sp['cope_guidance'])}</p>"
             f"{table}"
+        )
+
+    def _ieee_plag_section(self, ip: Optional[dict]) -> str:
+        if not ip:
+            return "<p class='no-data'>IEEE plagiarism-level check was skipped.</p>"
+        color = self.RISK_COLORS.get(ip["risk_level"], "#95a5a6")
+        badge = (f'<span class="verdict" style="background:{color}">'
+                 f'{ip["risk_level"]}</span>')
+        rows = "".join(
+            f"<tr><td>{self._esc(p['source'])}</td><td>{p['kind']}</td>"
+            f"<td>{p['words']}</td><td><small>{self._esc(p['text'][:140])}</small></td></tr>"
+            for p in ip.get("passages", [])
+        )
+        table = (
+            f"<details><summary>Matched passages ({len(ip['passages'])})</summary>"
+            "<table><thead><tr><th>Source</th><th>Class</th><th>Words</th>"
+            f"<th>Text</th></tr></thead><tbody>{rows}</tbody></table></details>"
+            if rows else ""
+        )
+        extra = "".join(
+            f"<li>{self._esc(x)}</li>"
+            for x in ip["reuse_findings"] + ip["illustration_findings"]
+        )
+        extra = f"<ul>{extra}</ul>" if extra else ""
+        return (
+            f"<p><strong>{self._esc(ip['level_label'])}</strong> &nbsp; {badge}</p>"
+            f"<p>Uncredited verbatim: {ip['uncredited_pct']:.1f}% &nbsp; "
+            f"credited without quotation marks: {ip['credited_undelineated_pct']:.1f}% "
+            f"&nbsp; uncredited close paraphrase: {ip['paraphrase_uncredited_pct']:.1f}%</p>"
+            f"<p><em>Guidance:</em> {self._esc(ip['guidance'])}</p>"
+            f"<p><small>Indicative only; levels are set by adjudication. "
+            f"Basis: {self._esc(ip['basis'])}.</small></p>"
+            f"{extra}{table}"
         )
 
     def _watermark_section(self, wm: Optional[dict]) -> str:

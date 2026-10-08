@@ -42,6 +42,7 @@ from aegis.detectors.citation import CitationIntegrityDetector, CitationVerdict
 from aegis.detectors.stylometric import StylometricAnalyzer, StyleAnalysisResult
 from aegis.detectors.self_plagiarism import (
     SelfPlagiarismDetector, SelfPlagiarismResult)
+from aegis.detectors.ieee_plagiarism import IEEEPlagiarismClassifier, IEEEPlagiarismResult
 from aegis.detectors.watermark_detector import (
     LLMWatermarkDetector, WatermarkResult, WatermarkMode)
 from aegis.detectors.citation_network import CitationNetworkAnalyzer, CitationNetworkResult
@@ -132,6 +133,7 @@ class PipelineConfig:
     run_semantic: bool = True
     run_stylometric: bool = True
     run_self_plagiarism: bool = True
+    run_ieee_plagiarism: bool = True
     run_watermark_detector: bool = True
     run_citation_network: bool = True
     run_coherence_analyzer: bool = True
@@ -157,6 +159,8 @@ class AnalysisReport:
     citation_summary: dict = field(default_factory=dict)
     stylometric_result: Optional[StyleAnalysisResult] = None
     self_plagiarism_result: Optional[SelfPlagiarismResult] = None
+    # IEEE PSPB 8.2.4.D level classification of the similarity evidence
+    ieee_plagiarism_result: Optional[IEEEPlagiarismResult] = None
 
     # v2.0 detector results
     watermark_result: Optional[WatermarkResult] = None
@@ -250,6 +254,8 @@ class AEGISPipeline:
             use_sbert=self.cfg.use_sbert_self_plagiarism,
             device=self.cfg.device,
         ) if self.cfg.run_self_plagiarism else None
+
+        self._ieee_plag = IEEEPlagiarismClassifier() if self.cfg.run_ieee_plagiarism else None
 
         self._watermark = LLMWatermarkDetector(
             mode=self.cfg.watermark_mode,
@@ -442,6 +448,27 @@ class AEGISPipeline:
 
         # 7. Aggregate plagiarism score
         report.plagiarism_score = self._aggregate_plagiarism_score(report)
+
+        # 7b. IEEE PSPB 8.2.4.D plagiarism-level classification
+        if not self._ieee_plag:
+            _status("ieee_plagiarism", "disabled")
+        else:
+            try:
+                report.ieee_plagiarism_result = self._ieee_plag.analyze(
+                    plagiarism_text, report.ngram_matches, report.semantic_matches,
+                    self_plagiarism_result=report.self_plagiarism_result,
+                    full_text=full_text,
+                    own_labels={row[0] for row in
+                                (self._self_plag._corpus_index if self._self_plag else [])})
+                _status(
+                    "ieee_plagiarism",
+                    "completed",
+                    None if self._corpus_loaded else
+                    "no comparison corpus loaded: only self-reuse and "
+                    "illustration-credit checks were meaningful")
+            except Exception as exc:
+                logger.warning("IEEE plagiarism classification failed: %s", exc)
+                _status("ieee_plagiarism", "failed", str(exc))
 
         # 8. LLM watermark detection
         if not self._watermark:
@@ -646,6 +673,8 @@ class AEGISPipeline:
                     f"{len(mismatched)} citation metadata mismatch(es)")
         if report.self_plagiarism_result:
             flags.extend(report.self_plagiarism_result.flags)
+        if report.ieee_plagiarism_result:
+            flags.extend(report.ieee_plagiarism_result.flags)
         if report.ngram_matches:
             high_j = [m for m in report.ngram_matches
                       if m.jaccard_estimate >= 0.50]
@@ -736,13 +765,18 @@ class AEGISPipeline:
         venue_risk = (report.venue_verification_result.overall_risk
                       if report.venue_verification_result else "LOW")
 
+        ieee_risk = (report.ieee_plagiarism_result.risk_level
+                     if report.ieee_plagiarism_result else "LOW")
+
         if (report.plagiarism_score > 0.70 or
                 hallucinated_count > 0 or
-                sp_risk == "CRITICAL"):
+                sp_risk == "CRITICAL" or
+                ieee_risk == "CRITICAL"):
             risk = "CRITICAL"
         elif (report.plagiarism_score > 0.40 or
               report.ai_score > 0.70 or
               sp_risk == "HIGH" or
+              ieee_risk == "HIGH" or
               citation_score_for_risk > 0.30 or
               network_risk == "HIGH" or
               venue_risk == "HIGH" or
@@ -751,6 +785,7 @@ class AEGISPipeline:
         elif (report.plagiarism_score > 0.20 or
               report.ai_score > 0.50 or
               sp_risk == "MEDIUM" or
+              ieee_risk == "MEDIUM" or
               citation_score_for_risk > 0.10 or
               report.style_score > 0.30 or
               network_risk == "MEDIUM" or

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "aegis-integrity",
   "display_name": "AEGIS Integrity Checker",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Check papers for copied text, AI-written passages, fabricated citations and publisher-style problems, on your own computer.",
   "long_description": "AEGIS is an open-source academic integrity checker. It finds copied and paraphrased text against your own comparison library, scores AI-like writing with calibration for non-native English writers, verifies every reference against Crossref, and checks equations, grammar and IEEE/ACM/Elsevier/IET/BCS/ISACA style rules. Documents are analysed locally; only reference metadata is sent to Crossref. Requires the AEGIS Python package: pip install \"aegis-integrity[mcp,ml] @ git+https://github.com/sunilgentyala/aegis-integrity\".",
   "author": {

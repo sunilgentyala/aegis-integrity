@@ -1,7 +1,7 @@
 {
   "name": "aegis-integrity",
   "displayName": "AEGIS Integrity Checker",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Academic integrity checks inside Claude: copied and paraphrased text, AI-written passages (calibrated for non-native English writers), fabricated or mismatched references, and IEEE/ACM/Elsevier/IET/BCS/ISACA style rules. Documents are analysed locally.",
   "author": {
     "name": "Sunil Gentyala",

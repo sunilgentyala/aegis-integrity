@@ -1,7 +1,7 @@
 # AEGIS Academic Integrity Checker
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.2.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.3.0-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -61,11 +61,11 @@ full check doesn't wait on them.
 
 ## How AEGIS Compares
 
-Every major integrity tool has blind spots. AEGIS v3.2 aims to close **fourteen** of them simultaneously.
+Every major integrity tool has blind spots. AEGIS v3.3 aims to close **fourteen** of them simultaneously.
 
 Based on each vendor's public documentation and pricing pages as of August 2026. "Not public" means the capability isn't documented publicly by that vendor -- not a confirmed absence. [Corrections welcome](https://github.com/sunilgentyala/aegis-integrity/issues).
 
-| Gap | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai | **AEGIS v3.2** |
+| Gap | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai | **AEGIS v3.3** |
 |-----|:--------:|:-----------:|:---------:|:-------:|:--------------:|:--------------:|
 | Open-source / self-hostable | No | No | No | No | No | **Yes** |
 | Citation hallucination detection | Not public | Not public | Not public | Not public | Not public | **Yes** |
@@ -630,7 +630,7 @@ If you use AEGIS in your research, please cite the software:
   author    = {Gentyala, Sunil},
   title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
   year      = {2026},
-  version   = {3.2.0},
+  version   = {3.3.0},
   url       = {https://github.com/sunilgentyala/aegis-integrity}
 }
 ```
@@ -665,7 +665,22 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 
 ## Changelog
 
-### v3.2.0 (September 2026)
+### v3.3.0 (October 2026)
+- **NEW: IEEE plagiarism-level check.** Maps similarity evidence onto the
+  levels of IEEE PSPB Operations Manual 8.2.4.D (amended 25 June 2026):
+  Level 1 (major portion, 50% or more), Level 2 (large, 20-50%), Level 3
+  (uncredited verbatim, under 20%) and Level 4 (credited verbatim without
+  quotation marks). Matches are merged so words are never double-counted,
+  and matches from several sources are summed as the manual requires.
+  Levels are indicative; IEEE sets them by adjudication.
+- **NEW:** reuse of your own prior work is checked against 8.2.4.G / 8.2.10
+  (undisclosed earlier version), and captions of borrowed figures and tables
+  without a reference or permission note are flagged. Overlap with your own
+  prior works is left to the self-plagiarism detector, not counted twice.
+- New "IEEE Plagiarism Level" section in the HTML and JSON reports;
+  `PipelineConfig.run_ieee_plagiarism` turns it off.
+
+### v3.3.0 (September 2026)
 - **NEW (web app):** `aegis ui` opens a browser app at `http://127.0.0.1:8765/`
   (also served at `/` by `aegis serve` and Docker). Drag-and-drop checking
   with four modes (Full, Private/offline, References only, Style &
