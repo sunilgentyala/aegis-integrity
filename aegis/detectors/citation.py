@@ -176,6 +176,12 @@ class CitationIntegrityDetector:
         titles = data.get("title", [])
         if titles:
             resolved_title = titles[0]
+            # Crossref often splits "Main: Subtitle" into title + subtitle
+            # (e.g. ACM proceedings titled just "Vronicle"). Rejoin them so a
+            # correctly cited full title is not flagged as a mismatch.
+            subtitles = data.get("subtitle", [])
+            if subtitles and subtitles[0] and                     subtitles[0].lower() not in resolved_title.lower():
+                resolved_title = f"{resolved_title}: {subtitles[0]}"
 
         author_list = data.get("author", [])
         resolved_authors = [
