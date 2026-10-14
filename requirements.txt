@@ -13,7 +13,7 @@ striprtf>=0.0.26          # RTF parsing
 # --- NLP core ---
 nltk>=3.8.1
 spacy>=3.7.0              # POS tagging, sentence splitting, NER
-textstat>=0.7.3           # Readability metrics
+textstat>=0.7.13           # Readability metrics
 
 # --- Embeddings and similarity ---
 sentence-transformers>=3.0.0   # SBERT: paraphrase-MiniLM-L6-v2 + cross-encoder
