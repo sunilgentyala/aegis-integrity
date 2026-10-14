@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.sunilgentyala/aegis-integrity",
   "title": "AEGIS Academic Integrity Checker",
-  "description": "Local-first paper integrity checks: citation hallucination detection, AI-text and plagiarism signals, venue guideline checks.",
+  "description": "Local-first paper integrity checks: hallucinated citations, AI-text, plagiarism, venue guidelines.",
   "repository": {
     "url": "https://github.com/sunilgentyala/aegis-integrity",
     "source": "github"
