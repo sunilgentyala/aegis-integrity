@@ -44,7 +44,7 @@ habanero>=1.2.3           # Crossref REST API client (DOI validation)
 # verify=False keeps ignoring cert verification for later requests to the
 # same host even after verify is corrected; yanked 2.32.0/2.32.1, use 2.32.2+).
 requests>=2.32.2          # HTTP for PubMed E-utilities
-bibtexparser>=1.4.0       # BibTeX reference parsing
+bibtexparser>=2.1.0       # BibTeX reference parsing
 
 # --- Web API ---
 fastapi>=0.115.0
