@@ -74,8 +74,8 @@ jobs:
       - name: bandit (static analysis of aegis/ source)
         run: bandit -r aegis/ -ll
       - name: pip-audit (dependency vulnerability scan)
-        # PYSEC-2026-3740 (nltk): no fixed release exists yet; AEGIS does not call the
-        # affected code path. Revisit when nltk publishes a fix.
+        # PYSEC-2026-3740 (nltk): no fixed release listed by pip-audit yet; not yet triaged for
+        # AEGIS usage. Revisit when nltk publishes a fix.
         run: pip-audit --ignore-vuln PYSEC-2026-3740
         # Blocking: a known-vulnerable dependency fails the build. If an advisory
         # is not exploitable here, add `--ignore-vuln <ID>` with a comment saying why.
