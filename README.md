@@ -1,7 +1,7 @@
 # AEGIS Academic Integrity Checker
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.3.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.3.1-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -681,7 +681,7 @@ If you use AEGIS in your research, please cite the software:
   author    = {Gentyala, Sunil},
   title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
   year      = {2026},
-  version   = {3.3.0},
+  version   = {3.3.1},
   url       = {https://github.com/sunilgentyala/aegis-integrity}
 }
 ```
@@ -715,6 +715,26 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.3.1 (October 2026)
+Security hardening release. No detection behaviour changes.
+- **SECURITY: MCP file access.** Tools now read only `.pdf`, `.docx`, `.tex`
+  and `.txt` files up to `AEGIS_MAX_FILE_MB` (default 50). New
+  `AEGIS_ALLOWED_ROOTS` confines tools to listed folders; `prior_works_dir`
+  is validated the same way. Paths are passed as absolute paths so a file
+  named `-x.pdf` cannot be read as a CLI option.
+- **SECURITY: tool output.** Output returned to the model is stripped of
+  control characters and truncated at 60,000 characters. All tools carry MCP
+  read-only / non-destructive annotations. Venue names are validated.
+- **SECURITY: DOIs.** DOIs extracted from documents are percent-encoded and
+  fetched without following redirects (Crossref, DataCite, OpenAlex).
+- **SECURITY: configuration.** The MCP server no longer loads `./.env`
+  (only `AEGIS_ENV_FILE` or `~/.aegis/.env`). `.dockerignore` excludes
+  `.env`, key files and virtualenvs.
+- **CI / repo:** `SECURITY.md`, Dependabot, CodeQL, blocking `pip-audit`,
+  least-privilege workflow token, 10 regression tests.
+- **README:** demo GIF, MCP tools table, and the ESL calibration is now
+  labelled experimental (see the v3.1.1 note).
 
 ### v3.3.0 (October 2026)
 - **NEW: IEEE plagiarism-level check.** Maps similarity evidence onto the
