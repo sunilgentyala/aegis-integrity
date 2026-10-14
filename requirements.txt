@@ -43,7 +43,7 @@ habanero>=1.2.3           # Crossref REST API client (DOI validation)
 # requests floor raised past CVE-2024-35195 (a Session that starts with
 # verify=False keeps ignoring cert verification for later requests to the
 # same host even after verify is corrected; yanked 2.32.0/2.32.1, use 2.32.2+).
-requests>=2.32.2          # HTTP for PubMed E-utilities
+requests>=2.34.2          # HTTP for PubMed E-utilities
 bibtexparser>=1.4.0       # BibTeX reference parsing
 
 # --- Web API ---
