@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.sunilgentyala/aegis-integrity",
+  "title": "AEGIS Academic Integrity Checker",
+  "description": "Local-first paper integrity checks: citation hallucination detection, AI-text and plagiarism signals, venue guideline checks.",
+  "repository": {
+    "url": "https://github.com/sunilgentyala/aegis-integrity",
+    "source": "github"
+  },
+  "version": "3.3.2",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "aegis-integrity",
+      "version": "3.3.2",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

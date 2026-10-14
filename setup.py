@@ -52,6 +52,7 @@ setup(
         "click>=8.1.7",
         "rich>=13.7.1",
         "numpy>=1.26.0",
+        "mcp>=1.0.0,<2",  # 2.x renamed FastMCP to MCPServer; core so `uvx aegis-integrity` works
     ],
     extras_require={
         "ml": [
@@ -78,6 +79,7 @@ setup(
         "console_scripts": [
             "aegis=aegis.cli:cli",
             "aegis-mcp=aegis.mcp_server:main",
+            "aegis-integrity=aegis.mcp_server:main",
         ],
     },
     classifiers=[

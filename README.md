@@ -1,7 +1,9 @@
 # AEGIS Academic Integrity Checker
 
+<!-- mcp-name: io.github.sunilgentyala/aegis-integrity -->
+
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.3.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.3.2-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -681,7 +683,7 @@ If you use AEGIS in your research, please cite the software:
   author    = {Gentyala, Sunil},
   title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
   year      = {2026},
-  version   = {3.3.1},
+  version   = {3.3.2},
   url       = {https://github.com/sunilgentyala/aegis-integrity}
 }
 ```
@@ -715,6 +717,12 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.3.2 (October 2026)
+Packaging release for the official MCP Registry. No detection behaviour changes.
+- `mcp` is now a core dependency and a new `aegis-integrity` command starts the
+  MCP server, so `uvx aegis-integrity` works. `aegis-mcp` is unchanged.
+- README carries the MCP Registry ownership marker.
 
 ### v3.3.1 (October 2026)
 Security hardening release. No detection behaviour changes.
