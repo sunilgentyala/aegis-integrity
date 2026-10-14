@@ -1,0 +1,26 @@
+# MCP-server image (stdio transport), used for Glama / MCP registry checks.
+# The main Dockerfile runs the REST API (`aegis serve`); this one runs the
+# MCP server (`aegis_mcp.py`), which answers initialize/tools/list over stdio.
+FROM python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 libglib2.0-0 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+RUN pip install --no-cache-dir -e ".[ml,nlp,bib,mcp]"
+
+ENV AEGIS_INDEX_DIR=/data/index
+ENV AEGIS_REPORT_DIR=/data/reports
+ENV AEGIS_DEVICE=cpu
+
+RUN groupadd --gid 1000 aegis \
+    && useradd --uid 1000 --gid aegis --shell /bin/bash --create-home aegis \
+    && mkdir -p /data \
+    && chown -R aegis:aegis /app /data
+
+USER aegis
+
+ENTRYPOINT ["python", "aegis_mcp.py"]

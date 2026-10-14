@@ -8,3 +8,10 @@ aegis_index
 artifacts
 tests
 docs
+.env
+.env.*
+!.env.example
+.venv
+venv
+*.pem
+*.key

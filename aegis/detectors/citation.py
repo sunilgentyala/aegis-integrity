@@ -33,10 +33,23 @@ from dataclasses import dataclass
 from typing import Optional
 
 import requests
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
 _NETWORK_EXCEPTIONS = (requests.exceptions.Timeout, requests.exceptions.ConnectionError)
+
+
+def _safe_doi(doi: str) -> str:
+    """Percent-encode a DOI for use in a URL path.
+
+    DOIs are regex-extracted from untrusted paper text, so characters such as
+    ``?``, ``#``, spaces and ``..`` segments must not be able to alter which
+    API endpoint is queried.
+    """
+    doi = doi.strip()
+    segments = [seg for seg in doi.split("/") if seg not in ("..", ".")]
+    return quote("/".join(segments), safe="/")
 
 
 @dataclass
@@ -154,8 +167,8 @@ class CitationIntegrityDetector:
         # --- Resolve DOI via Crossref ---
         try:
             session = self._get_session()
-            url = f"{self.CROSSREF_BASE}/{doi}"
-            r = session.get(url, timeout=self.timeout)
+            url = f"{self.CROSSREF_BASE}/{_safe_doi(doi)}"
+            r = session.get(url, timeout=self.timeout, allow_redirects=False)
             if r.status_code == 404:
                 return self._handle_crossref_404(ref, doi, url)
             if r.status_code == 429 or r.status_code >= 500:
@@ -338,8 +351,8 @@ class CitationIntegrityDetector:
         """
         try:
             session = self._get_session()
-            agency_url = f"{self.CROSSREF_BASE}/{doi}/agency"
-            r = session.get(agency_url, timeout=self.timeout)
+            agency_url = f"{self.CROSSREF_BASE}/{_safe_doi(doi)}/agency"
+            r = session.get(agency_url, timeout=self.timeout, allow_redirects=False)
             if r.status_code == 200:
                 agency = (
                     r.json().get("message", {}).get("agency", {}).get("id", "")
@@ -421,7 +434,8 @@ class CitationIntegrityDetector:
         """
         try:
             session = self._get_session()
-            r = session.get(f"{self.DATACITE_BASE}/{doi}", timeout=self.timeout)
+            r = session.get(f"{self.DATACITE_BASE}/{_safe_doi(doi)}", timeout=self.timeout,
+                            allow_redirects=False)
             if r.status_code != 200:
                 return None
             attrs = r.json().get("data", {}).get("attributes", {})

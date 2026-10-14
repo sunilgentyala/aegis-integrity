@@ -141,9 +141,10 @@ class CitationNetworkAnalyzer:
             return None
         try:
             import requests
-            url = f"https://api.openalex.org/works/doi:{doi}"
+            from aegis.detectors.citation import _safe_doi
+            url = f"https://api.openalex.org/works/doi:{_safe_doi(doi)}"
             params = {"mailto": self.openalex_email}
-            resp = requests.get(url, params=params, timeout=6)
+            resp = requests.get(url, params=params, timeout=6, allow_redirects=False)
             if resp.status_code == 200:
                 data = resp.json()
                 venue = data.get("primary_location", {}).get("source", {})

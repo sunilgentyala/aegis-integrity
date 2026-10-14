@@ -5,9 +5,22 @@
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
-  <img src="https://img.shields.io/badge/bias--aware-ESL%20calibrated-purple?style=for-the-badge" alt="Bias Aware">
+  <img src="https://img.shields.io/badge/bias--aware-ESL%20(experimental)-purple?style=for-the-badge" alt="Bias aware, experimental">
   <img src="https://img.shields.io/github/stars/sunilgentyala/aegis-integrity?style=for-the-badge" alt="Stars">
 </p>
+
+<p align="center">
+  <a href="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/tests.yml"><img src="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/codeql.yml"><img src="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/sunilgentyala/aegis-integrity"><img src="https://api.scorecard.dev/projects/github.com/sunilgentyala/aegis-integrity/badge" alt="OpenSSF Scorecard"></a>
+  <a href="https://pypi.org/project/aegis-integrity/"><img src="https://img.shields.io/pypi/v/aegis-integrity" alt="PyPI"></a>
+  <a href="SECURITY.md"><img src="https://img.shields.io/badge/security-policy-blue" alt="Security policy"></a>
+</p>
+
+<p align="center">
+  <img src="docs/demo/demo.gif" alt="AEGIS analysing a paper from the terminal: two invented DOIs are flagged as hallucinated citations" width="860">
+</p>
+<p align="center"><sub>Real CLI output on a synthetic sample paper (<code>docs/demo/sample_paper.txt</code>). Both DOIs in it are invented, and AEGIS flags them.</sub></p>
 
 > **Open-source, offline, bias-aware academic integrity analysis.**
 > Documents are processed entirely on your own hardware and never uploaded anywhere. Citation checks may query Crossref/OpenAlex with reference metadata (titles, authors, DOIs) when online verification is enabled.
@@ -59,6 +72,42 @@ full check doesn't wait on them.
 
 ---
 
+## MCP Tools
+
+`aegis-mcp` exposes seven tools to Claude Code, Claude Desktop and any MCP client.
+
+| Tool | What it does | Example prompt |
+|---|---|---|
+| `aegis_analyze_paper` | Full integrity pipeline on a PDF/DOCX/TEX/TXT | "Run a full integrity check on ~/drafts/paper.pdf" |
+| `aegis_check_citations` | Verify references against Crossref (finds hallucinated DOIs) | "Check the references in paper.docx" |
+| `aegis_check_guidelines` | Offline style pass vs IEEE, ACM, BCS, IET, ISACA, Elsevier | "Is this ready for an Elsevier journal?" |
+| `aegis_compare_papers` | Overlap between two papers (conference vs journal version) | "Compare v1.docx and v2.docx" |
+| `aegis_index_add` | Add a paper to your local comparison corpus | "Add Smith2025.pdf to my corpus" |
+| `aegis_index_summary` | List the corpus | "What is in my AEGIS corpus?" |
+| `aegis_status` | Which checks are ready and how to fix the rest | "Is AEGIS set up correctly?" |
+
+---
+
+## Security
+
+AEGIS is local-first and the MCP server runs over stdio. Documents never leave your machine; only reference metadata goes to Crossref/OpenAlex.
+
+- MCP tools read only `.pdf`, `.docx`, `.tex` and `.txt` files up to 50 MB (`AEGIS_MAX_FILE_MB`).
+- Set `AEGIS_ALLOWED_ROOTS` to confine every tool to specific folders (recommended when an agent drives AEGIS).
+- Tool output is stripped of control characters and truncated; tools carry read-only / non-destructive MCP hints.
+- DOIs from documents are percent-encoded and fetched without redirects. The MCP server never loads `./.env`.
+- CI runs tests, `bandit`, a blocking `pip-audit`, CodeQL and OpenSSF Scorecard; Dependabot is on.
+
+Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
+
+---
+
+## Support the project
+
+If AEGIS helped you, a star on GitHub helps other researchers find it. Bug reports, sample papers that break it and pull requests are worth more: see the open issues labelled `good first issue`.
+
+---
+
 ## How AEGIS Compares
 
 Every major integrity tool has blind spots. AEGIS v3.3 aims to close **fourteen** of them simultaneously.
@@ -72,7 +121,7 @@ Based on each vendor's public documentation and pricing pages as of August 2026.
 | IEEE/ACM/Elsevier/IET/IETE/BCS -scoped venue-claim + duplicate-title check | **Yes (metadata-only via Crossref, free)** | Yes (full-text, paid Similarity Check membership) | Yes (full-text, paid Similarity Check membership) | Not public | Not public | Not public |
 | LLM watermark token-distribution heuristic (experimental, keyless) | **Yes** | Not public | Not public | Not public | Not public | Not public |
 | Citation network analysis (cartels, predatory) | **Yes** | Not public | Not public | Not public | Not public | Not public |
-| ESL / non-native bias calibration (15 languages) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| ESL / non-native bias calibration (15 languages) | Partial (experimental) | Not public | Not public | Not public | Not public | Not public |
 | Paragraph-level AI scoring | **Yes** | Not public | Not public | Yes | Yes | Partial |
 | Semantic / paraphrase plagiarism (SBERT) | **Yes** | Partial | Not public | Partial | Not public | Not public |
 | Stylometric ghostwriting detection (Burrows' Delta) | **Yes** | Not public | Not public | Not public | Not public | Not public |
@@ -130,7 +179,10 @@ misses:
 Targets the bias documented by [Liang et al. (Stanford, 2023)](https://arxiv.org/abs/2304.02819):
 GPT detectors misclassified more than half of non-native-authored TOEFL essays as AI-generated,
 one detector flagging up to 98%, while native-English essays were scored accurately.
-Applies per-language threshold multipliers for 15 languages. Paragraph-level scoring
+Defines per-language threshold multipliers for 15 languages, but **this part is experimental**:
+the language is detected from the text, which is "en" for nearly all English submissions, so the
+non-English multipliers rarely fire (see the v3.1.1 changelog note). Do not treat AEGIS as having
+solved ESL false positives; keep a human in the loop. Paragraph-level scoring
 pinpoints injected AI sections rather than giving one document-level verdict.
 
 Signals: GPT-2 perplexity, burstiness, cross-perplexity ratio, stylometric ensemble,

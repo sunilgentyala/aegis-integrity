@@ -10,6 +10,9 @@ Configuration (environment variables, all optional):
     AEGIS_INDEX_DIR    corpus index directory   (default: ~/.aegis/index)
     AEGIS_REPORT_DIR   HTML report directory    (default: ~/.aegis/reports)
     AEGIS_ENV_FILE     .env file to load         (default: ~/.aegis/.env)
+    AEGIS_ALLOWED_ROOTS  os.pathsep-separated folders the tools may read
+                         (default: unrestricted, but only PDF/DOCX/TEX/TXT
+                         files up to AEGIS_MAX_FILE_MB, default 50, are read)
 
 Each tool runs the ``aegis`` CLI in a child process (``python -m aegis``)
 rather than in-process, so a slow first-run model download or a crash in a
@@ -19,18 +22,58 @@ detector can never wedge the MCP stdio pipe.
 from __future__ import annotations
 
 import os
+import re
 import signal
 import subprocess
 import sys
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
-from aegis.paths import default_index_dir, default_report_dir, load_env_file
+from aegis.paths import aegis_home, default_index_dir, default_report_dir, load_env_file
 
-load_env_file()
+# Never read ./.env here: the MCP client picks the working directory, which may
+# be an untrusted folder. Only AEGIS_ENV_FILE or ~/.aegis/.env are honoured.
+load_env_file(os.environ.get("AEGIS_ENV_FILE") or aegis_home() / ".env")
 
 mcp = FastMCP("aegis-integrity")
+
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".tex", ".txt"}
+MAX_FILE_BYTES = int(os.environ.get("AEGIS_MAX_FILE_MB", "50")) * 1024 * 1024
+MAX_OUTPUT_CHARS = 60_000
+MAX_PRIOR_WORKS_ENTRIES = 10_000
+VALID_VENUES = {"IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "ALL"}
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+_CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+# Tool annotations tell the client what each tool can do. Nothing here deletes
+# or overwrites user data; aegis_index_add only appends to the local index.
+_READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                             idempotentHint=True, openWorldHint=False)
+_READ_ONLY_NET = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                 idempotentHint=True, openWorldHint=True)
+_WRITES_INDEX = ToolAnnotations(readOnlyHint=False, destructiveHint=False,
+                                idempotentHint=False, openWorldHint=False)
+
+
+def _allowed_roots() -> list[Path]:
+    raw = os.environ.get("AEGIS_ALLOWED_ROOTS", "")
+    return [Path(r).expanduser().resolve() for r in raw.split(os.pathsep) if r.strip()]
+
+
+def _in_allowed_roots(path: Path) -> bool:
+    roots = _allowed_roots()
+    return not roots or any(path.is_relative_to(r) for r in roots)
+
+
+def _sanitize_output(text: str) -> str:
+    """Strip ANSI/control characters and cap size before text reaches the model."""
+    text = _CTRL_RE.sub("", _ANSI_RE.sub("", text))
+    if len(text) > MAX_OUTPUT_CHARS:
+        extra = len(text) - MAX_OUTPUT_CHARS
+        text = text[:MAX_OUTPUT_CHARS] + f"\n...[truncated, {extra} more characters]"
+    return text
 
 
 def _index_dir() -> Path:
@@ -95,9 +138,9 @@ def _run(args: list[str], timeout: int = 300) -> str:
             "Setting HF_TOKEN in ~/.aegis/.env also speeds up downloads."
         )
         if partial:
-            msg += f"\n\nPartial output before timeout:\n{partial[-2000:]}"
+            msg += f"\n\nPartial output before timeout:\n{_sanitize_output(partial[-2000:])}"
         return msg
-    out = (out or "").strip()
+    out = _sanitize_output((out or "").strip())
     if proc.returncode != 0:
         out = (out + f"\n(exit code {proc.returncode})").strip()
     return out or "(no output)"
@@ -110,13 +153,52 @@ def _with_report(output: str, html_out: str, wanted: bool) -> str:
 
 
 def _check_file(file_path: str) -> str | None:
-    if not Path(file_path).is_file():
+    """Validate a model-supplied path before it is handed to the CLI."""
+    try:
+        p = Path(file_path).expanduser().resolve()
+    except (OSError, RuntimeError, ValueError):
+        return "Invalid file path."
+    if not p.is_file():
         return (f"File not found: {file_path}\n"
                 "Pass the absolute path to a PDF, DOCX, TEX or TXT file.")
+    if p.suffix.lower() not in ALLOWED_EXTENSIONS:
+        return ("Unsupported file type. AEGIS reads only "
+                + ", ".join(sorted(ALLOWED_EXTENSIONS)) + " files.")
+    if not _in_allowed_roots(p):
+        return "Path is outside the folders allowed by AEGIS_ALLOWED_ROOTS."
+    if p.stat().st_size > MAX_FILE_BYTES:
+        return f"File exceeds the {MAX_FILE_BYTES // (1024 * 1024)} MB limit (AEGIS_MAX_FILE_MB)."
     return None
 
 
-@mcp.tool()
+def _check_dir(dir_path: str) -> str | None:
+    try:
+        p = Path(dir_path).expanduser().resolve()
+    except (OSError, RuntimeError, ValueError):
+        return "Invalid folder path."
+    if not p.is_dir():
+        return f"Folder not found: {dir_path}"
+    if not _in_allowed_roots(p):
+        return "Folder is outside the folders allowed by AEGIS_ALLOWED_ROOTS."
+    for n, _ in enumerate(p.rglob("*")):
+        if n > MAX_PRIOR_WORKS_ENTRIES:
+            return "Folder contains too many entries."
+    return None
+
+
+def _abs(file_path: str) -> str:
+    """Absolute, resolved path, so it can never be parsed as a CLI option."""
+    return str(Path(file_path).expanduser().resolve())
+
+
+def _check_venues(venues: str) -> str | None:
+    bad = [v for v in venues.replace(" ", "").upper().split(",") if v and v not in VALID_VENUES]
+    if bad:
+        return f"Unknown venue(s): {', '.join(bad)}. Use IEEE, ACM, BCS, IET, ISACA, ELSEVIER or all."
+    return None
+
+
+@mcp.tool(annotations=_READ_ONLY_NET)
 def aegis_analyze_paper(
     file_path: str,
     prior_works_dir: str = "",
@@ -146,12 +228,16 @@ def aegis_analyze_paper(
     """
     if err := _check_file(file_path):
         return err
+    if prior_works_dir and (err := _check_dir(prior_works_dir)):
+        return err
+    if check_guidelines and (err := _check_venues(check_guidelines)):
+        return err
     html_out = str(_report_dir() / f"{Path(file_path).stem}_report.html")
-    args = ["analyze", file_path, "--index-dir", str(_index_dir())]
+    args = ["analyze", _abs(file_path), "--index-dir", str(_index_dir())]
     if html_report:
         args += ["--html", html_out]
     if prior_works_dir:
-        args += ["--prior-works", prior_works_dir]
+        args += ["--prior-works", _abs(prior_works_dir)]
     if skip_ai_detection:
         args.append("--no-ai")
     if skip_citations:
@@ -161,7 +247,7 @@ def aegis_analyze_paper(
     return _with_report(_run(args, timeout=900), html_out, html_report)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 def aegis_compare_papers(file1: str, file2: str) -> str:
     """Compare two papers directly for overlap or self-plagiarism.
 
@@ -175,10 +261,10 @@ def aegis_compare_papers(file1: str, file2: str) -> str:
     for f in (file1, file2):
         if err := _check_file(f):
             return err
-    return _run(["compare", file1, file2], timeout=900)
+    return _run(["compare", _abs(file1), _abs(file2)], timeout=900)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY_NET)
 def aegis_check_citations(file_path: str, html_report: bool = True) -> str:
     """Verify a paper's references against Crossref (citations module only).
 
@@ -193,14 +279,14 @@ def aegis_check_citations(file_path: str, html_report: bool = True) -> str:
     if err := _check_file(file_path):
         return err
     html_out = str(_report_dir() / f"{Path(file_path).stem}_citations.html")
-    args = ["analyze", file_path,
+    args = ["analyze", _abs(file_path),
             "--no-ai", "--no-semantic", "--no-stylometric", "--no-self-plagiarism"]
     if html_report:
         args += ["--html", html_out]
     return _with_report(_run(args, timeout=300), html_out, html_report)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 def aegis_check_guidelines(file_path: str, venues: str = "all", html_report: bool = True) -> str:
     """Fast offline style pass: equations, grammar and per-publisher guidelines.
 
@@ -214,20 +300,22 @@ def aegis_check_guidelines(file_path: str, venues: str = "all", html_report: boo
     """
     if err := _check_file(file_path):
         return err
+    if err := _check_venues(venues):
+        return err
     html_out = str(_report_dir() / f"{Path(file_path).stem}_guidelines.html")
-    args = ["guidelines", file_path, "--venues", venues]
+    args = ["guidelines", _abs(file_path), "--venues", venues]
     if html_report:
         args += ["--html", html_out]
     return _with_report(_run(args, timeout=120), html_out, html_report)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 def aegis_index_summary() -> str:
     """List the papers in the local AEGIS comparison corpus."""
     return _run(["index", "summary", "--index-dir", str(_index_dir())], timeout=30)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITES_INDEX)
 def aegis_index_add(file_path: str, label: str = "") -> str:
     """Add a paper to the local comparison corpus for future plagiarism checks.
 
@@ -237,13 +325,13 @@ def aegis_index_add(file_path: str, label: str = "") -> str:
     """
     if err := _check_file(file_path):
         return err
-    args = ["index", "add", file_path, "--index-dir", str(_index_dir())]
+    args = ["index", "add", _abs(file_path), "--index-dir", str(_index_dir())]
     if label:
-        args += ["--label", label]
+        args += [f"--label={label[:100]}"]
     return _run(args, timeout=120)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY_NET)
 def aegis_status() -> str:
     """Show which AEGIS checks are ready, which are missing, and how to fix them.
 

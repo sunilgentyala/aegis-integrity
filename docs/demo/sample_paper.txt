@@ -1,0 +1,11 @@
+Federated Anomaly Detection for Edge Networks
+
+Abstract
+We propose a lightweight federated method for anomaly detection. Experiments show strong results on public benchmarks.
+
+I. Introduction
+Federated learning keeps data local [1]. Prior work reports high accuracy [2].
+
+References
+[1] J. Doe and A. Roe, "Federated learning at the edge," Journal of Examples, vol. 12, 2023, doi:10.1000/xyz123.
+[2] B. Poe, "A survey of detection," Proc. Example Conf., 2022, doi:10.9999/this.doi.does.not.exist.

@@ -461,7 +461,7 @@ class TestCitationIntegrityDetector:
         """responses: {url_substring: (status_code, json_dict)}"""
         session = MagicMock()
 
-        def fake_get(url, timeout=None, params=None):
+        def fake_get(url, timeout=None, params=None, **kwargs):
             for substr, (status, body) in responses.items():
                 if substr in url:
                     resp = MagicMock()
