@@ -2,7 +2,7 @@
 # reproducible builds. Refresh periodically (e.g. `docker pull python:3.11-slim`
 # then `docker inspect --format='{{index .RepoDigests 0}}' python:3.11-slim`)
 # to pick up security patches -- a floating tag alone can silently drift.
-FROM python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93
+FROM python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170
 
 WORKDIR /app
 
