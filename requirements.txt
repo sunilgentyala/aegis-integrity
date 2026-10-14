@@ -18,7 +18,7 @@ textstat>=0.7.3           # Readability metrics
 # --- Embeddings and similarity ---
 sentence-transformers>=3.0.0   # SBERT: paraphrase-MiniLM-L6-v2 + cross-encoder
 faiss-cpu>=1.8.0               # ANN vector search
-datasketch>=1.6.4              # MinHash LSH for n-gram shingling
+datasketch>=2.0.0              # MinHash LSH for n-gram shingling
 scikit-learn>=1.4.0            # TF-IDF, cosine similarity
 
 # --- AI detection ---
