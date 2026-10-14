@@ -7,7 +7,7 @@
 # write in embed-extract, affected 1.26.5-1.26.6, fixed 1.26.7).
 PyMuPDF>=1.26.7          # PDF extraction (fitz)
 python-docx>=1.1.0       # DOCX parsing
-TexSoup>=0.3.1            # LaTeX source parsing
+TexSoup>=0.3.3            # LaTeX source parsing
 striprtf>=0.0.26          # RTF parsing
 
 # --- NLP core ---
