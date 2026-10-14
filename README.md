@@ -12,7 +12,6 @@
 <p align="center">
   <a href="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/tests.yml"><img src="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
   <a href="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/codeql.yml"><img src="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/sunilgentyala/aegis-integrity"><img src="https://api.scorecard.dev/projects/github.com/sunilgentyala/aegis-integrity/badge" alt="OpenSSF Scorecard"></a>
   <a href="https://pypi.org/project/aegis-integrity/"><img src="https://img.shields.io/pypi/v/aegis-integrity" alt="PyPI"></a>
   <a href="SECURITY.md"><img src="https://img.shields.io/badge/security-policy-blue" alt="Security policy"></a>
 </p>
@@ -96,7 +95,7 @@ AEGIS is local-first and the MCP server runs over stdio. Documents never leave y
 - Set `AEGIS_ALLOWED_ROOTS` to confine every tool to specific folders (recommended when an agent drives AEGIS).
 - Tool output is stripped of control characters and truncated; tools carry read-only / non-destructive MCP hints.
 - DOIs from documents are percent-encoded and fetched without redirects. The MCP server never loads `./.env`.
-- CI runs tests, `bandit`, a blocking `pip-audit`, CodeQL and OpenSSF Scorecard; Dependabot is on.
+- CI runs tests, `bandit`, a blocking `pip-audit`, and CodeQL; Dependabot is on.
 
 Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
 

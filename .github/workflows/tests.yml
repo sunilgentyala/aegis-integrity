@@ -70,11 +70,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e ".[ml,nlp,bib]" bandit pip-audit
+      - run: pip install -U setuptools && pip install -e ".[ml,nlp,bib]" bandit pip-audit
       - name: bandit (static analysis of aegis/ source)
         run: bandit -r aegis/ -ll
       - name: pip-audit (dependency vulnerability scan)
-        run: pip-audit
+        # PYSEC-2026-3740 (nltk): no fixed release exists yet; AEGIS does not call the
+        # affected code path. Revisit when nltk publishes a fix.
+        run: pip-audit --ignore-vuln PYSEC-2026-3740
         # Blocking: a known-vulnerable dependency fails the build. If an advisory
         # is not exploitable here, add `--ignore-vuln <ID>` with a comment saying why.
 
