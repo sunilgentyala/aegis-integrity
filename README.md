@@ -17,6 +17,7 @@
   <a href="https://pypi.org/project/aegis-integrity/"><img src="https://img.shields.io/pypi/v/aegis-integrity" alt="PyPI"></a>
   <a href="SECURITY.md"><img src="https://img.shields.io/badge/security-policy-blue" alt="Security policy"></a>
   <a href="https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp"><img src="https://img.shields.io/badge/mcprush-verified%20publisher%20%C2%B7%20grade%20A-brightgreen" alt="mcprush verified publisher, grade A"></a>
+  <a href="https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity"><img src="https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity/badges/score.svg" alt="sunilgentyala/aegis-integrity MCP server on Glama"></a>
 </p>
 
 <p align="center">
@@ -77,6 +78,8 @@ full check doesn't wait on them.
 ## MCP Tools
 
 `aegis-mcp` exposes seven tools to Claude Code, Claude Desktop and any MCP client.
+
+Listed and claimed by the maintainer on [Glama](https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity) and [mcprush](https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp). See [what each listing status means](docs/DIRECTORY_LISTINGS.md).
 
 | Tool | What it does | Example prompt |
 |---|---|---|
