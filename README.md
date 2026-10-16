@@ -16,6 +16,7 @@
   <a href="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/codeql.yml"><img src="https://github.com/sunilgentyala/aegis-integrity/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
   <a href="https://pypi.org/project/aegis-integrity/"><img src="https://img.shields.io/pypi/v/aegis-integrity" alt="PyPI"></a>
   <a href="SECURITY.md"><img src="https://img.shields.io/badge/security-policy-blue" alt="Security policy"></a>
+  <a href="https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp"><img src="https://img.shields.io/badge/mcprush-verified%20publisher%20%C2%B7%20grade%20A-brightgreen" alt="mcprush verified publisher, grade A"></a>
 </p>
 
 <p align="center">
