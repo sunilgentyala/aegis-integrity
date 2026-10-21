@@ -19,7 +19,7 @@ textstat>=0.7.13           # Readability metrics
 sentence-transformers>=3.0.0   # SBERT: paraphrase-MiniLM-L6-v2 + cross-encoder
 faiss-cpu>=1.8.0               # ANN vector search
 datasketch>=2.0.0              # MinHash LSH for n-gram shingling
-scikit-learn>=1.4.0            # TF-IDF, cosine similarity
+scikit-learn>=1.7.2            # TF-IDF, cosine similarity
 
 # --- AI detection ---
 # transformers floor raised past CVE-2024-11394/CVE-2024-11392 (RCE via
