@@ -39,7 +39,7 @@ torch>=2.6.0              # Required by transformers
 langdetect>=1.0.9         # Language detection for threshold calibration
 
 # --- Citation integrity (NOVEL FEATURE) ---
-habanero>=1.2.3           # Crossref REST API client (DOI validation)
+habanero>=2.9.2           # Crossref REST API client (DOI validation)
 # requests floor raised past CVE-2024-35195 (a Session that starts with
 # verify=False keeps ignoring cert verification for later requests to the
 # same host even after verify is corrected; yanked 2.32.0/2.32.1, use 2.32.2+).
