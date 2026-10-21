@@ -70,4 +70,4 @@ pydantic>=2.7.0
 python-dotenv>=1.0.1
 tqdm>=4.66.4
 click>=8.1.7              # CLI
-rich>=13.7.1              # Terminal output
+rich>=15.0.0              # Terminal output
