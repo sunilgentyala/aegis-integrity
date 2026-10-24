@@ -191,3 +191,44 @@ class TestOverallStatus:
             assert res.overall_status in ("COMPLIANT", "NEEDS_REVIEW", "NOT_ENOUGH_DATA")
             for check in res.checks:
                 assert check.status in ("PASS", "NEEDS_REVIEW", "NOT_ENOUGH_DATA")
+
+
+class TestElsevierWritingPattern:
+    """Pattern checks measured on two Information Fusion 139 (2027) papers."""
+
+    GOOD = (
+        "Abstract\n" + " ".join(["This study examines a fusion rule under uncertain provenance and reports measured results."] * 8) +
+        "\nKeywords:\nInformation fusion\nProvenance\n\n1. Introduction\nWe study evidence fusion [1]. Our contributions are listed here. "
+        "The rest of the paper is organized as follows. Section 2 reviews related work [2].\n\n2. Related work\nPrior work is discussed [3].\n\n"
+        "3. Method\nThe method has a limitation. Another limitation is stated.\n\n4. Conclusions\nWe conclude.\n\n"
+        "Corresponding author: A. Author\nCRediT authorship contribution statement\nA. Author: Writing.\n"
+        "Declaration of competing interest\nNone.\nDeclaration of generative AI and AI-assisted technologies in the manuscript preparation process\nNone used.\n"
+        "Data availability\nOn request.\n\nReferences\n[1] A. Author, Title one, J. Test 1 (2025) 1-2.\n[2] B. Author, Title two, J. Test 2 (2025) 3-4.\n"
+        "[3] C. Author, Title three, J. Test 3 (2025) 5-6.\n"
+    )
+
+    def _result(self, text):
+        checks = _run_check(text, ["ELSEVIER"])["ELSEVIER"].checks
+        return {c.rule: c for c in checks}
+
+    def test_good_skeleton_passes_core_checks(self):
+        r = self._result(self.GOOD)
+        for rule in ("Introduction ends with a roadmap sentence", "Introduction states the contributions",
+                     "Declarations present and ordered like the published papers",
+                     "Numbered references by first citation, all cited, all resolved"):
+            assert r[rule].status == "PASS", (rule, r[rule].detail)
+
+    def test_em_dash_flagged(self):
+        r = self._result(self.GOOD.replace("We conclude.", "We conclude — briefly."))
+        assert r["No em or en dashes in running text"].status == "NEEDS_REVIEW"
+
+    def test_missing_genai_declaration_flagged(self):
+        text = self.GOOD.replace("Declaration of generative AI and AI-assisted technologies in the manuscript preparation process\nNone used.\n", "")
+        assert self._result(text)["Declarations present and ordered like the published papers"].status == "NEEDS_REVIEW"
+
+    def test_out_of_order_citations_flagged(self):
+        text = self.GOOD.replace("We study evidence fusion [1].", "We study evidence fusion [2].")
+        assert self._result(text)["Numbered references by first citation, all cited, all resolved"].status == "NEEDS_REVIEW"
+
+    def test_other_venues_do_not_run_house_style(self):
+        assert "No em or en dashes in running text" not in {c.rule for c in _run_check(self.GOOD, ["IEEE"])["IEEE"].checks}

@@ -83,6 +83,7 @@ class GuidelineProfile:
     require_data_availability_statement: bool = False
     highlights_max_bullets: Optional[int] = None
     highlights_max_chars: Optional[int] = None
+    elsevier_house_style: bool = False     # writing-pattern checks, see elsevier_pattern.py
 
 
 GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
@@ -236,6 +237,7 @@ GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
         require_data_availability_statement=True,
         highlights_max_bullets=5,
         highlights_max_chars=85,
+        elsevier_house_style=True,
         notes=(
             '"American or British usage is accepted, but not a mixture of these" -- '
             "unlike the other four venues here, Elsevier explicitly permits either "
@@ -260,6 +262,12 @@ GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
             "set per journal, not uniformly across Elsevier -- recorded here as "
             '"varies" rather than asserting one convention, so this check reports '
             "NOT_ENOUGH_DATA instead of a false verdict.",
+            "Writing-pattern checks (aegis.guidelines.elsevier_pattern) were measured on two "
+            "papers published in Information Fusion 139 (2027): sentence length, "
+            "transition density, dash use, section skeleton, roadmap sentence, "
+            "declaration order, limitations discussion, and reference numbering.",
+            "Elsevier's generative-AI policy asks authors to disclose AI-assisted writing in a "
+            "dedicated declaration placed before the reference list.",
             "Equation numbering/reference convention cross-checked against a real "
             "published ScienceDirect article (Biomedical Signal Processing and "
             "Control 115 (2026) 109428).",

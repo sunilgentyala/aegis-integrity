@@ -90,6 +90,8 @@ class GuidelineComplianceChecker:
         checks.append(self._check_conflict_of_interest_statement(profile))
         checks.append(self._check_data_availability_statement(profile))
         checks.append(self._check_highlights(profile))
+        if profile.elsevier_house_style:
+            checks.extend(self._check_elsevier_house_style(profile))
 
         if any(c.status == "NEEDS_REVIEW" for c in checks):
             overall = "NEEDS_REVIEW"
@@ -368,6 +370,11 @@ class GuidelineComplianceChecker:
             f"available on request.\").",
             source,
         )
+
+    def _check_elsevier_house_style(self, profile: GuidelineProfile) -> list[ComplianceCheck]:
+        from aegis.guidelines.elsevier_pattern import run_checks
+        source = profile.source_name + " / two published Information Fusion 139 (2027) papers"
+        return [ComplianceCheck(rule, status, detail, source) for rule, status, detail in run_checks(self.full_text)]
 
     def _check_highlights(self, profile: GuidelineProfile) -> ComplianceCheck:
         rule = "Highlights (bullet-point summary)"
