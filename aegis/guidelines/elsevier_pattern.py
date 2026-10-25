@@ -256,10 +256,10 @@ def run_checks(full_text: str):
                         "PASS" if not problems else "NEEDS_REVIEW",
                         f"{len(entries)} entries, {len(cited_nums)} distinct citations." if not problems else
                         "; ".join(problems) + "."))
-        years = sum(1 for e in re.split(r"\n\s*\[\d+\]\s+", refs) if re.search(r"\((?:19|20)\d{2}\)", e))
+        years = sum(1 for e in re.split(r"\n\s*\[\d+\]\s+", refs) if re.search(r"\((?:19|20)\d{2}\)|,\s*(?:19|20)\d{2}\b", e))
         results.append(("Elsevier reference format (Initials Surname, Title, Journal vol (year) pages)",
                         "PASS" if years >= 0.9 * len(entries) else "NEEDS_REVIEW",
-                        f"{years} of {len(entries)} entries carry a parenthesised year."))
+                        f"{years} of {len(entries)} entries carry a year (journals as (2025), proceedings as , 2025,)."))
     else:
         results.append(("Numbered references by first citation, all cited, all resolved", "NOT_ENOUGH_DATA",
                         "No bracket-numbered reference list recognised."))
