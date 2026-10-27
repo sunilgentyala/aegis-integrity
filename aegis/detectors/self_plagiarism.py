@@ -302,7 +302,8 @@ class SelfPlagiarismDetector:
                 for i in range(len(tokens) - self.WORD_N + 1)}
 
     def _split_sentences(self, text: str) -> list[str]:
-        parts = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
+        # bounded whitespace run keeps matching linear on adversarial input (CWE-1333)
+        parts = re.split(r"(?<=[.!?])\s{1,64}(?=[A-Z])", text)
         return [p.strip() for p in parts if p.strip()]
 
     def _split_paragraphs(self, text: str) -> list[str]:
