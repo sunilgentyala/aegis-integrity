@@ -329,7 +329,7 @@ class AEGISPipeline:
         """
         Run full AEGIS analysis on a submission file.
 
-        submission_path: absolute path to PDF, DOCX, TEX, or TXT file.
+        submission_path: absolute path to PDF, DOCX, TEX, TXT, or Markdown file.
         author_style_baseline: pre-computed StyleProfile from prior publications.
         """
         t0 = time.time()

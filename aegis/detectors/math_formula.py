@@ -150,7 +150,7 @@ class MathFormulaChecker:
         result.reference_issues = self._check_references(definitions, references)
         result.notation_issues = self._check_notation(full_text, eq_texts, doc_format)
 
-        if doc_format in ("pdf", "txt", "bib"):
+        if doc_format in ("pdf", "txt", "bib", "markdown"):
             result.limitations.append(
                 "Equations were located via text-pattern heuristics, not native math "
                 "markup -- numbering/reference checks are best-effort and may miss "

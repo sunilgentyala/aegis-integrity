@@ -165,10 +165,10 @@ footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: cen
       <p class="sub">Looks for copied or paraphrased text, AI-written passages, fabricated or mismatched references, and style problems.</p>
       <div class="drop" id="drop1" tabindex="0" role="button" aria-label="Choose a file to check">
         <strong>Drop a file here, or click to choose</strong>
-        <span class="snip">PDF, Word (.docx), LaTeX (.tex) or plain text · up to 50 MB</span>
+        <span class="snip">PDF, Word (.docx), LaTeX (.tex), Markdown (.md) or plain text · up to 50 MB</span>
         <div class="file" id="file1Name"></div>
       </div>
-      <input type="file" id="file1" accept=".pdf,.docx,.tex,.txt" hidden>
+      <input type="file" id="file1" accept=".pdf,.docx,.tex,.txt,.md" hidden>
 
       <div class="modes" role="radiogroup" aria-label="What to check">
         <label class="mode"><input type="radio" name="mode" value="full" checked><div><b>Full check</b><span>Everything. A few minutes; the first run downloads models.</span></div></label>
@@ -228,11 +228,11 @@ footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: cen
       <div class="two">
         <div>
           <div class="drop" id="dropA" tabindex="0" role="button" aria-label="Choose the first paper"><strong>First paper</strong><span class="snip">Drop or click</span><div class="file" id="fileAName"></div></div>
-          <input type="file" id="fileA" accept=".pdf,.docx,.tex,.txt" hidden>
+          <input type="file" id="fileA" accept=".pdf,.docx,.tex,.txt,.md" hidden>
         </div>
         <div>
           <div class="drop" id="dropB" tabindex="0" role="button" aria-label="Choose the second paper"><strong>Second paper</strong><span class="snip">Drop or click</span><div class="file" id="fileBName"></div></div>
-          <input type="file" id="fileB" accept=".pdf,.docx,.tex,.txt" hidden>
+          <input type="file" id="fileB" accept=".pdf,.docx,.tex,.txt,.md" hidden>
         </div>
       </div>
       <div class="row"><button class="btn" id="cmpBtn" type="button" disabled>Compare</button></div>
@@ -248,7 +248,7 @@ footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: cen
       <h2>My comparison library</h2>
       <p class="sub">Copied-text checks compare a paper against the documents in this library: your earlier papers, a reference set, or earlier student submissions. Nothing is uploaded anywhere; the library lives in <code id="idxDir">…</code>.</p>
       <div class="drop" id="dropC" tabindex="0" role="button" aria-label="Choose files to add to the library"><strong>Add papers to the library</strong><span class="snip">Drop one or more files, or click to choose</span><div class="file" id="fileCName"></div></div>
-      <input type="file" id="fileC" accept=".pdf,.docx,.tex,.txt" multiple hidden>
+      <input type="file" id="fileC" accept=".pdf,.docx,.tex,.txt,.md" multiple hidden>
       <div class="row"><button class="btn" id="addBtn" type="button" disabled>Add to library</button><span class="note" id="addMsg" style="margin:0" role="status" aria-live="polite"></span></div>
       <div id="corpusErr" class="err hidden" role="alert"></div>
     </div>
