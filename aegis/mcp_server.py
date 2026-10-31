@@ -11,7 +11,7 @@ Configuration (environment variables, all optional):
     AEGIS_REPORT_DIR   HTML report directory    (default: ~/.aegis/reports)
     AEGIS_ENV_FILE     .env file to load         (default: ~/.aegis/.env)
     AEGIS_ALLOWED_ROOTS  os.pathsep-separated folders the tools may read
-                         (default: unrestricted, but only PDF/DOCX/TEX/TXT
+                         (default: unrestricted, but only PDF/DOCX/TEX/TXT/MD
                          files up to AEGIS_MAX_FILE_MB, default 50, are read)
 
 Each tool runs the ``aegis`` CLI in a child process (``python -m aegis``)
@@ -39,7 +39,7 @@ load_env_file(os.environ.get("AEGIS_ENV_FILE") or aegis_home() / ".env")
 
 mcp = FastMCP("aegis-integrity")
 
-ALLOWED_EXTENSIONS = {".pdf", ".docx", ".tex", ".txt"}
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".tex", ".txt", ".md"}
 MAX_FILE_BYTES = int(os.environ.get("AEGIS_MAX_FILE_MB", "50")) * 1024 * 1024
 MAX_OUTPUT_CHARS = 60_000
 MAX_PRIOR_WORKS_ENTRIES = 10_000
@@ -160,7 +160,7 @@ def _check_file(file_path: str) -> str | None:
         return "Invalid file path."
     if not p.is_file():
         return (f"File not found: {file_path}\n"
-                "Pass the absolute path to a PDF, DOCX, TEX or TXT file.")
+                "Pass the absolute path to a PDF, DOCX, TEX, TXT or Markdown file.")
     if p.suffix.lower() not in ALLOWED_EXTENSIONS:
         return ("Unsupported file type. AEGIS reads only "
                 + ", ".join(sorted(ALLOWED_EXTENSIONS)) + " files.")
@@ -207,7 +207,7 @@ def aegis_analyze_paper(
     check_guidelines: str = "",
     html_report: bool = True,
 ) -> str:
-    """Run the full AEGIS integrity check on a paper (PDF/DOCX/TEX/TXT).
+    """Run the full AEGIS integrity check on a paper (PDF/DOCX/TEX/TXT/MD).
 
     Covers n-gram and semantic plagiarism against the local corpus, AI-content
     detection calibrated for non-native English writers, Crossref citation
@@ -294,7 +294,7 @@ def aegis_check_guidelines(file_path: str, venues: str = "all", html_report: boo
     Each requested publisher is checked separately against its own guidance.
 
     Args:
-        file_path: Absolute path to the paper file (PDF/DOCX/TEX/TXT).
+        file_path: Absolute path to the paper file (PDF/DOCX/TEX/TXT/MD).
         venues: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER, or "all".
         html_report: Save a self-contained HTML report. Default True.
     """

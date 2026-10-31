@@ -13,8 +13,9 @@ def test_rejects_non_document_extension(tmp_path):
     assert "Unsupported file type" in m._check_file(str(secret))
 
 
-def test_accepts_txt(tmp_path):
-    f = tmp_path / "paper.txt"
+@pytest.mark.parametrize("suffix", [".txt", ".md", ".MD"])
+def test_accepts_text_document(tmp_path, suffix):
+    f = tmp_path / ("paper" + suffix)
     f.write_text("hello")
     assert m._check_file(str(f)) is None
 

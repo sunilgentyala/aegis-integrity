@@ -91,7 +91,7 @@ def run_checks(offline: bool = False) -> list[Check]:
     checks.append(Check(
         "Read PDF, Word, LaTeX and text files",
         MISSING if core else READY,
-        f"missing: {', '.join(core)}" if core else "PDF, DOCX, TEX, TXT supported",
+        f"missing: {', '.join(core)}" if core else "PDF, DOCX, TEX, TXT, Markdown supported",
         pip_hint() if core else "",
     ))
 

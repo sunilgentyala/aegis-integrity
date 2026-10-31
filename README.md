@@ -83,7 +83,7 @@ Listed and claimed by the maintainer on [Glama](https://glama.ai/mcp/servers/sun
 
 | Tool | What it does | Example prompt |
 |---|---|---|
-| `aegis_analyze_paper` | Full integrity pipeline on a PDF/DOCX/TEX/TXT | "Run a full integrity check on ~/drafts/paper.pdf" |
+| `aegis_analyze_paper` | Full integrity pipeline on a PDF/DOCX/TEX/TXT/MD | "Run a full integrity check on ~/drafts/paper.pdf" |
 | `aegis_check_citations` | Verify references against Crossref (finds hallucinated DOIs) | "Check the references in paper.docx" |
 | `aegis_check_guidelines` | Offline style pass vs IEEE, ACM, BCS, IET, ISACA, Elsevier | "Is this ready for an Elsevier journal?" |
 | `aegis_compare_papers` | Overlap between two papers (conference vs journal version) | "Compare v1.docx and v2.docx" |
@@ -97,7 +97,7 @@ Listed and claimed by the maintainer on [Glama](https://glama.ai/mcp/servers/sun
 
 AEGIS is local-first and the MCP server runs over stdio. Documents never leave your machine; only reference metadata goes to Crossref/OpenAlex.
 
-- MCP tools read only `.pdf`, `.docx`, `.tex` and `.txt` files up to 50 MB (`AEGIS_MAX_FILE_MB`).
+- MCP tools read only `.pdf`, `.docx`, `.tex`, `.txt` and `.md` files up to 50 MB (`AEGIS_MAX_FILE_MB`).
 - Set `AEGIS_ALLOWED_ROOTS` to confine every tool to specific folders (recommended when an agent drives AEGIS).
 - Tool output is stripped of control characters and truncated; tools carry read-only / non-destructive MCP hints.
 - DOIs from documents are percent-encoded and fetched without redirects. The MCP server never loads `./.env`.
@@ -302,10 +302,12 @@ analyze ... --guidelines all`.
 
 ---
 
+Markdown input strips YAML front matter and fenced code blocks while retaining heading text.
+
 ## Architecture
 
 ```
-submission (PDF / DOCX / TEX / TXT)
+submission (PDF / DOCX / TEX / TXT / Markdown)
        |
        v
   DocumentParser              -- PyMuPDF / python-docx / TexSoup / striprtf

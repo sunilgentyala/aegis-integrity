@@ -117,7 +117,7 @@ def analyze(
     no_math, no_grammar, guidelines,
     watermark_mode, device, email,
 ):
-    """Run the full AEGIS analysis on SUBMISSION (PDF, DOCX, TEX, or TXT)."""
+    """Run the full AEGIS analysis on SUBMISSION (PDF, DOCX, TEX, TXT, or Markdown)."""
     from aegis.core.pipeline import AEGISPipeline, PipelineConfig
     from aegis.corpus.indexer import CorpusIndexer
     from aegis.detectors.watermark_detector import WatermarkMode
@@ -613,12 +613,12 @@ def doctor(offline, plain, warm_up):
 def _collect_docs(paths) -> list[tuple[str, str]]:
     """
     Given a sequence of file/directory paths, parse each and return
-    (label, text) pairs. Directories are walked for PDF/DOCX/TEX files.
+    (label, text) pairs. Directories are walked for PDF/DOCX/TEX/TXT/MD files.
     """
     from aegis.core.document import DocumentParser
     parser = DocumentParser()
     docs = []
-    exts = {".pdf", ".docx", ".tex", ".txt"}
+    exts = {".pdf", ".docx", ".tex", ".txt", ".md"}
     for path in paths:
         p = Path(path)
         candidates = (
