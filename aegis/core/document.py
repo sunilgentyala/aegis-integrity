@@ -1,6 +1,6 @@
 """
 Multi-format academic document parser.
-Supports: PDF, DOCX, LaTeX (.tex), plain text, BibTeX.
+Supports: PDF, DOCX, LaTeX (.tex), Markdown (.md), plain text, BibTeX.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ _REFERENCES_HEADING_RE = re.compile(
 @dataclass
 class ParsedDocument:
     path: str
-    format: str                          # pdf | docx | latex | txt | bib
+    format: str                          # pdf | docx | latex | markdown | txt | bib
     title: Optional[str]
     authors: list[str]
     abstract: Optional[str]
@@ -213,14 +213,39 @@ class DocumentParser:
 
     def _parse_txt(self, path: Path) -> ParsedDocument:
         full_text = path.read_text(encoding="utf-8", errors="replace")
+        is_markdown = path.suffix.lower() == ".md"
+        if is_markdown:
+            full_text = self._clean_markdown(full_text)
         sections = self._extract_sections_heuristic(full_text)
         abstract = self._extract_abstract(full_text)
         refs = self._extract_references_heuristic(full_text)
         return ParsedDocument(
-            path=str(path), format="txt",
+            path=str(path), format="markdown" if is_markdown else "txt",
             title=None, authors=[], abstract=abstract,
             full_text=full_text, sections=sections, references=refs,
         )
+
+    def _clean_markdown(self, text: str) -> str:
+        text = re.sub(r"\A\ufeff?---[ \t]*\n.*?\n(?:---|\.\.\.)[ \t]*(?:\n|$)",
+                      "", text, count=1, flags=re.DOTALL)
+        lines = []
+        fence = ""
+        for line in text.splitlines(keepends=True):
+            if fence:
+                if re.fullmatch(r" {0,3}" + re.escape(fence[0])
+                                + "{" + str(len(fence)) + r",}[ \t]*\n?", line):
+                    fence = ""
+                continue
+            opening = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
+            if opening and not (opening[1][0] == "`" and "`" in opening[2]):
+                fence = opening[1]
+                continue
+            # Keep heading text so the existing abstract/reference heuristics work.
+            if re.match(r"^ {0,3}#{1,6}[ \t]+", line):
+                line = re.sub(r"^ {0,3}#{1,6}[ \t]+", "", line)
+                line = re.sub(r"[ \t]+#+[ \t]*(?=\n?$)", "", line)
+            lines.append(line)
+        return "".join(lines)
 
     # ------------------------------------------------------------------
     # LaTeX helpers
