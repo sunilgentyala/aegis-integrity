@@ -52,7 +52,7 @@ setup(
         "click>=8.1.7",
         "rich>=13.7.1",
         "numpy>=1.26.0",
-        "mcp>=1.0.0,<3",  # 2.x renamed FastMCP to MCPServer; core so `uvx aegis-integrity` works
+        "mcp>=1.0.0,<2",  # 2.x renamed FastMCP to MCPServer; core so `uvx aegis-integrity` works
     ],
     extras_require={
         "ml": [
@@ -68,10 +68,10 @@ setup(
             "textstat>=0.7.3",
         ],
         "mcp": [
-            "mcp>=1.0.0,<3",  # 2.x renamed FastMCP to MCPServer
+            "mcp>=1.0.0,<2",  # 2.x renamed FastMCP to MCPServer
         ],
         "bib": [
-            "bibtexparser>=1.4.0",
+            "bibtexparser>=1.4.0,<2",
             "habanero>=1.2.3",
         ],
     },
