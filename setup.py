@@ -71,7 +71,7 @@ setup(
             "mcp>=1.0.0,<2",  # 2.x renamed FastMCP to MCPServer
         ],
         "bib": [
-            "bibtexparser>=1.4.0",
+            "bibtexparser>=1.4.0,<2",
             "habanero>=1.2.3",
         ],
     },
