@@ -77,6 +77,7 @@ h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;letter-spacing:-.025em;lin
 .b-red{background:rgba(247,129,102,.1);border-color:rgba(247,129,102,.3);color:var(--accent3)}
 
 /* SECTIONS */
+.hl-badges{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-bottom:2rem}.hl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}.hl-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.25rem}.hl-card h3{font-size:.98rem;margin-bottom:.35rem;color:var(--accent)}.hl-card p{color:var(--muted);font-size:.88rem;line-height:1.55}
 .sec{padding:5rem 2rem;max-width:1200px;margin:0 auto}
 .sec-wide{padding:5rem 2rem;max-width:1400px;margin:0 auto}
 .sec-title{text-align:center;margin-bottom:.65rem;font-size:1.85rem;font-weight:800;letter-spacing:-.02em}
@@ -271,7 +272,29 @@ footer{border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;
     <div class="stat"><div class="stat-num">5</div><div class="stat-label">Citation Verdict Classes</div></div>
     <div class="stat"><div class="stat-num">0</div><div class="stat-label">Bytes Sent to Cloud</div></div>
     <div class="stat"><div class="stat-num">$0</div><div class="stat-label">Per-Submission Cost</div></div>
-    <div class="stat"><div class="stat-num">AGPL<</div><div class="stat-label">License</div></div>
+    <div class="stat"><div class="stat-num">AGPL</div><div class="stat-label">License</div></div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- HIGHLIGHTS -->
+<div class="sec" id="highlights">
+  <h2 class="sec-title">Highlights</h2>
+  <p class="sec-sub">Live community numbers from GitHub and PyPI, and what ships in v3.4.</p>
+  <div class="hl-badges">
+    <a href="https://github.com/sunilgentyala/aegis-integrity/stargazers" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/sunilgentyala/aegis-integrity?style=for-the-badge&amp;color=58a6ff" alt="GitHub stars"></a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/network/members" target="_blank" rel="noopener"><img src="https://img.shields.io/github/forks/sunilgentyala/aegis-integrity?style=for-the-badge&amp;color=3fb950" alt="GitHub forks"></a>
+    <a href="https://pypi.org/project/aegis-integrity/" target="_blank" rel="noopener"><img src="https://img.shields.io/pypi/dm/aegis-integrity?style=for-the-badge&amp;label=PyPI%20downloads%2Fmonth&amp;color=d2a8ff" alt="PyPI downloads per month"></a>
+    <a href="https://github.com/sunilgentyala/aegis-integrity/releases/latest" target="_blank" rel="noopener"><img src="https://img.shields.io/github/v/release/sunilgentyala/aegis-integrity?style=for-the-badge&amp;label=latest%20release&amp;color=ffa657" alt="Latest release"></a>
+  </div>
+  <div class="hl-grid">
+    <div class="hl-card"><h3>Starred and forked</h3><p>Researchers and developers are starring, forking and installing AEGIS. Counts above are live.</p></div>
+    <div class="hl-card"><h3>Fourteen detection modules</h3><p>Citation hallucination, bias-calibrated AI-text detection, paraphrase and self-plagiarism, stylometry, essay mill patterns and an experimental watermark test, in one offline pipeline.</p></div>
+    <div class="hl-card"><h3>Tested and scanned</h3><p>284 automated tests, CodeQL code scanning, dependency auditing and pinned CI actions on every push.</p></div>
+    <div class="hl-card"><h3>Listed and rated</h3><p>Grade A on <a href="https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp" target="_blank" rel="noopener">mcprush</a> and on <a href="https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity" target="_blank" rel="noopener">Glama</a> (each directory's own automated rating).</p></div>
+    <div class="hl-card"><h3>New in v3.4</h3><p>Four source-use skills built from Harvard and Stanford guidance, and AGPL-3.0 licensing with attribution to Sunil Gentyala.</p></div>
+    <div class="hl-card"><h3>Private by design</h3><p>Documents are analysed on your own machine and never uploaded. Works in a browser, CLI, REST API, Docker, Claude Code and Claude Desktop.</p></div>
   </div>
 </div>
 
