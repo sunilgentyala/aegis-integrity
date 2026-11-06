@@ -31,6 +31,24 @@
 > **Plagiarism detection is corpus-based, not a live web/database crawl:** AEGIS compares your document against a corpus of papers *you supply* (your own prior works, a downloaded reference set, etc. -- see [Building a Corpus Index](HOWTO.md#9-building-a-corpus-index)). With no corpus loaded, plagiarism modules correctly report "no prior works loaded" rather than silently finding nothing to flag -- that isn't a scan failure.
 > Results are a supporting signal for human review, not a determination of misconduct.
 
+## Highlights
+
+<p align="center">
+  <a href="https://github.com/sunilgentyala/aegis-integrity/stargazers"><img src="https://img.shields.io/github/stars/sunilgentyala/aegis-integrity?style=social" alt="GitHub stars"></a>
+  <a href="https://github.com/sunilgentyala/aegis-integrity/network/members"><img src="https://img.shields.io/github/forks/sunilgentyala/aegis-integrity?style=social" alt="GitHub forks"></a>
+  <a href="https://github.com/sunilgentyala/aegis-integrity/watchers"><img src="https://img.shields.io/github/watchers/sunilgentyala/aegis-integrity?style=social" alt="GitHub watchers"></a>
+  <a href="https://pypi.org/project/aegis-integrity/"><img src="https://img.shields.io/pypi/dm/aegis-integrity?label=PyPI%20downloads%2Fmonth" alt="PyPI downloads per month"></a>
+  <a href="https://github.com/sunilgentyala/aegis-integrity/releases/latest"><img src="https://img.shields.io/github/v/release/sunilgentyala/aegis-integrity?label=latest%20release" alt="Latest release"></a>
+</p>
+
+- **Community interest:** starred and forked by researchers and developers on GitHub (live counts above) and installed from PyPI.
+- **Fourteen detection modules in one offline pipeline:** citation hallucination, AI-text detection calibrated for non-native English writers, paraphrase and self-plagiarism, ghostwriting stylometry, essay mill patterns and an experimental LLM watermark test.
+- **Tested and scanned:** 284 automated tests, CodeQL code scanning, dependency auditing and pinned CI actions on every push.
+- **Listed and rated:** Grade A on [mcprush](https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp) and on [Glama](https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity), the MCP directories (each directory's own automated rating).
+- **Works where you work:** browser app, CLI, REST API, Docker, Claude Code plugin, Claude Desktop (`.mcpb`) and any MCP client.
+- **New in v3.4:** four source-use skills built from Harvard and Stanford guidance, and AGPL-3.0 licensing with author attribution to Sunil Gentyala.
+- **Private by design:** documents are analysed on your own machine and never uploaded.
+
 ---
 
 ## Get Started
