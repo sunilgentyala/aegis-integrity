@@ -1,5 +1,5 @@
 ---
-name: turnitin-ai-score-interpretation
+name: ai-score-interpretation
 description: Explain and responsibly interpret an AI writing detection score such as "81% detected as AI", say what the number does and does not measure, find which passages drove it, and plan a fair response. Use when someone shares an AI percentage, asks why a paper scored high, or asks whether a paper was AI generated.
 ---
 

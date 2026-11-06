@@ -13,7 +13,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(__file__)
-VERSION = "v3.5.0"
+VERSION = "v3.5.1"
 
 BG = (13, 17, 23)
 PANEL = (22, 27, 34)

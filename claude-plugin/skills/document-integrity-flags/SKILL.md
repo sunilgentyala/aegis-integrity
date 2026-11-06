@@ -1,5 +1,5 @@
 ---
-name: turnitin-integrity-flags
+name: document-integrity-flags
 description: Detect text manipulation that defeats similarity checking, namely hidden text and look-alike replaced characters, in DOCX, PDF or plain text. Use when preparing a submission, auditing a file for tampering, or when a similarity score looks suspiciously low.
 ---
 

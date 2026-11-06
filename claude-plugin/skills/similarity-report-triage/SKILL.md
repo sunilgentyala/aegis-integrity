@@ -1,6 +1,6 @@
 ---
-name: turnitin-similarity-triage
-description: Triage a Turnitin Similarity Report (or any text-overlap report) by sorting matches into four groups based on quotation and citation, discounting author blocks and identifiers, and fixing real problems first. Use when someone shares a similarity percentage or report, or asks whether a match is plagiarism or properly quoted material.
+name: similarity-report-triage
+description: Triage a similarity or text-overlap report by sorting matches into four groups based on quotation and citation, discounting author blocks and identifiers, and fixing real problems first. Use when someone shares a similarity percentage or report, or asks whether a match is plagiarism or properly quoted material.
 ---
 
 # Similarity report triage
@@ -31,7 +31,7 @@ A raw percentage says little. What matters is whether each match is quoted and c
 - Cited and quoted is 0% for numeric citation styles such as IEEE and ACM, because that group needs quotation marks. Zero is normal there and does not mean citations are missing.
 - Student-paper matches (other institutions' submissions) are usually short shared phrases of a few dozen words. Read the phrase before drawing any conclusion.
 - Phrase-level matches against a published paper can sit inside a sentence of your own, for example a standard description of a proof or protocol. Check whether it is a term of art.
-- Similarity and the AI writing percentage are independent. A low similarity says nothing about AI text, and the reverse. See `turnitin-ai-score-interpretation`.
+- Similarity and the AI writing percentage are independent. A low similarity says nothing about AI text, and the reverse. See `ai-score-interpretation`.
 
 ## Steps
 
