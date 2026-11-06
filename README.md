@@ -3,9 +3,9 @@
 <!-- mcp-name: io.github.sunilgentyala/aegis-integrity -->
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.3.2-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.4.0-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
   <img src="https://img.shields.io/badge/bias--aware-ESL%20(experimental)-purple?style=for-the-badge" alt="Bias aware, experimental">
   <img src="https://img.shields.io/github/stars/sunilgentyala/aegis-integrity?style=for-the-badge" alt="Stars">
@@ -61,6 +61,9 @@ pip install "aegis-integrity[mcp,ml]"
 Then ask in plain words ("check references in ~/drafts/paper.pdf", "is this
 ready for an Elsevier journal?"), or use the `/integrity-check` and
 `/submission-check` skills.
+
+> **Author, developer, architect and scientist: [Sunil Gentyala](https://github.com/sunilgentyala)** (HCLTech, IEEE Senior Member).
+> AEGIS is licensed under the GNU AGPL-3.0-or-later. Copies and derivatives (including network services) must stay under the AGPL, publish their source, keep the [LICENSE](LICENSE) and [NOTICE](NOTICE) files and credit Sunil Gentyala as the original author. Please cite it using [CITATION.cff](CITATION.cff).
 
 **3. In Claude Desktop.** Install the package as in option 2, download
 `aegis-integrity-<version>.mcpb` from the
@@ -653,7 +656,7 @@ human review, not a determination of misconduct.
 air-gapped deployment, batch mode for classroom scanning, persistent indices for
 journal editorial systems.
 
-**6. Free, forever.** MIT license. No per-submission fees, no seat licenses, no vendor
+**6. Free, forever.** AGPL-3.0 open source. No per-submission fees, no seat licenses, no vendor
 lock-in -- commercial tools require an institutional license or paid API credits. AEGIS
 costs compute time only.
 
@@ -689,7 +692,7 @@ If you use AEGIS in your research, please cite the software:
   author    = {Gentyala, Sunil},
   title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
   year      = {2026},
-  version   = {3.3.2},
+  version   = {3.4.0},
   url       = {https://github.com/sunilgentyala/aegis-integrity}
 }
 ```
@@ -700,7 +703,7 @@ Machine-readable metadata is in [`CITATION.cff`](CITATION.cff); GitHub shows it 
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+GNU AGPL-3.0-or-later from v3.4.0. See [LICENSE](LICENSE). Releases up to v3.3.2 were published under the MIT License (kept in [LICENSE-MIT-historical.txt](LICENSE-MIT-historical.txt)) and remain available under those terms. Network use of a modified AEGIS requires offering its source to users under the AGPL.
 
 ---
 
@@ -723,6 +726,14 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.4.0 (November 2026)
+- **License change: AGPL-3.0-or-later** (previously MIT). Releases up to v3.3.2 stay MIT.
+  Modified or network-hosted copies must publish their source and credit Sunil Gentyala.
+  `NOTICE` added with author and attribution terms.
+- Four new Claude plugin skills built from published university guidance:
+  `harvard-source-use`, `stanford-honor-code-plagiarism`, `stanford-research-misconduct`,
+  `stanford-citation-practice`. No detection behaviour changes.
 
 ### v3.3.2 (October 2026)
 Packaging release for the official MCP Registry. No detection behaviour changes.

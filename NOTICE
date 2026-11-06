@@ -1,0 +1,33 @@
+AEGIS Academic Integrity Checker
+Copyright (c) 2026 Sunil Gentyala
+
+Author, developer, architect and scientist: Sunil Gentyala
+Affiliation: HCLTech (HCL America Inc.), Dallas, TX, USA
+ORCID: https://orcid.org/0009-0005-2642-3479
+Contact: sunil.gentyala@ieee.org
+Source: https://github.com/sunilgentyala/aegis-integrity
+
+From v3.4.0 this product is distributed under the GNU Affero General Public
+License v3.0 or later (see LICENSE). Anyone who modifies AEGIS or runs it as a
+network service must offer the complete corresponding source to its users under the
+same license, keep the LICENSE file and this NOTICE file, preserve the copyright
+notices, and credit Sunil Gentyala as the original author of AEGIS.
+
+Releases up to and including v3.3.2 were published under the MIT License, kept in
+LICENSE-MIT-historical.txt. Those releases remain available under that license.
+
+For permission to use AEGIS outside the AGPL terms (a commercial license), contact
+the author.
+
+Please cite this software using CITATION.cff when you use it in research.
+
+The policy summaries in the claude-plugin skills (Harvard Guide to Using Sources,
+Stanford Office of Community Standards, Stanford Research Policy Handbook, Stanford
+Libraries) are original paraphrases with links to the sources. Those institutions own
+their source text and are not affiliated with or endorsing this project.
+
+Third-party contributions
+The Markdown draft parsing added in pull request #28 (commit dc2d2f6) was contributed by
+Shahid Shamim Shah under the MIT License, which permits inclusion in this AGPL-3.0-or-later
+work. That contribution remains Copyright (c) its contributor and is covered by the MIT
+License terms in LICENSE-MIT-historical.txt.

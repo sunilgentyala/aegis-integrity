@@ -38,7 +38,7 @@ jobs:
             type=raw,value=latest
           labels: |
             org.opencontainers.image.description=Offline academic integrity checker (plagiarism, AI detection, citations)
-            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.licenses=AGPL-3.0-or-later
 
       - name: Build and push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7

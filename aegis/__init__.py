@@ -23,8 +23,8 @@ in existing plagiarism detection tools:
      guidance, not one generic merged rule set
 
 Authors: Sunil Gentyala, Rakesh Prakash, Akhila Kasturi
-License: MIT
+License: AGPL-3.0-or-later
 """
 
-__version__ = "3.3.2"
+__version__ = "3.4.0"
 __author__ = "Sunil Gentyala"
