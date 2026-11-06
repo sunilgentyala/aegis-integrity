@@ -118,11 +118,11 @@ If AEGIS helped you, a star on GitHub helps other researchers find it. Bug repor
 
 ## How AEGIS Compares
 
-Every major integrity tool has blind spots. AEGIS v3.3 aims to close **fourteen** of them simultaneously.
+Every major integrity tool has blind spots. AEGIS v3.4 aims to close **fourteen** of them simultaneously.
 
 Based on each vendor's public documentation and pricing pages as of August 2026. "Not public" means the capability isn't documented publicly by that vendor -- not a confirmed absence. [Corrections welcome](https://github.com/sunilgentyala/aegis-integrity/issues).
 
-| Gap | **AEGIS v3.3** | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai |
+| Gap | **AEGIS v3.4** | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai |
 |-----|:--------------:|:--------:|:-----------:|:---------:|:-------:|:--------------:|
 | Open-source / self-hostable | **Yes** | No | No | No | No | No |
 | Citation hallucination detection | **Yes** | Not public | Not public | Not public | Not public | Not public |
