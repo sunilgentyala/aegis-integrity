@@ -3,7 +3,7 @@
 <!-- mcp-name: io.github.sunilgentyala/aegis-integrity -->
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.4.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.5.0-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
@@ -46,7 +46,7 @@
 - **Tested and scanned:** 284 automated tests, CodeQL code scanning, dependency auditing and pinned CI actions on every push.
 - **Listed and rated:** Grade A on [mcprush](https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp) and on [Glama](https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity), the MCP directories (each directory's own automated rating).
 - **Works where you work:** browser app, CLI, REST API, Docker, Claude Code plugin, Claude Desktop (`.mcpb`) and any MCP client.
-- **New in v3.4:** four source-use skills built from Harvard and Stanford guidance, and AGPL-3.0 licensing with author attribution to Sunil Gentyala.
+- **New in v3.5:** three report-interpretation skills (similarity triage, integrity flags, AI writing score interpretation) plus a local prose-uniformity diagnostic. Earlier in v3.4: four source-use skills built from Harvard and Stanford guidance, and AGPL-3.0 licensing with author attribution to Sunil Gentyala.
 - **Private by design:** documents are analysed on your own machine and never uploaded.
 
 ---
@@ -136,11 +136,11 @@ If AEGIS helped you, a star on GitHub helps other researchers find it. Bug repor
 
 ## How AEGIS Compares
 
-Every major integrity tool has blind spots. AEGIS v3.4 aims to close **fourteen** of them simultaneously.
+Every major integrity tool has blind spots. AEGIS v3.5 aims to close **fourteen** of them simultaneously.
 
 Based on each vendor's public documentation and pricing pages as of August 2026. "Not public" means the capability isn't documented publicly by that vendor -- not a confirmed absence. [Corrections welcome](https://github.com/sunilgentyala/aegis-integrity/issues).
 
-| Gap | **AEGIS v3.4** | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai |
+| Gap | **AEGIS v3.5** | Turnitin | iThenticate | CopyLeaks | GPTZero | Originality.ai |
 |-----|:--------------:|:--------:|:-----------:|:---------:|:-------:|:--------------:|
 | Open-source / self-hostable | **Yes** | No | No | No | No | No |
 | Citation hallucination detection | **Yes** | Not public | Not public | Not public | Not public | Not public |
@@ -710,7 +710,7 @@ If you use AEGIS in your research, please cite the software:
   author    = {Gentyala, Sunil},
   title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
   year      = {2026},
-  version   = {3.4.0},
+  version   = {3.5.0},
   url       = {https://github.com/sunilgentyala/aegis-integrity}
 }
 ```
@@ -744,6 +744,16 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### v3.5.0 (November 2026)
+- Three new Claude plugin skills for reading overlap and AI-writing reports:
+  `turnitin-similarity-triage` (four match groups, author-block and identifier discounting, report versions),
+  `turnitin-integrity-flags` (hidden text and look-alike characters) and
+  `turnitin-ai-score-interpretation` (what an AI percentage measures, where highlights fall, how to respond fairly).
+- New local diagnostic `claude-plugin/skills/turnitin-ai-score-interpretation/scripts/prose_uniformity.py`:
+  reports how much of a file counts as prose and ranks paragraphs by uniformity. Diagnostic only, not a detector.
+- Turnitin is a trademark of Turnitin, LLC. AEGIS is independent and includes no Turnitin software, data or models.
+  No detection behaviour changes.
 
 ### v3.4.0 (November 2026)
 - **License change: AGPL-3.0-or-later** (previously MIT). Releases up to v3.3.2 stay MIT.

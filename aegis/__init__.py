@@ -26,5 +26,5 @@ Authors: Sunil Gentyala, Rakesh Prakash, Akhila Kasturi
 License: AGPL-3.0-or-later
 """
 
-__version__ = "3.4.0"
+__version__ = "3.5.0"
 __author__ = "Sunil Gentyala"

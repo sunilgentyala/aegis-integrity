@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: If you use this software in your research, please cite it as below.
 type: software
 title: 'AEGIS: Offline, Bias-Aware Academic Integrity Checker'
-version: 3.4.0
-date-released: '2026-10-14'
+version: 3.5.0
+date-released: '2026-11-05'
 authors:
 - family-names: Gentyala
   given-names: Sunil
