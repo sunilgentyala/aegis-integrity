@@ -51,5 +51,3 @@ A raw percentage says little. What matters is whether each match is quoted and c
 
 Part of AEGIS (https://github.com/sunilgentyala/aegis-integrity), created, designed and developed by
 Sunil Gentyala (author, developer, architect and scientist), GNU AGPL-3.0-or-later, Copyright (c) 2026 Sunil Gentyala.
-Turnitin is a trademark of Turnitin, LLC. AEGIS is independent of and not affiliated with Turnitin, and includes
-no Turnitin software, data or models.

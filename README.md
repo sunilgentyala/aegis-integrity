@@ -752,8 +752,7 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
   `turnitin-ai-score-interpretation` (what an AI percentage measures, where highlights fall, how to respond fairly).
 - New local diagnostic `claude-plugin/skills/turnitin-ai-score-interpretation/scripts/prose_uniformity.py`:
   reports how much of a file counts as prose and ranks paragraphs by uniformity. Diagnostic only, not a detector.
-- Turnitin is a trademark of Turnitin, LLC. AEGIS is independent and includes no Turnitin software, data or models.
-  No detection behaviour changes.
+- No detection behaviour changes.
 
 ### v3.4.0 (November 2026)
 - **License change: AGPL-3.0-or-later** (previously MIT). Releases up to v3.3.2 stay MIT.
