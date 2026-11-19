@@ -26,7 +26,7 @@
 <p align="center"><sub>Real CLI output on a synthetic sample paper (<code>docs/demo/sample_paper.txt</code>). Both DOIs in it are invented, and AEGIS flags them.</sub></p>
 
 > **Open-source, local-first academic integrity analysis.**
-> Documents are processed entirely on your own hardware and never uploaded anywhere. Citation checks may query Crossref/OpenAlex with reference metadata (titles, authors, DOIs) when online verification is enabled.
+> Documents are processed entirely on your own hardware and never uploaded anywhere. Online checks may send reference metadata (titles, authors, DOIs) to Crossref/DataCite/OpenAlex, and the publisher duplicate-title check sends the paper's own title to Crossref. `aegis analyze --offline` (or the web app's Private/offline mode) makes no such calls.
 > Analyzes plagiarism, AI-generated content, citation hallucinations, ghostwriting, predatory references, and essay mill patterns in a single pipeline -- plus an experimental token-distribution heuristic for LLM watermark research.
 > **Plagiarism detection is corpus-based, not a live web/database crawl:** AEGIS compares your document against a corpus of papers *you supply* (your own prior works, a downloaded reference set, etc. -- see [Building a Corpus Index](HOWTO.md#9-building-a-corpus-index)). With no corpus loaded, plagiarism modules correctly report "no prior works loaded" rather than silently finding nothing to flag -- that isn't a scan failure.
 > Results are a supporting signal for human review, not a determination of misconduct.
@@ -116,11 +116,11 @@ Listed and claimed by the maintainer on [Glama](https://glama.ai/mcp/servers/sun
 
 ## Security
 
-AEGIS is local-first and the MCP server runs over stdio. Documents never leave your machine; only reference metadata goes to Crossref/OpenAlex.
+AEGIS is local-first and the MCP server runs over stdio. Document text never leaves your machine; online checks send only reference metadata and the paper's title to Crossref/DataCite/OpenAlex, and `skip_citations=true` (CLI: `--offline`) turns all of them off. See the [security model](docs/SECURITY_MODEL.md) for trust boundaries, tests and known limits.
 
 - MCP tools read only `.pdf`, `.docx`, `.tex`, `.txt` and `.md` files up to 50 MB (`AEGIS_MAX_FILE_MB`).
 - Set `AEGIS_ALLOWED_ROOTS` to confine every tool to specific folders (recommended when an agent drives AEGIS).
-- Tool output is stripped of control characters and truncated; analysis tools carry read-only MCP hints, while `aegis_index_add` is marked as writing (it appends to the local corpus index but never deletes or overwrites data).
+- Tool output is stripped of control characters and truncated. MCP hints are accurate: no tool is destructive; `aegis_index_add` and the analysis tools that save HTML reports are marked as writing (to `AEGIS_INDEX_DIR` / `AEGIS_REPORT_DIR` only); compare, index summary and status are read-only.
 - DOIs from documents are percent-encoded and fetched without redirects. The MCP server never loads `./.env`.
 - CI runs tests, `bandit`, a blocking `pip-audit`, and CodeQL; Dependabot is on.
 
@@ -650,9 +650,9 @@ The test suite runs without network calls or ML model downloads.
 ## Why Choose AEGIS
 
 **1. Local-first processing.** AEGIS never uploads your manuscript anywhere -- analysis
-runs entirely on your own machine. Citation checks may query Crossref/OpenAlex with
-reference metadata (titles, authors, DOIs), never the document itself, and only when
-online verification is enabled.
+runs entirely on your own machine. Online checks may query Crossref/DataCite/OpenAlex with
+reference metadata (titles, authors, DOIs) and, for the publisher duplicate-title check,
+the paper's own title -- never the document text. `--offline` turns all of these off.
 
 **2. Aware of false-positive bias against international researchers.** [Liang et al. (Stanford,
 2023)](https://arxiv.org/abs/2304.02819) found GPT detectors misclassified more than half of
@@ -746,6 +746,22 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 ---
 
 ## Changelog
+
+### Unreleased
+- **FIX (privacy): MCP `skip_citations` is now really offline.** It previously
+  disabled citation verification only; the publisher duplicate-title search
+  still sent the paper's own title (PDF/DOCX) to Crossref. It now also passes
+  the new `--offline` flag.
+- **NEW: `aegis analyze --offline`** makes no Crossref/DataCite/OpenAlex calls
+  (citation, citation-network and venue checks all run offline), matching the
+  REST API's `offline=true`.
+- **FIX: MCP annotations.** Analysis tools that save an HTML report are no
+  longer marked read-only; no tool is destructive.
+- **Hardening:** the remaining two Crossref search requests no longer follow
+  redirects, like every other metadata lookup.
+- **Docs:** new [security model](docs/SECURITY_MODEL.md); privacy wording now
+  states that the paper title is used by the duplicate-title check.
+- 14 new regression tests, 24 cases (`tests/test_mcp_security.py`), all network-free.
 
 ### v3.5.1 (November 2026)
 - Report-interpretation skills renamed to neutral names: `similarity-report-triage`,

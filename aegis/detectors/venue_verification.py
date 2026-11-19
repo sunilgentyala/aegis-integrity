@@ -190,7 +190,8 @@ class TargetPublisherVerifier:
             }
             if profile.crossref_member_id is not None:
                 params["filter"] = f"member:{profile.crossref_member_id}"
-            r = session.get(self.CROSSREF_BASE, params=params, timeout=self.timeout)
+            r = session.get(self.CROSSREF_BASE, params=params, timeout=self.timeout,
+                            allow_redirects=False)
             if r.status_code != 200:
                 return []
             items = r.json().get("message", {}).get("items", [])
