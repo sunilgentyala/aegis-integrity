@@ -48,11 +48,20 @@ _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 _CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 # Tool annotations tell the client what each tool can do. Nothing here deletes
-# or overwrites user data; aegis_index_add only appends to the local index.
+# user documents. Two kinds of write happen, both under AEGIS's own data
+# folders (AEGIS_INDEX_DIR / AEGIS_REPORT_DIR):
+#   - aegis_index_add appends a paper to the local comparison index;
+#   - the analysis tools save an HTML report by default (html_report=True).
+#     Re-running on a file with the same name replaces that earlier AEGIS
+#     report, so these tools are idempotent but not read-only.
 _READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
                              idempotentHint=True, openWorldHint=False)
 _READ_ONLY_NET = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
                                  idempotentHint=True, openWorldHint=True)
+_WRITES_REPORT = ToolAnnotations(readOnlyHint=False, destructiveHint=False,
+                                 idempotentHint=True, openWorldHint=False)
+_WRITES_REPORT_NET = ToolAnnotations(readOnlyHint=False, destructiveHint=False,
+                                     idempotentHint=True, openWorldHint=True)
 _WRITES_INDEX = ToolAnnotations(readOnlyHint=False, destructiveHint=False,
                                 idempotentHint=False, openWorldHint=False)
 
@@ -198,7 +207,7 @@ def _check_venues(venues: str) -> str | None:
     return None
 
 
-@mcp.tool(annotations=_READ_ONLY_NET)
+@mcp.tool(annotations=_WRITES_REPORT_NET)
 def aegis_analyze_paper(
     file_path: str,
     prior_works_dir: str = "",
@@ -221,7 +230,11 @@ def aegis_analyze_paper(
         prior_works_dir: Optional folder of the author's own earlier papers
             (for the self-plagiarism check).
         skip_ai_detection: Skip the GPT-2 based AI detector (faster, no model download).
-        skip_citations: Skip Crossref lookups (fully offline).
+        skip_citations: Make no Crossref/OpenAlex lookups at all: skips citation
+            verification and also keeps the publisher duplicate-title search
+            offline, so neither reference metadata nor the paper's own title
+            is sent anywhere. (First-run model downloads are separate; use
+            skip_ai_detection or run `aegis doctor --warm-up` beforehand.)
         check_guidelines: Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER,
             or "all". Empty skips the guideline section.
         html_report: Save a self-contained HTML report. Default True.
@@ -241,7 +254,7 @@ def aegis_analyze_paper(
     if skip_ai_detection:
         args.append("--no-ai")
     if skip_citations:
-        args.append("--no-citations")
+        args += ["--no-citations", "--offline"]
     if check_guidelines:
         args += ["--guidelines", check_guidelines]
     return _with_report(_run(args, timeout=900), html_out, html_report)
@@ -264,7 +277,7 @@ def aegis_compare_papers(file1: str, file2: str) -> str:
     return _run(["compare", _abs(file1), _abs(file2)], timeout=900)
 
 
-@mcp.tool(annotations=_READ_ONLY_NET)
+@mcp.tool(annotations=_WRITES_REPORT_NET)
 def aegis_check_citations(file_path: str, html_report: bool = True) -> str:
     """Verify a paper's references against Crossref (citations module only).
 
@@ -286,7 +299,7 @@ def aegis_check_citations(file_path: str, html_report: bool = True) -> str:
     return _with_report(_run(args, timeout=300), html_out, html_report)
 
 
-@mcp.tool(annotations=_READ_ONLY)
+@mcp.tool(annotations=_WRITES_REPORT)
 def aegis_check_guidelines(file_path: str, venues: str = "all", html_report: bool = True) -> str:
     """Fast offline style pass: equations, grammar and per-publisher guidelines.
 
