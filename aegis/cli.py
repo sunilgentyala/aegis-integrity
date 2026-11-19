@@ -88,6 +88,11 @@ def cli():
 @click.option("--no-self-plagiarism", is_flag=True, help="Skip self-plagiarism check.")
 @click.option("--no-venue-check", is_flag=True,
               help="Skip target-publisher verification (IEEE/ACM/Elsevier/IET/IETE/BCS).")
+@click.option("--offline", is_flag=True,
+              help="Make no Crossref/OpenAlex calls at all (citation, citation-network "
+                   "and publisher duplicate-title checks run without network). "
+                   "Does not prevent first-run ML model downloads; combine with "
+                   "--no-ai/--no-semantic or warm the cache with 'aegis doctor --warm-up'.")
 @click.option("--target-publishers", default=None,
               help="Comma-separated subset of IEEE,ACM,Elsevier,IET,IETE,BCS to check "
                    "(default: all six).")
@@ -113,7 +118,7 @@ def cli():
 def analyze(
     submission, corpus, prior_works, index_dir,
     output_html, no_ai, no_citations, no_semantic,
-    no_stylometric, no_self_plagiarism, no_venue_check, target_publishers,
+    no_stylometric, no_self_plagiarism, no_venue_check, offline, target_publishers,
     no_math, no_grammar, guidelines,
     watermark_mode, device, email,
 ):
@@ -145,6 +150,9 @@ def analyze(
         run_stylometric=not no_stylometric,
         run_self_plagiarism=not no_self_plagiarism,
         run_venue_verification=not no_venue_check,
+        citation_offline=offline,
+        citation_network_offline=offline,
+        venue_offline=offline,
         venue_target_publishers=venue_targets,
         run_math_check=not no_math,
         run_grammar_check=not no_grammar,

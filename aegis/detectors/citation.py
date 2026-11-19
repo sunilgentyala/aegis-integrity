@@ -322,7 +322,7 @@ class CitationIntegrityDetector:
                 "mailto": self.email,
             }
             r = session.get(self.CROSSREF_BASE, params=params,
-                            timeout=self.timeout)
+                            timeout=self.timeout, allow_redirects=False)
             if r.status_code != 200:
                 raise ValueError(f"HTTP {r.status_code}")
             items = r.json().get("message", {}).get("items", [])
