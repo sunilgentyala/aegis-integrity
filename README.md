@@ -3,7 +3,7 @@
 <!-- mcp-name: io.github.sunilgentyala/aegis-integrity -->
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.5.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.5.2-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/local-first-orange?style=for-the-badge" alt="Local-first">
@@ -721,7 +721,7 @@ If you use AEGIS in your research, please cite the software:
   author    = {Gentyala, Sunil},
   title     = {{AEGIS}: Offline, Bias-Aware Academic Integrity Checker},
   year      = {2026},
-  version   = {3.5.1},
+  version   = {3.5.2},
   url       = {https://github.com/sunilgentyala/aegis-integrity}
 }
 ```
@@ -756,7 +756,7 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 
 ## Changelog
 
-### Unreleased
+### v3.5.2 (November 2026)
 - **FIX (privacy): MCP `skip_citations` is now really offline.** It previously
   disabled citation verification only; the publisher duplicate-title search
   still sent the paper's own title (PDF/DOCX) to Crossref. It now also passes
