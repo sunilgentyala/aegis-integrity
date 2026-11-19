@@ -94,6 +94,15 @@ capability, whether it's ready, and the one command that fixes it.
 `aegis doctor --warm-up` downloads the AI models ahead of time so your first
 full check doesn't wait on them.
 
+**Want to see a report first?** Open the
+[example citation report](https://sunilgentyala.com/aegis-integrity/demo/citation_demo_report.html)
+([source](docs/demo/citation_demo_report.html)). It was produced by AEGIS on a
+synthetic paper with invented references and simulated Crossref answers, and
+shows each verdict: valid, mismatch, invented DOI, and "could not verify"
+(timeouts, other registration agencies). Reproduce it offline with
+`python benchmarks/citations/run_eval.py`; results and the one known miss are in
+[benchmarks/](benchmarks/README.md).
+
 ---
 
 ## MCP Tools
@@ -762,6 +771,13 @@ Website: [sunilgentyala.github.io/aegis-integrity](https://sunilgentyala.github.
 - **Docs:** new [security model](docs/SECURITY_MODEL.md); privacy wording now
   states that the paper title is used by the duplicate-title check.
 - 14 new regression tests, 24 cases (`tests/test_mcp_security.py`), all network-free.
+- **NEW: citation benchmark** (`benchmarks/citations/`): 12 synthetic
+  references with simulated Crossref responses, run through the real parser
+  and detector. 11/12 verdicts match; no correct or unverifiable reference is
+  labelled fabricated; wrong-first-author detection is a documented miss.
+  Regression-tested in `tests/test_citation_benchmark.py`.
+- **NEW: example report** at `docs/demo/citation_demo_report.html`, generated
+  from the benchmark and marked as simulated.
 
 ### v3.5.1 (November 2026)
 - Report-interpretation skills renamed to neutral names: `similarity-report-triage`,
