@@ -101,7 +101,7 @@ def cli():
 @click.option("--no-grammar", is_flag=True,
               help="Skip grammar & language convention checking.")
 @click.option("--guidelines", default=None,
-              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER to run "
+              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER to run "
                    "per-venue guideline compliance for, checked SEPARATELY per venue "
                    "(default: none -- opt-in). Pass 'all' for all six.")
 @click.option("--watermark-mode",
@@ -262,7 +262,7 @@ def analyze(
 @cli.command()
 @click.argument("submission", type=click.Path(exists=True))
 @click.option("--venues", default="all", show_default=True,
-              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER, or "
+              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER, or "
                    "'all'. Each venue is checked SEPARATELY against its own sourced "
                    "style guidance -- see aegis/guidelines/profiles.py.")
 @click.option("--html", "output_html", default=None, type=click.Path(),

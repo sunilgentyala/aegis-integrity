@@ -115,7 +115,7 @@ Listed and claimed by the maintainer on [Glama](https://glama.ai/mcp/servers/sun
 |---|---|---|
 | `aegis_analyze_paper` | Full integrity pipeline on a PDF/DOCX/TEX/TXT/MD | "Run a full integrity check on ~/drafts/paper.pdf" |
 | `aegis_check_citations` | Verify references against Crossref (finds hallucinated DOIs) | "Check the references in paper.docx" |
-| `aegis_check_guidelines` | Offline style pass vs IEEE, ACM, BCS, IET, ISACA, Elsevier | "Is this ready for an Elsevier journal?" |
+| `aegis_check_guidelines` | Offline style pass vs IEEE, ACM, BCS, IET, ISACA, Elsevier, Springer Nature | "Is this ready for an Elsevier journal?" |
 | `aegis_compare_papers` | Overlap between two papers (conference vs journal version) | "Compare v1.docx and v2.docx" |
 | `aegis_index_add` | Add a paper to your local comparison corpus | "Add Smith2025.pdf to my corpus" |
 | `aegis_index_summary` | List the corpus | "What is in my AEGIS corpus?" |
@@ -167,7 +167,7 @@ Based on each vendor's public documentation and pricing pages as of August 2026.
 | Fully explainable per-sentence reports | **Yes** | Not public | Not public | Partial | Partial | Not public |
 | Mathematical formula checking (equation numbering, dangling references, notation) | **Yes** | Not public | Not public | Not public | Not public | Not public |
 | Grammar & language convention checking (contractions, US/UK spelling, agreement) | **Yes** | Not public | Not public | Not public | Not public | Not public |
-| Per-venue publisher guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier, checked separately) | **Yes** | Not public | Not public | Not public | Not public | Not public |
+| Per-venue publisher guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier/Springer, checked separately) | **Yes** | Not public | Not public | Not public | Not public | Not public |
 | Offline / air-gapped operation | **Yes** | No | No | No | No | No |
 | REST API + CLI (free) | **Yes** | No | Paid | Paid | Paid | Paid |
 | Pricing model | **$0.00 (self-hosted)** | Institutional (not public) | Institutional (not public) | Paid (self-serve) | Paid (self-serve) | Paid (self-serve) |
@@ -323,11 +323,12 @@ IEEE-specific one (or vice versa) is visible per venue instead of averaged away:
 | **IET** | IET Research Journals Author Guide | Bare `"(1)"` equation references (not `"Eq. (1)"`); scientific notation, not `5E03` |
 | **ISACA** | ISACA Journal Article Submission Guidelines | **Third person required** ("avoid 'I' or 'you'"); 2,000-3,000 word target; endnotes, not numeric brackets |
 | **Elsevier** | Elsevier Guide for Authors / CRediT / Highlights / Declaration of Competing Interest policy pages | **Either US or UK spelling accepted, just not mixed**; requires a CRediT authorship statement, a Declaration of Competing Interest, and a Data Availability Statement; Highlights capped at 3-5 bullets x 85 characters |
+| **Springer Nature** | Springer journal Instructions for Authors / editorial policies (journal-level template; individual journals may override) | Abstract 150-250 words; 4-6 keywords; citation style varies by journal (reported as not verified); LLM use documented in Methods |
 
 Results are `PASS` / `NEEDS_REVIEW` / `NOT_ENOUGH_DATA` -- advisory, never `FAIL`.
 These are style conventions, not academic-integrity findings; AEGIS does not
 claim to be a venue's editorial desk. Run via `aegis guidelines paper.pdf --venues
-IEEE,ACM,BCS,IET,ISACA,ELSEVIER` (fast, no ML models at all) or opt in from `aegis
+IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER` (fast, no ML models at all) or opt in from `aegis
 analyze ... --guidelines all`.
 
 ---
@@ -358,7 +359,7 @@ submission (PDF / DOCX / TEX / TXT / Markdown)
   │  TargetPublisherVerifier[v2.4] IEEE/ACM/Elsevier/IET/IETE/BCS     │
   │  MathFormulaChecker    [v3.0] equation numbering/refs/notation    │
   │  GrammarLanguageChecker[v3.0] contractions/spelling/agreement     │
-  │  GuidelineComplianceChecker[v3.0] IEEE/ACM/BCS/IET/ISACA/Elsevier │
+  │  GuidelineComplianceChecker[v3.0] IEEE/ACM/BCS/IET/ISACA/Elsevier/Springer │
   └────────────────────────────┬──────────────────────────────────────┘
                                |
                           AnalysisReport
@@ -413,7 +414,7 @@ aegis analyze paper.pdf --html report.html
 
 # Fast, offline-only scan: math + grammar + per-venue guideline compliance,
 # checked SEPARATELY for each requested venue -- no ML models at all:
-aegis guidelines paper.pdf --venues IEEE,ACM,BCS,IET,ISACA,ELSEVIER --html guidelines.html
+aegis guidelines paper.pdf --venues IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER --html guidelines.html
 
 # Fold guideline compliance into the full analysis instead:
 aegis analyze paper.pdf --guidelines all --html report.html
@@ -440,6 +441,30 @@ aegis analyze paper.pdf --index-dir ./aegis_index/ --html report.html
 # Start the REST API server:
 aegis serve --host 0.0.0.0 --port 8000
 ```
+
+### Verify your install in under a minute
+
+`examples/sample_paper.txt` is a tiny synthetic manuscript (public domain, CC0 1.0)
+with a few deliberate style slips. The guideline scan is fully offline and loads no
+ML models, so it is the fastest way to confirm that AEGIS runs:
+
+```bash
+aegis guidelines examples/sample_paper.txt --venues IEEE,SPRINGER
+```
+
+Expected report excerpt (rows trimmed; exact wording may vary slightly by version):
+
+```text
+IEEE: NEEDS_REVIEW
+  Spelling variant (US English)   NEEDS_REVIEW   Document mixes British and American spelling ...
+  Contractions                    NEEDS_REVIEW   1 contraction(s) found; IEEE avoids contractions ...
+SPRINGER: NEEDS_REVIEW
+  Spelling variant (EITHER ...)   NEEDS_REVIEW   Document mixes British and American spelling ...
+  Abstract length                 PASS           152 words, within the 150-250 word range.
+  Keyword count                   PASS           4 keyword(s), within the 4-6 range.
+```
+
+If you see the two venue panels with `NEEDS_REVIEW` on the spelling rows, the install works.
 
 ### Python API
 

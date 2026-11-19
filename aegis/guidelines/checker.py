@@ -90,6 +90,8 @@ class GuidelineComplianceChecker:
         checks.append(self._check_conflict_of_interest_statement(profile))
         checks.append(self._check_data_availability_statement(profile))
         checks.append(self._check_highlights(profile))
+        checks.append(self._check_abstract_length(profile))
+        checks.append(self._check_keyword_count(profile))
         if profile.elsevier_house_style:
             checks.extend(self._check_elsevier_house_style(profile))
 
@@ -124,8 +126,11 @@ class GuidelineComplianceChecker:
                     rule, "NEEDS_REVIEW",
                     f"Document mixes British and American spelling "
                     f"({self.grammar.spelling_variant_counts}); {profile.display_name} "
-                    f'accepts either variant but states "American or British usage is '
-                    f'accepted, but not a mixture of these."',
+                    + ('accepts either variant but states "American or British usage is '
+                       'accepted, but not a mixture of these."'
+                       if profile.spelling_variant_confidence == "stated"
+                       else "has no stated spelling rule, but a mixture of variants "
+                            "is inconsistent house style."),
                     source,
                 )
             return ComplianceCheck(
@@ -252,8 +257,9 @@ class GuidelineComplianceChecker:
         source = profile.source_name
         if profile.citation_style not in ("numeric-bracket",):
             return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
-                                    f"{profile.display_name} uses {profile.citation_style} "
-                                    f"citations, which this scan does not verify.", source)
+                                    f"{profile.display_name} citation style is "
+                                    f"\"{profile.citation_style}\", which this scan does not "
+                                    f"verify.", source)
         numeric_hits = len(_NUMERIC_CITATION_RE.findall(self.full_text))
         author_year_hits = len(_AUTHOR_YEAR_CITATION_RE.findall(self.full_text))
         if numeric_hits == 0 and author_year_hits == 0:
@@ -423,3 +429,49 @@ class GuidelineComplianceChecker:
             f"{profile.highlights_max_chars} characters.",
             source,
         )
+
+    def _check_abstract_length(self, profile: GuidelineProfile) -> ComplianceCheck:
+        rule = "Abstract length"
+        source = profile.source_name
+        if profile.abstract_word_range is None:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    f"{profile.display_name} publishes no abstract length "
+                                    f"requirement in the sourced guidelines.", source)
+        from aegis.guidelines.elsevier_pattern import _abstract
+        abstract = _abstract(self.full_text)
+        if not abstract:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    "No Abstract section found in the manuscript text.", source)
+        lo, hi = profile.abstract_word_range
+        n = len(abstract.split())
+        if lo <= n <= hi:
+            return ComplianceCheck(rule, "PASS",
+                                    f"{n} words, within the {lo}-{hi} word range.", source)
+        return ComplianceCheck(rule, "NEEDS_REVIEW",
+                                f"{n} words, outside the {lo}-{hi} word range published "
+                                f"for {profile.display_name}.", source)
+
+    def _check_keyword_count(self, profile: GuidelineProfile) -> ComplianceCheck:
+        rule = "Keyword count"
+        source = profile.source_name
+        if profile.keyword_count_range is None:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    f"{profile.display_name} publishes no keyword count "
+                                    f"requirement in the sourced guidelines.", source)
+        m = re.search(r"^\s*(?:index terms|keywords?)\s*[:\-\u2014]*\s*(.*)$",
+                      self.full_text, re.IGNORECASE | re.MULTILINE)
+        if not m:
+            return ComplianceCheck(rule, "NOT_ENOUGH_DATA",
+                                    "No Keywords line found in the manuscript text.", source)
+        blob = m.group(1).strip()
+        if not blob:
+            following = self.full_text[m.end():m.end() + 300].strip().split("\n")
+            blob = following[0] if following else ""
+        items = [k for k in re.split(r"[;,\u00b7\u2022]", blob) if k.strip()]
+        lo, hi = profile.keyword_count_range
+        if lo <= len(items) <= hi:
+            return ComplianceCheck(rule, "PASS",
+                                    f"{len(items)} keyword(s), within the {lo}-{hi} range.", source)
+        return ComplianceCheck(rule, "NEEDS_REVIEW",
+                                f"{len(items)} keyword(s), outside the {lo}-{hi} range "
+                                f"published for {profile.display_name}.", source)

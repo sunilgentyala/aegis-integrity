@@ -84,6 +84,8 @@ class GuidelineProfile:
     highlights_max_bullets: Optional[int] = None
     highlights_max_chars: Optional[int] = None
     elsevier_house_style: bool = False     # writing-pattern checks, see elsevier_pattern.py
+    abstract_word_range: Optional[tuple[int, int]] = None   # (min, max) words, if stated
+    keyword_count_range: Optional[tuple[int, int]] = None   # (min, max) keywords, if stated
 
 
 GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
@@ -273,14 +275,62 @@ GUIDELINE_PROFILES: dict[str, GuidelineProfile] = {
             "Control 115 (2026) 109428).",
         ),
     ),
+    "SPRINGER": GuidelineProfile(
+        key="SPRINGER",
+        display_name="Springer Nature (journals)",
+        source_name="Springer journal Instructions for Authors (springer.com "
+                     "journal submission guidelines) / Springer Nature editorial policies",
+        # Official author guidelines: the Springer journal "Submission guidelines"
+        # page carries the template text each journal inherits (abstract 150-250
+        # words, 4-6 keywords, name-year citations, DOIs as full links). Individual
+        # journals may override these, so always check the target journal's page.
+        source_url="https://www.springer.com/journal/11252/submission-guidelines",
+        spelling_variant="EITHER", spelling_variant_confidence="inferred",
+        allow_contractions=True, require_oxford_comma=False,
+        require_third_person=False, disallow_first_person_singular=False,
+        equation_ref_style=None,
+        equation_ref_note="The Springer journal Instructions for Authors do not "
+                           "prescribe a citation phrasing for equations.",
+        citation_style="varies",
+        word_count_range=None, discourage_bulleted_lists=False,
+        abstract_word_range=(150, 250),
+        keyword_count_range=(4, 6),
+        notes=(
+            # Source: https://www.springer.com/journal/11252/submission-guidelines
+            # ("Abstract" section).
+            '"Please provide an abstract of 150 to 250 words. The abstract should '
+            'not contain any undefined abbreviations or unspecified references."',
+            # Source: same page, "Keywords" section.
+            '"Please provide 4 to 6 keywords which can be used for indexing purposes."',
+            # Source: same page, "References" section; numbered citations where
+            # customary are allowed per the Springer Nature manuscript guidelines
+            # (https://www.springernature.com/gp/authors/publish-a-book/manuscript-guidelines).
+            "Reference style varies by journal: the default journal template cites "
+            'by name and year in parentheses, e.g. "(Thompson 1990)", with the '
+            "reference list alphabetized by first-author surname; some journals "
+            'use numbered references instead. Recorded as "varies" so the '
+            "citation-marker check reports NOT_ENOUGH_DATA rather than a false verdict.",
+            '"If available, please always include DOIs as full DOI links in your '
+            'reference list."',
+            "No spelling-variant rule is stated in the sourced guidance; treated as "
+            "inferred EITHER.",
+            "Use of a large language model must be documented in the Methods "
+            "section; LLMs do not satisfy authorship criteria. AI-assisted copy "
+            "editing for readability and grammar need not be declared.",
+            "Required statements go under a 'Statements and Declarations' heading "
+            "placed after the References section.",
+        ),
+    ),
 }
 
-DEFAULT_GUIDELINE_VENUES: tuple[str, ...] = ("IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER")
+DEFAULT_GUIDELINE_VENUES: tuple[str, ...] = (
+    "IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "SPRINGER",
+)
 
 
 def resolve_guideline_profiles(requested: Optional[list[str]]) -> list[GuidelineProfile]:
     """Validate and resolve a list of venue keys (case-insensitive) to their
-    GuidelineProfile, defaulting to all five when none are given."""
+    GuidelineProfile, defaulting to all venues when none are given."""
     keys = requested or list(DEFAULT_GUIDELINE_VENUES)
     profiles = []
     for k in keys:

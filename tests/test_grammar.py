@@ -113,3 +113,67 @@ class TestQualityScore:
         result = _CHECKER.analyze("")
         assert result.quality_score == 1.0
         assert result.word_count == 0
+
+
+class TestSpellingMixDetails:
+    """Issue #26: British vs American mix, beyond the basic variant tests."""
+
+    def test_mix_reports_both_counts_and_examples(self):
+        text = "We analyse the colour map and then analyze the behavior of the centre."
+        result = _CHECKER.analyze(text)
+        assert result.spelling_variant_detected == "MIXED"
+        assert result.spelling_variant_counts["UK"] == 3   # analyse, colour, centre
+        assert result.spelling_variant_counts["US"] == 2   # analyze, behavior
+        issue = next(i for i in result.issues if i.category == "spelling_mix")
+        assert issue.count == 5
+        assert issue.examples
+
+    def test_consistent_uk_text_not_flagged_as_mix(self):
+        result = _CHECKER.analyze("The organisation will optimise the labelling of colour data.")
+        assert result.spelling_variant_detected == "UK"
+        assert not [i for i in result.issues if i.category == "spelling_mix"]
+
+
+class TestRepeatedWords:
+
+    def test_flags_immediately_repeated_word(self):
+        result = _CHECKER.analyze("The the model converges after training.")
+        hits = [i for i in result.issues if "repeated word" in i.message]
+        assert len(hits) == 1
+        assert hits[0].count == 1
+        assert "The" in hits[0].examples or "the" in [e.lower() for e in hits[0].examples]
+
+    def test_repeated_word_across_newline_is_flagged(self):
+        result = _CHECKER.analyze("We evaluate the\nthe proposed detector on two datasets.")
+        assert any("repeated word" in i.message for i in result.issues)
+
+    def test_no_flag_when_words_are_separated(self):
+        result = _CHECKER.analyze("The model that we trained converges after training.")
+        assert not any("repeated word" in i.message for i in result.issues)
+
+
+class TestSentenceInitialNumerals:
+
+    def test_flags_sentence_starting_with_numeral(self):
+        text = "We ran the study in spring. 12 participants were recruited from two sites."
+        result = _CHECKER.analyze(text)
+        hits = [i for i in result.issues if "begin with a numeral" in i.message]
+        assert len(hits) == 1
+        assert hits[0].count == 1
+        assert hits[0].examples[0].startswith("12 participants")
+
+    def test_flags_first_sentence_of_document(self):
+        result = _CHECKER.analyze("300 samples were collected. They were then labelled.")
+        assert any("begin with a numeral" in i.message for i in result.issues)
+
+    def test_spelled_out_number_not_flagged(self):
+        result = _CHECKER.analyze("Twelve participants were recruited from two sites.")
+        assert not any("begin with a numeral" in i.message for i in result.issues)
+
+    def test_numeral_mid_sentence_not_flagged(self):
+        result = _CHECKER.analyze("We recruited 12 participants from 2 sites.")
+        assert not any("begin with a numeral" in i.message for i in result.issues)
+
+    def test_sentence_starting_with_year_not_flagged(self):
+        result = _CHECKER.analyze("2024 was the year the benchmark was released.")
+        assert not any("begin with a numeral" in i.message for i in result.issues)

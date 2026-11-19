@@ -80,6 +80,14 @@ _UK_US_PAIRS = [
 _DECADE_APOSTROPHE_RE = re.compile(r"\b((?:19|20)\d0)'s\b")
 _ACRONYM_PLURAL_APOSTROPHE_RE = re.compile(r"\b([A-Z]{2,6})'s\s+(?:are|were)\b")
 _REPEATED_WORD_RE = re.compile(r"\b(\w+)\s+\1\b", re.IGNORECASE)
+# A sentence that opens with a numeral ("12 participants were recruited.") should
+# spell the number out or be reworded. Matched only at the very start of the text
+# or right after sentence-ending punctuation, so numbered headings ("1 Introduction")
+# and list markers on their own lines are not touched. Years ("2024 was ...") are
+# common enough in technical prose that they are excluded.
+_SENTENCE_INITIAL_NUMERAL_RE = re.compile(
+    r"(?:\A\s*|(?<=[.!?])[ \t]+)(?!(?:19|20)\d{2}\b)(\d+(?:[.,]\d+)?[ \t]+[A-Za-z][^.!?\n]{0,60})"
+)
 _COMPRISED_OF_RE = re.compile(r"\bcomprised of\b", re.IGNORECASE)
 _A_LOT_RE = re.compile(r"\balot\b", re.IGNORECASE)
 _IRREGARDLESS_RE = re.compile(r"\birregardless\b", re.IGNORECASE)
@@ -246,6 +254,19 @@ class GrammarLanguageChecker:
                         f"(e.g. \"the the\").",
                 count=len(repeated), examples=list(dict.fromkeys(repeated))[:5],
                 rule_source="general proofreading check",
+            ))
+
+        numeral_starts = _SENTENCE_INITIAL_NUMERAL_RE.findall(text)
+        if numeral_starts:
+            issues.append(GrammarIssue(
+                category="usage", severity="LOW",
+                message=f"{len(numeral_starts)} sentence(s) begin with a numeral "
+                        f"(e.g. \"12 participants were ...\"); spell the number out "
+                        f"or reword the sentence.",
+                count=len(numeral_starts),
+                examples=[n.strip() for n in numeral_starts[:5]],
+                rule_source="general style convention: do not begin a sentence "
+                            "with a numeral",
             ))
 
         list_lines = len(_LIST_LINE_RE.findall(text))
