@@ -236,7 +236,7 @@ async def analyze(
     run_grammar: bool = Query(True),
     offline: bool = Query(False, description="Make no network calls at all "
                           "(disables Crossref/OpenAlex lookups)"),
-    guidelines: str = Query("", description="Comma-separated IEEE,ACM,BCS,IET,ISACA,ELSEVIER or 'all'"),
+    guidelines: str = Query("", description="Comma-separated IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER or 'all'"),
     include_html: bool = Query(False, description="Also return the full HTML report in the JSON"),
     prior_works: Optional[str] = Form(
         None,

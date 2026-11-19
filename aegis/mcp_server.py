@@ -43,7 +43,7 @@ ALLOWED_EXTENSIONS = {".pdf", ".docx", ".tex", ".txt", ".md"}
 MAX_FILE_BYTES = int(os.environ.get("AEGIS_MAX_FILE_MB", "50")) * 1024 * 1024
 MAX_OUTPUT_CHARS = 60_000
 MAX_PRIOR_WORKS_ENTRIES = 10_000
-VALID_VENUES = {"IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "ALL"}
+VALID_VENUES = {"IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "SPRINGER", "ALL"}
 _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 _CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 

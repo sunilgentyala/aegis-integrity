@@ -23,15 +23,15 @@ def _run_check(text: str, venues=None):
 
 class TestProfileRegistry:
 
-    def test_all_six_venues_present(self):
+    def test_all_seven_venues_present(self):
         assert set(GUIDELINE_PROFILES.keys()) == {
-            "IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER",
+            "IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "SPRINGER",
         }
 
     def test_default_venues_matches_registry(self):
         assert set(DEFAULT_GUIDELINE_VENUES) == set(GUIDELINE_PROFILES.keys())
 
-    def test_resolve_defaults_to_all_six(self):
+    def test_resolve_defaults_to_all_venues(self):
         profiles = resolve_guideline_profiles(None)
         assert {p.key for p in profiles} == set(DEFAULT_GUIDELINE_VENUES)
 
@@ -44,8 +44,8 @@ class TestScansRunSeparately:
 
     def test_each_requested_venue_gets_its_own_result(self):
         results = _run_check("A plain sentence with no notable issues here.",
-                              ["IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER"])
-        assert set(results.keys()) == {"IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER"}
+                              ["IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "SPRINGER"])
+        assert set(results.keys()) == {"IEEE", "ACM", "BCS", "IET", "ISACA", "ELSEVIER", "SPRINGER"}
         for venue, res in results.items():
             assert res.venue == venue
             assert res.source_name  # every venue must cite its own source
@@ -232,3 +232,37 @@ class TestElsevierWritingPattern:
 
     def test_other_venues_do_not_run_house_style(self):
         assert "No em or en dashes in running text" not in {c.rule for c in _run_check(self.GOOD, ["IEEE"])["IEEE"].checks}
+
+
+def _springer_paper(abstract_words: int, keywords: str) -> str:
+    abstract = " ".join(["method"] * abstract_words)
+    return (f"A Sample Title\n\nAbstract\n{abstract}\n\nKeywords: {keywords}\n\n"
+            "1 Introduction\nWe study the problem (Smith 2020).\n")
+
+
+class TestSpringerProfile:
+
+    def test_profile_cites_official_source_and_rules(self):
+        p = GUIDELINE_PROFILES["SPRINGER"]
+        assert p.source_url.startswith("https://www.springer.com/")
+        assert p.abstract_word_range == (150, 250)
+        assert p.keyword_count_range == (4, 6)
+        assert p.citation_style == "varies"
+
+    def test_abstract_and_keywords_within_range_pass(self):
+        text = _springer_paper(200, "federated learning, anomaly detection, edge, privacy")
+        checks = {c.rule: c for c in _run_check(text, ["SPRINGER"])["SPRINGER"].checks}
+        assert checks["Abstract length"].status == "PASS"
+        assert checks["Keyword count"].status == "PASS"
+
+    def test_short_abstract_and_too_many_keywords_need_review(self):
+        text = _springer_paper(60, "a, b, c, d, e, f, g")
+        checks = {c.rule: c for c in _run_check(text, ["SPRINGER"])["SPRINGER"].checks}
+        assert checks["Abstract length"].status == "NEEDS_REVIEW"
+        assert checks["Keyword count"].status == "NEEDS_REVIEW"
+
+    def test_other_venues_do_not_check_abstract_or_keywords(self):
+        text = _springer_paper(60, "a, b")
+        checks = {c.rule: c for c in _run_check(text, ["IEEE"])["IEEE"].checks}
+        assert checks["Abstract length"].status == "NOT_ENOUGH_DATA"
+        assert checks["Keyword count"].status == "NOT_ENOUGH_DATA"
