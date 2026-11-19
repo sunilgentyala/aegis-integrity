@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [history-cleanup]
   pull_request:
-    branches: [main]
+    branches: [history-cleanup]
 
 permissions:
   contents: read
