@@ -13,7 +13,7 @@ setup(
     name="aegis-integrity",
     version=VERSION,
     description=(
-        "Open-source, offline, bias-aware academic integrity checker: "
+        "Open-source, local-first academic integrity checker: "
         "plagiarism, AI content detection, LLM watermark detection, "
         "citation integrity & network analysis, stylometric authorship "
         "profiling, semantic coherence analysis, and batch classroom scanning."

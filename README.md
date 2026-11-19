@@ -6,8 +6,8 @@
   <img src="https://img.shields.io/badge/version-3.5.1-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen?style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/offline-first-orange?style=for-the-badge" alt="Offline">
-  <img src="https://img.shields.io/badge/bias--aware-ESL%20(experimental)-purple?style=for-the-badge" alt="Bias aware, experimental">
+  <img src="https://img.shields.io/badge/local-first-orange?style=for-the-badge" alt="Local-first">
+  <img src="https://img.shields.io/badge/ESL%20calibration-experimental-purple?style=for-the-badge" alt="ESL calibration, experimental">
   <img src="https://img.shields.io/github/stars/sunilgentyala/aegis-integrity?style=for-the-badge" alt="Stars">
 </p>
 
@@ -25,7 +25,7 @@
 </p>
 <p align="center"><sub>Real CLI output on a synthetic sample paper (<code>docs/demo/sample_paper.txt</code>). Both DOIs in it are invented, and AEGIS flags them.</sub></p>
 
-> **Open-source, offline, bias-aware academic integrity analysis.**
+> **Open-source, local-first academic integrity analysis.**
 > Documents are processed entirely on your own hardware and never uploaded anywhere. Citation checks may query Crossref/OpenAlex with reference metadata (titles, authors, DOIs) when online verification is enabled.
 > Analyzes plagiarism, AI-generated content, citation hallucinations, ghostwriting, predatory references, and essay mill patterns in a single pipeline -- plus an experimental token-distribution heuristic for LLM watermark research.
 > **Plagiarism detection is corpus-based, not a live web/database crawl:** AEGIS compares your document against a corpus of papers *you supply* (your own prior works, a downloaded reference set, etc. -- see [Building a Corpus Index](HOWTO.md#9-building-a-corpus-index)). With no corpus loaded, plagiarism modules correctly report "no prior works loaded" rather than silently finding nothing to flag -- that isn't a scan failure.
@@ -42,7 +42,7 @@
 </p>
 
 - **Community interest:** starred and forked by researchers and developers on GitHub (live counts above) and installed from PyPI.
-- **Fourteen detection modules in one offline pipeline:** citation hallucination, AI-text detection calibrated for non-native English writers, paraphrase and self-plagiarism, ghostwriting stylometry, essay mill patterns and an experimental LLM watermark test.
+- **Fourteen detection modules in one local pipeline:** citation hallucination, AI-text signals (with experimental non-native-English calibration), paraphrase and self-plagiarism, ghostwriting stylometry, essay mill patterns and an experimental LLM watermark test.
 - **Tested and scanned:** 284 automated tests, CodeQL code scanning, dependency auditing and pinned CI actions on every push.
 - **Listed and rated:** Grade A on [mcprush](https://mcprush.com/sunilgentyala/aegis-academic-integrity-checker-mcp) and on [Glama](https://glama.ai/mcp/servers/sunilgentyala/aegis-integrity), the MCP directories (each directory's own automated rating).
 - **Works where you work:** browser app, CLI, REST API, Docker, Claude Code plugin, Claude Desktop (`.mcpb`) and any MCP client.
@@ -120,7 +120,7 @@ AEGIS is local-first and the MCP server runs over stdio. Documents never leave y
 
 - MCP tools read only `.pdf`, `.docx`, `.tex`, `.txt` and `.md` files up to 50 MB (`AEGIS_MAX_FILE_MB`).
 - Set `AEGIS_ALLOWED_ROOTS` to confine every tool to specific folders (recommended when an agent drives AEGIS).
-- Tool output is stripped of control characters and truncated; tools carry read-only / non-destructive MCP hints.
+- Tool output is stripped of control characters and truncated; analysis tools carry read-only MCP hints, while `aegis_index_add` is marked as writing (it appends to the local corpus index but never deletes or overwrites data).
 - DOIs from documents are percent-encoded and fetched without redirects. The MCP server never loads `./.env`.
 - CI runs tests, `bandit`, a blocking `pip-audit`, and CodeQL; Dependabot is on.
 
@@ -654,10 +654,12 @@ runs entirely on your own machine. Citation checks may query Crossref/OpenAlex w
 reference metadata (titles, authors, DOIs), never the document itself, and only when
 online verification is enabled.
 
-**2. Reduced false-positive bias against international researchers.** [Liang et al. (Stanford,
+**2. Aware of false-positive bias against international researchers.** [Liang et al. (Stanford,
 2023)](https://arxiv.org/abs/2304.02819) found GPT detectors misclassified more than half of
-non-native-authored TOEFL essays as AI-generated. AEGIS applies per-language calibration
-across 15 languages to reduce this bias.
+non-native-authored TOEFL essays as AI-generated. AEGIS includes an experimental per-language
+calibration for 15 languages aimed at this problem. It has not been validated, and for most
+English-language submissions it rarely activates (see the v3.1.1 changelog note), so AI-text
+scores should always be reviewed by a human with this bias in mind.
 
 **3. Closes gaps not publicly documented elsewhere.** Citation cartels, essay mills, and
 AI-polished text that passes perplexity filters are not publicly documented as covered by
