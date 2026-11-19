@@ -1,0 +1,50 @@
+name: Wrong or confusing result
+description: A reference, similarity match, AI-text score or guideline finding looks wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        False positives and false negatives are the most useful reports. **Only share text you have the right to make public.** For citations, the single reference string is usually enough.
+  - type: dropdown
+    id: check
+    attributes:
+      label: Which check?
+      options: [Citation verification, Plagiarism / similarity, AI-text score, Stylometry, Publisher guidelines, Grammar / equations, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of problem
+      options: [Flagged something that is fine (false positive), Missed a real problem (false negative), Result is correct but the explanation is confusing]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AEGIS version
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Minimal input
+      description: e.g. the reference string, or a short paragraph.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: got
+    attributes:
+      label: What AEGIS reported
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why you think it is wrong
+      description: e.g. "the DOI resolves at doi.org to this paper", with a link if public.
+    validations:
+      required: true
