@@ -139,7 +139,7 @@ Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
 
 ## Support the project
 
-If AEGIS helped you, a star on GitHub helps other researchers find it. Bug reports, sample papers that break it and pull requests are worth more: see the open issues labelled `good first issue`.
+If AEGIS helped you, a star on GitHub helps other researchers find it. Bug reports and non-confidential examples that AEGIS gets wrong are worth even more: use the **Wrong or confusing result** issue template. To contribute code, start with [CONTRIBUTING.md](CONTRIBUTING.md), the [contribution ideas](docs/community/good-first-issues.md) and the [roadmap](docs/community/roadmap.md).
 
 ---
 

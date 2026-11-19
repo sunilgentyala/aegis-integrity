@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a new check, publisher profile, or workflow improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the task or problem, not just the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help?
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: For publisher rules, link the official author-guidelines page. For detection ideas, link the paper or method.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Local-first
+      options:
+        - label: This would still work without uploading documents anywhere (or I have explained the network use above).
