@@ -1,0 +1,57 @@
+name: Bug report
+description: AEGIS crashed, failed to install, or did something unexpected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Do not attach confidential or unpublished manuscripts, or papers you do not have the right to share.** A short synthetic snippet that reproduces the problem is ideal.
+  - type: input
+    id: version
+    attributes:
+      label: AEGIS version
+      description: Output of `python -c "import aegis; print(aegis.__version__)"`
+    validations:
+      required: true
+  - type: dropdown
+    id: interface
+    attributes:
+      label: How were you running AEGIS?
+      options: [Web app (aegis ui), CLI, MCP server (Claude Code / Claude Desktop / other client), REST API, Python API, Docker]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Operating system and Python version
+      placeholder: Windows 11, Python 3.12
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `aegis doctor --plain`
+      render: text
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. pip install ...
+        2. aegis analyze sample.txt --no-ai
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Paste error messages or logs. Remove file paths, names or text you do not want to make public.
+      render: text
+    validations:
+      required: true
