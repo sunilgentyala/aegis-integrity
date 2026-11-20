@@ -37,6 +37,26 @@ class TestDOIExtraction:
     def test_unwrapped_doi_unchanged(self):
         assert self.p._extract_doi("see 10.1109/TSMCC.2011.2134847.") == "10.1109/TSMCC.2011.2134847"
 
+    def test_wrap_after_slash(self):
+        assert self.p._extract_doi("doi:10.1234/\n journal.2026.12345.") == "10.1234/journal.2026.12345"
+
+    def test_wrapped_numeric_publication_id(self):
+        assert self.p._extract_doi("doi:10.1234/journal.2026.\n1234567.\n15") == "10.1234/journal.2026.1234567"
+
+    def test_wrapped_year_and_numeric_publication_id(self):
+        assert self.p._extract_doi("doi:10.1234/journal.\n2026.1234567.\n15") == "10.1234/journal.2026.1234567"
+
+    def test_bracketed_entries_do_not_split_on_wrapped_year_pages_or_doi(self):
+        refs = self.p._extract_references_heuristic(
+            "References\n"
+            "[1] A. Author, First synthetic article, Example Journal 26\n"
+            "(2025) i5–i5. doi:10.1234/\nexample.001.\n"
+            "[2] B. Author, Second synthetic article, Example Conference 2026, pp. 587–\n"
+            "618. doi:10.1234/example.2026.\n1234567.\n"
+        )
+        assert [ref.year for ref in refs] == ["2025", "2026"]
+        assert [ref.doi for ref in refs] == ["10.1234/example.001", "10.1234/example.2026.1234567"]
+
 
 class TestRunningHeadersInReferences:
 

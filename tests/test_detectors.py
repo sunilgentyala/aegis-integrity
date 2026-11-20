@@ -278,13 +278,19 @@ class TestCitationIntegrityDetector:
         verdicts = det.verify_references([ref])
         assert verdicts[0].verdict == "NO_DOI"
 
-    def test_offline_mode_skips_network(self):
+    def test_offline_mode_skips_network_and_preserves_doi(self, monkeypatch):
         from aegis.detectors.citation import CitationIntegrityDetector
         det = CitationIntegrityDetector(offline=True)
+        def unexpected_network():
+            raise AssertionError("Offline verification must not open an HTTP session")
+        monkeypatch.setattr(det, "_get_session", unexpected_network)
         ref = self._make_ref(doi="10.9999/fake", title="A Fake Title", year="2023")
         verdicts = det.verify_references([ref])
-        # In offline mode with a DOI, returns NO_DOI (cannot verify)
-        assert verdicts[0].verdict in ("NO_DOI", "UNRESOLVABLE")
+        assert verdicts[0].verdict == "NOT_CHECKED_OFFLINE"
+        assert verdicts[0].doi == ref.doi
+        summary = det.summary(verdicts)
+        assert summary["references_with_identifier"] == 1
+        assert summary["references_verified"] == 0
 
     def test_short_generic_title_skips_title_lookup(self):
         """Real bug: a spec/document reference with no DOI and a short,

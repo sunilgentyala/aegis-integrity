@@ -8,7 +8,7 @@ No existing open-source plagiarism tool validates citations. This module:
   4. Detects hallucinated references (DOI resolves to a different paper)
   5. Flags unresolvable DOIs (possibly fabricated by LLMs)
   6. Computes a per-reference verdict: VALID / MISMATCH / HALLUCINATED /
-     NOT_FOUND_IN_CROSSREF / UNAVAILABLE / UNRESOLVABLE / NO_DOI
+     NOT_FOUND_IN_CROSSREF / UNAVAILABLE / UNRESOLVABLE / NO_DOI / NOT_CHECKED_OFFLINE
 
 A Crossref 404 on /works/{doi} means "not a Crossref record," not "fake DOI":
 DataCite-registered DOIs (e.g. arXiv's 10.48550/* prefix) always 404 against
@@ -65,7 +65,7 @@ class CitationVerdict:
     resolved_year: Optional[str]
     resolved_journal: Optional[str]
     verdict: str          # VALID | MISMATCH | HALLUCINATED | NOT_FOUND_IN_CROSSREF |
-                          # UNAVAILABLE | UNRESOLVABLE | NO_DOI
+                          # UNAVAILABLE | UNRESOLVABLE | NO_DOI | NOT_CHECKED_OFFLINE
     confidence: float     # 0.0 -- 1.0
     issues: list[str]
     crossref_url: Optional[str]
@@ -150,7 +150,7 @@ class CitationIntegrityDetector:
             return CitationVerdict(
                 cite_key=ref.cite_key or "unknown",
                 raw_text=raw[:300],
-                doi=None,
+                doi=doi,
                 claimed_year=claimed_year,
                 claimed_authors=claimed_authors,
                 claimed_title=claimed_title,
@@ -158,9 +158,10 @@ class CitationIntegrityDetector:
                 resolved_authors=[],
                 resolved_year=None,
                 resolved_journal=None,
-                verdict="NO_DOI",
-                confidence=0.5,
-                issues=["No DOI found; cannot verify against Crossref"],
+                verdict="NOT_CHECKED_OFFLINE" if doi else "NO_DOI",
+                confidence=0.0 if doi else 0.5,
+                issues=(["DOI extracted; live verification skipped in offline mode"] if doi
+                        else ["No DOI found; cannot verify against Crossref"]),
                 crossref_url=None,
             )
 
