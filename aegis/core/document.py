@@ -38,6 +38,12 @@ _REFERENCES_HEADING_RE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
+_REFERENCE_ENTRY_PATTERNS = (
+    r"^[ \t]*\[\d+\][ \t]+",
+    r"^[ \t]*\(\d+\)[ \t]+",
+    r"^[ \t]*\d+\.[ \t]+",
+)
+
 
 @dataclass
 class ParsedDocument:
@@ -396,12 +402,10 @@ class DocumentParser:
     def _extract_references_heuristic(self, text: str) -> list[ParsedReference]:
         refs = []
         # Find reference section
-        ref_match = re.search(
-            r"(?:References|Bibliography|REFERENCES)\s*\n(.*)",
-            text, re.DOTALL | re.IGNORECASE)
-        if not ref_match:
+        headings = list(_REFERENCES_HEADING_RE.finditer(text))
+        if not headings:
             return []
-        ref_block = ref_match.group(1)
+        ref_block = text[headings[-1].end():].lstrip("\n\r")
         # Drop running headers/footers (journal name + year, author running
         # head, page numbers) that PDF extraction interleaves into the
         # reference list; left in, "... Control 115 (2026) 109428" becomes
@@ -415,8 +419,15 @@ class DocumentParser:
             line for line in ref_block.splitlines()
             if line_counts.get(line.strip(), 0) < 3
         )
-        # Split on numbered entries [1] or (1) or line starts
-        entries = re.split(r"\n\s*(?:\[\d+\]|\(\d+\)|(?:\d+\.))\s+", ref_block)
+        # Detect the numbering style once. Mixing styles mistakes wrapped
+        # publication years "(2025)" and page ranges "618." for new entries.
+        # Horizontal whitespace prevents a standalone wrapped DOI line such
+        # as "3602970." from becoming a numbered entry across a newline.
+        entries = [ref_block]
+        for pattern in _REFERENCE_ENTRY_PATTERNS:
+            if re.search(pattern, ref_block, re.MULTILINE):
+                entries = re.split(pattern, ref_block, flags=re.MULTILINE)[1:]
+                break
         for i, entry in enumerate(entries):
             entry = entry.strip()
             if len(entry) < 20:
@@ -432,13 +443,13 @@ class DocumentParser:
 
     def _extract_doi(self, text: str) -> Optional[str]:
         # A DOI can wrap across lines in PDF text ("10.1016/j. \nebiom.2022.1").
-        # Rejoin a piece that ends in a DOI separator when the next line
-        # continues like a DOI suffix: starts lowercase/digit, 4+ characters,
-        # and contains a letter or dot. A following word such as "Accessed"
-        # or a bare page number ("15") from a page footer is never glued on.
+        # A line may break immediately after the slash or after a suffix
+        # separator. Some numeric publication IDs wrap onto their own line;
+        # accept long, period-terminated IDs without absorbing page footers.
         m = re.search(
-            r"10\.\d{4,}/\S+"
-            r"(?:(?<=[./_-])[ \t]*\n[ \t]*(?=[a-z0-9]\S{3,})(?=\S*[a-z.])\S+)*",
+            r"10\.\d{4,}/(?:[ \t]*\n[ \t]*)?\S+"
+            r"(?:(?<=[./_-])[ \t]*\n[ \t]*(?:"
+            r"(?=[a-z0-9]\S{3,})(?=\S*[a-z])\S+|(?:\d{4}\.)?\d{6,}\.(?=[ \t]*(?:\n|$))))*",
             text)
         if not m:
             return None

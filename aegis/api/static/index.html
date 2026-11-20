@@ -446,8 +446,8 @@ footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: cen
     rows.forEach((r) => tb.append(el("tr", {}, ...r.map((c) => (c instanceof Node ? el("td", {}, c) : el("td", { text: c == null ? "" : String(c) }))))));
     return el("div", { class: "tbl" }, el("table", {}, el("thead", {}, el("tr", {}, ...headers.map((h) => el("th", { text: h })))), tb));
   }
-  const VERDICT_CLS = { VALID: "b-ok", MISMATCH: "b-warn", HALLUCINATED: "b-bad", UNRESOLVABLE: "b-info", NO_DOI: "b-info", UNAVAILABLE: "b-info", NOT_FOUND_IN_CROSSREF: "b-info" };
-  const VERDICT_TEXT = { VALID: "Verified", MISMATCH: "Details don't match", HALLUCINATED: "Not found / likely fabricated", UNRESOLVABLE: "Couldn't check", NO_DOI: "No DOI given", UNAVAILABLE: "Lookup timed out; try again", NOT_FOUND_IN_CROSSREF: "Registered elsewhere; not checked" };
+  const VERDICT_CLS = { VALID: "b-ok", MISMATCH: "b-warn", HALLUCINATED: "b-bad", UNRESOLVABLE: "b-info", NO_DOI: "b-info", NOT_CHECKED_OFFLINE: "b-info", UNAVAILABLE: "b-info", NOT_FOUND_IN_CROSSREF: "b-info" };
+  const VERDICT_TEXT = { VALID: "Verified", MISMATCH: "Details don't match", HALLUCINATED: "Not found / likely fabricated", UNRESOLVABLE: "Couldn't check", NO_DOI: "No DOI given", NOT_CHECKED_OFFLINE: "DOI found; offline", UNAVAILABLE: "Lookup timed out; try again", NOT_FOUND_IN_CROSSREF: "Registered elsewhere; not checked" };
   const PROBLEM_VERDICTS = new Set(["MISMATCH", "HALLUCINATED"]);
 
   let lastData = null, lastName = "";

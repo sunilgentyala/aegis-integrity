@@ -380,6 +380,7 @@ class ReportGenerator:
     VERDICT_COLORS = {
         "VALID": "#27ae60",
         "NO_DOI": "#95a5a6",
+        "NOT_CHECKED_OFFLINE": "#95a5a6",
         "UNRESOLVABLE": "#f39c12",
         "MISMATCH": "#e67e22",
         "HALLUCINATED": "#c0392b",
