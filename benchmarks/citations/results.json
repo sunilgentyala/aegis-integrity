@@ -1,0 +1,137 @@
+{
+  "summary": {
+    "references": 12,
+    "parsed_references": 12,
+    "exact_verdict_matches": 11,
+    "outcome_matches": 11,
+    "problems_in_ground_truth": 5,
+    "problems_flagged_correctly": 4,
+    "flags_raised": 4,
+    "precision": 1.0,
+    "recall": 0.8,
+    "false_fabrication_claims": 0,
+    "unverifiable_reported_as_problem": 0
+  },
+  "rows": [
+    {
+      "ref": 1,
+      "scenario": "Correct reference",
+      "truth": "ok",
+      "expected_verdict": "VALID",
+      "aegis_verdict": "VALID",
+      "aegis_outcome": "ok",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 2,
+      "scenario": "Real DOI, but it belongs to a different paper (wrong title)",
+      "truth": "problem",
+      "expected_verdict": "MISMATCH",
+      "aegis_verdict": "MISMATCH",
+      "aegis_outcome": "problem",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 3,
+      "scenario": "Wrong year (cited 2016, published 2019)",
+      "truth": "problem",
+      "expected_verdict": "MISMATCH",
+      "aegis_verdict": "MISMATCH",
+      "aegis_outcome": "problem",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 4,
+      "scenario": "Year off by one (online-first 2022, print 2023): acceptable",
+      "truth": "ok",
+      "expected_verdict": "VALID",
+      "aegis_verdict": "VALID",
+      "aegis_outcome": "ok",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 5,
+      "scenario": "Invented DOI: not registered with any agency",
+      "truth": "problem",
+      "expected_verdict": "HALLUCINATED",
+      "aegis_verdict": "HALLUCINATED",
+      "aegis_outcome": "problem",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 6,
+      "scenario": "Real DOI registered with mEDRA, not Crossref",
+      "truth": "cannot_verify",
+      "expected_verdict": "NOT_FOUND_IN_CROSSREF",
+      "aegis_verdict": "NOT_FOUND_IN_CROSSREF",
+      "aegis_outcome": "cannot_verify",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 7,
+      "scenario": "Crossref times out",
+      "truth": "cannot_verify",
+      "expected_verdict": "UNAVAILABLE",
+      "aegis_verdict": "UNAVAILABLE",
+      "aegis_outcome": "cannot_verify",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 8,
+      "scenario": "Crossref rate-limits the request (HTTP 429)",
+      "truth": "cannot_verify",
+      "expected_verdict": "UNAVAILABLE",
+      "aegis_verdict": "UNAVAILABLE",
+      "aegis_outcome": "cannot_verify",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 9,
+      "scenario": "Borrowed real DOI: title and year both wrong",
+      "truth": "problem",
+      "expected_verdict": "MISMATCH",
+      "aegis_verdict": "MISMATCH",
+      "aegis_outcome": "problem",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 10,
+      "scenario": "Wrong first author (cited Fischer, actual Garcia)",
+      "truth": "problem",
+      "expected_verdict": "MISMATCH",
+      "aegis_verdict": "VALID",
+      "aegis_outcome": "ok",
+      "verdict_correct": false,
+      "outcome_correct": false
+    },
+    {
+      "ref": 11,
+      "scenario": "No DOI and no matching record in Crossref",
+      "truth": "cannot_verify",
+      "expected_verdict": "NO_DOI",
+      "aegis_verdict": "NO_DOI",
+      "aegis_outcome": "cannot_verify",
+      "verdict_correct": true,
+      "outcome_correct": true
+    },
+    {
+      "ref": 12,
+      "scenario": "No DOI, but a title search finds the matching record",
+      "truth": "ok",
+      "expected_verdict": "VALID",
+      "aegis_verdict": "VALID",
+      "aegis_outcome": "ok",
+      "verdict_correct": true,
+      "outcome_correct": true
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117;stop-opacity:1"/>
+      <stop offset="60%" style="stop-color:#0d1117;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#101820;stop-opacity:1"/>
+    </linearGradient>
+    <!-- Shield gradient -->
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#58a6ff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#3fb950;stop-opacity:1"/>
+    </linearGradient>
+    <!-- Accent line gradient -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#58a6ff;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#3fb950;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#d2a8ff;stop-opacity:1"/>
+    </linearGradient>
+    <!-- Glow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="18" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Dot pattern -->
+    <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="1" fill="#58a6ff" opacity="0.07"/>
+    </pattern>
+    <!-- Shield clip -->
+    <clipPath id="shieldClip">
+      <path d="M130 60 L230 60 L230 150 Q230 200 180 220 Q130 200 130 150 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+
+  <!-- Ambient glow blobs -->
+  <ellipse cx="200" cy="315" rx="280" ry="220" fill="#58a6ff" opacity="0.04"/>
+  <ellipse cx="900" cy="200" rx="220" ry="160" fill="#3fb950" opacity="0.04"/>
+  <ellipse cx="1050" cy="500" rx="180" ry="140" fill="#d2a8ff" opacity="0.04"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1200" height="5" fill="url(#accentGrad)"/>
+
+  <!-- ========== LEFT PANEL: SHIELD + WORDMARK ========== -->
+
+  <!-- Shield shape -->
+  <g transform="translate(88, 80)" filter="url(#softGlow)">
+    <!-- Outer shield -->
+    <path d="M96 0 L192 30 L192 120 Q192 200 96 240 Q0 200 0 120 L0 30 Z"
+          fill="url(#shieldGrad)" opacity="0.15"/>
+    <!-- Inner shield border -->
+    <path d="M96 8 L184 35 L184 120 Q184 193 96 230 Q8 193 8 120 L8 35 Z"
+          fill="none" stroke="url(#shieldGrad)" stroke-width="2" opacity="0.8"/>
+    <!-- Shield inner fill -->
+    <path d="M96 18 L174 42 L174 120 Q174 183 96 218 Q18 183 18 120 L18 42 Z"
+          fill="url(#shieldGrad)" opacity="0.08"/>
+    <!-- Letter A -->
+    <text x="96" y="148" font-family="'Segoe UI',Arial,sans-serif" font-size="100"
+          font-weight="900" fill="url(#shieldGrad)" text-anchor="middle"
+          filter="url(#glow)" opacity="0.95">A</text>
+    <!-- Check tick at bottom of shield -->
+    <path d="M72 192 L88 208 L120 176" stroke="#3fb950" stroke-width="5"
+          fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  </g>
+
+  <!-- AEGIS wordmark -->
+  <text x="88" y="388" font-family="'Segoe UI',Arial Black,sans-serif"
+        font-size="90" font-weight="900" letter-spacing="-2"
+        fill="#e6edf3" opacity="0.97">AEGIS</text>
+
+  <!-- Wordmark underline (gradient) -->
+  <rect x="88" y="398" width="320" height="4" rx="2" fill="url(#accentGrad)" opacity="0.9"/>
+
+  <!-- Tagline -->
+  <text x="88" y="444" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="22" font-weight="400" fill="#8b949e" letter-spacing="0.5">
+    Open-Source Academic Integrity Engine
+  </text>
+
+  <!-- Sub-tagline -->
+  <text x="88" y="476" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="18" font-weight="400" fill="#6e7681" letter-spacing="0.3">
+    Plagiarism · AI Detection · LLM Watermarks · Citation Integrity
+  </text>
+
+  <!-- ========== DIVIDER LINE ========== -->
+  <line x1="480" y1="60" x2="480" y2="560" stroke="#30363d" stroke-width="1"/>
+
+  <!-- ========== RIGHT PANEL: FEATURES + STATS ========== -->
+
+  <!-- "v2.0 · MIT License · 100% Offline" pill -->
+  <rect x="520" y="68" width="340" height="36" rx="18"
+        fill="rgba(63,185,80,0.1)" stroke="rgba(63,185,80,0.35)" stroke-width="1.5"/>
+  <circle cx="543" cy="86" r="6" fill="#3fb950">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="560" y="91" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="15" font-weight="700" fill="#3fb950" letter-spacing="0.5">
+    v2.0.0  ·  MIT License  ·  100% Offline
+  </text>
+
+  <!-- Module count big stat -->
+  <text x="520" y="185" font-family="'Segoe UI',Arial Black,sans-serif"
+        font-size="72" font-weight="900" fill="#58a6ff" filter="url(#glow)">10</text>
+  <text x="615" y="155" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="17" font-weight="600" fill="#8b949e">Detection</text>
+  <text x="615" y="178" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="17" font-weight="600" fill="#8b949e">Modules</text>
+  <text x="615" y="201" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="13" fill="#6e7681">No other tool covers all</text>
+
+  <!-- Feature list -->
+  <g font-family="'Segoe UI',Arial,sans-serif" font-size="17" fill="#cdd9e5">
+
+    <!-- Row 1 -->
+    <circle cx="535" cy="243" r="5" fill="#58a6ff"/>
+    <text x="552" y="248" font-weight="600" fill="#e6edf3">Citation Hallucination</text>
+    <text x="552" y="248" font-size="14" fill="#6e7681" dy="18">Crossref DOI verification</text>
+
+    <circle cx="835" cy="243" r="5" fill="#f78166"/>
+    <text x="852" y="248" font-weight="600" fill="#e6edf3">LLM Watermark</text>
+    <text x="852" y="248" font-size="14" fill="#6e7681" dy="18">Kirchenbauer z-test</text>
+
+    <!-- Row 2 -->
+    <circle cx="535" cy="303" r="5" fill="#3fb950"/>
+    <text x="552" y="308" font-weight="600" fill="#e6edf3">ESL Bias Correction</text>
+    <text x="552" y="308" font-size="14" fill="#6e7681" dy="18">15 language calibrations</text>
+
+    <circle cx="835" cy="303" r="5" fill="#d2a8ff"/>
+    <text x="852" y="308" font-weight="600" fill="#e6edf3">Ghostwriting Detection</text>
+    <text x="852" y="308" font-size="14" fill="#6e7681" dy="18">Burrows' Delta stylometrics</text>
+
+    <!-- Row 3 -->
+    <circle cx="535" cy="363" r="5" fill="#ffa657"/>
+    <text x="552" y="368" font-weight="600" fill="#e6edf3">Semantic Coherence</text>
+    <text x="552" y="368" font-size="14" fill="#6e7681" dy="18">AI-polish detection</text>
+
+    <circle cx="835" cy="363" r="5" fill="#3fb950"/>
+    <text x="852" y="368" font-weight="600" fill="#e6edf3">Batch / Essay Mill</text>
+    <text x="852" y="368" font-size="14" fill="#6e7681" dy="18">Classroom-level analysis</text>
+
+    <!-- Row 4 -->
+    <circle cx="535" cy="423" r="5" fill="#58a6ff"/>
+    <text x="552" y="428" font-weight="600" fill="#e6edf3">SBERT Paraphrase</text>
+    <text x="552" y="428" font-size="14" fill="#6e7681" dy="18">Dense semantic retrieval</text>
+
+    <circle cx="835" cy="423" r="5" fill="#ffa657"/>
+    <text x="852" y="428" font-weight="600" fill="#e6edf3">Self-Plagiarism</text>
+    <text x="852" y="428" font-size="14" fill="#6e7681" dy="18">COPE guidelines</text>
+  </g>
+
+  <!-- ========== BOTTOM BAR ========== -->
+  <rect x="0" y="556" width="1200" height="74" fill="rgba(22,27,34,0.95)"/>
+  <line x1="0" y1="556" x2="1200" y2="556" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Author info left -->
+  <text x="88" y="589" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="17" font-weight="700" fill="#e6edf3">Sunil Gentyala</text>
+  <text x="88" y="611" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="13" fill="#8b949e">
+    IEEE Senior Member  ·  CISM  ·  ISACA  ·  HCL America Inc., Dallas TX
+  </text>
+
+  <!-- Credential badges -->
+  <rect x="480" y="568" width="90" height="26" rx="5"
+        fill="rgba(88,166,255,0.1)" stroke="rgba(88,166,255,0.3)" stroke-width="1"/>
+  <text x="525" y="585" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="11" font-weight="700" fill="#58a6ff">IEEE Sr. Member</text>
+
+  <rect x="580" y="568" width="60" height="26" rx="5"
+        fill="rgba(63,185,80,0.1)" stroke="rgba(63,185,80,0.3)" stroke-width="1"/>
+  <text x="610" y="585" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="11" font-weight="700" fill="#3fb950">CISM</text>
+
+  <rect x="650" y="568" width="64" height="26" rx="5"
+        fill="rgba(210,168,255,0.1)" stroke="rgba(210,168,255,0.3)" stroke-width="1"/>
+  <text x="682" y="585" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="11" font-weight="700" fill="#d2a8ff">ISACA</text>
+
+  <!-- GitHub URL right -->
+  <text x="1112" y="585" text-anchor="end" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="13" font-weight="600" fill="#58a6ff">
+    github.com/sunilgentyala/aegis-integrity
+  </text>
+  <text x="1112" y="609" text-anchor="end" font-family="'Segoe UI',Arial,sans-serif"
+        font-size="12" fill="#6e7681">
+    sunilgentyala.github.io/aegis-integrity
+  </text>
+
+  <!-- Bottom accent -->
+  <rect x="0" y="626" width="1200" height="4" fill="url(#accentGrad)"/>
+</svg>

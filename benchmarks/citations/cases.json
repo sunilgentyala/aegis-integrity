@@ -1,0 +1,294 @@
+{
+  "_comment": "Ground truth and simulated Crossref responses for synthetic_paper.md. 'truth' is what a careful human reviewer should conclude; 'expected_verdict' is the AEGIS verdict a correct implementation should give. All metadata is invented.",
+  "cases": [
+    {
+      "ref": 1,
+      "doi": "10.5555/aegis.demo.001",
+      "scenario": "Correct reference",
+      "crossref": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Federated learning for resource constrained edge devices"
+          ],
+          "author": [
+            {
+              "family": "Rivera",
+              "given": "A"
+            }
+          ],
+          "container-title": [
+            "Journal of Synthetic Systems"
+          ],
+          "issued": {
+            "date-parts": [
+              [
+                2021
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "ok",
+      "expected_verdict": "VALID"
+    },
+    {
+      "ref": 2,
+      "doi": "10.5555/aegis.demo.002",
+      "scenario": "Real DOI, but it belongs to a different paper (wrong title)",
+      "crossref": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Thermal modelling of rooftop photovoltaic arrays"
+          ],
+          "author": [
+            {
+              "family": "Lindqvist",
+              "given": "C"
+            }
+          ],
+          "container-title": [
+            "Synthetic Transactions on Networks"
+          ],
+          "issued": {
+            "date-parts": [
+              [
+                2020
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "problem",
+      "expected_verdict": "MISMATCH"
+    },
+    {
+      "ref": 3,
+      "doi": "10.5555/aegis.demo.003",
+      "scenario": "Wrong year (cited 2016, published 2019)",
+      "crossref": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Gradient compression strategies for low bandwidth federated training"
+          ],
+          "author": [
+            {
+              "family": "Mehta",
+              "given": "D"
+            }
+          ],
+          "container-title": [
+            "Proc. Example Conf. on Learning Systems"
+          ],
+          "issued": {
+            "date-parts": [
+              [
+                2019
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "problem",
+      "expected_verdict": "MISMATCH"
+    },
+    {
+      "ref": 4,
+      "doi": "10.5555/aegis.demo.004",
+      "scenario": "Year off by one (online-first 2022, print 2023): acceptable",
+      "crossref": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Measuring communication cost in cross device federated learning"
+          ],
+          "author": [
+            {
+              "family": "Novak",
+              "given": "E"
+            }
+          ],
+          "container-title": [
+            "Journal of Synthetic Systems"
+          ],
+          "published-online": {
+            "date-parts": [
+              [
+                2022
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "ok",
+      "expected_verdict": "VALID"
+    },
+    {
+      "ref": 5,
+      "doi": "10.5555/aegis.demo.005",
+      "scenario": "Invented DOI: not registered with any agency",
+      "crossref": {
+        "status": 404
+      },
+      "agency": {
+        "status": 404
+      },
+      "truth": "problem",
+      "expected_verdict": "HALLUCINATED"
+    },
+    {
+      "ref": 6,
+      "doi": "10.5555/aegis.demo.006",
+      "scenario": "Real DOI registered with mEDRA, not Crossref",
+      "crossref": {
+        "status": 404
+      },
+      "agency": {
+        "status": 200,
+        "message": {
+          "agency": {
+            "id": "medra"
+          }
+        }
+      },
+      "truth": "cannot_verify",
+      "expected_verdict": "NOT_FOUND_IN_CROSSREF"
+    },
+    {
+      "ref": 7,
+      "doi": "10.5555/aegis.demo.007",
+      "scenario": "Crossref times out",
+      "crossref": {
+        "timeout": true
+      },
+      "truth": "cannot_verify",
+      "expected_verdict": "UNAVAILABLE"
+    },
+    {
+      "ref": 8,
+      "doi": "10.5555/aegis.demo.008",
+      "scenario": "Crossref rate-limits the request (HTTP 429)",
+      "crossref": {
+        "status": 429
+      },
+      "truth": "cannot_verify",
+      "expected_verdict": "UNAVAILABLE"
+    },
+    {
+      "ref": 9,
+      "doi": "10.5555/aegis.demo.009",
+      "scenario": "Borrowed real DOI: title and year both wrong",
+      "crossref": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Corrosion resistance of marine grade aluminium alloys"
+          ],
+          "author": [
+            {
+              "family": "Brennan",
+              "given": "K"
+            }
+          ],
+          "container-title": [
+            "Journal of Synthetic Systems"
+          ],
+          "issued": {
+            "date-parts": [
+              [
+                2014
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "problem",
+      "expected_verdict": "MISMATCH"
+    },
+    {
+      "ref": 10,
+      "doi": "10.5555/aegis.demo.010",
+      "scenario": "Wrong first author (cited Fischer, actual Garcia)",
+      "crossref": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Evaluating anomaly detectors on simulated industrial sensor benchmarks"
+          ],
+          "author": [
+            {
+              "family": "Garcia",
+              "given": "R"
+            }
+          ],
+          "container-title": [
+            "Synthetic Data Journal"
+          ],
+          "issued": {
+            "date-parts": [
+              [
+                2022
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "problem",
+      "expected_verdict": "MISMATCH"
+    },
+    {
+      "ref": 11,
+      "doi": null,
+      "scenario": "No DOI and no matching record in Crossref",
+      "title_search": {
+        "items": []
+      },
+      "truth": "cannot_verify",
+      "expected_verdict": "NO_DOI"
+    },
+    {
+      "ref": 12,
+      "doi": null,
+      "scenario": "No DOI, but a title search finds the matching record",
+      "title_search": {
+        "items": [
+          {
+            "DOI": "10.5555/aegis.demo.012",
+            "title": [
+              "Benchmark selection bias in edge anomaly detection research"
+            ]
+          }
+        ]
+      },
+      "resolved_doi": "10.5555/aegis.demo.012",
+      "crossref_resolved": {
+        "status": 200,
+        "message": {
+          "title": [
+            "Benchmark selection bias in edge anomaly detection research"
+          ],
+          "author": [
+            {
+              "family": "Lindgren",
+              "given": "P"
+            }
+          ],
+          "container-title": [
+            "Synthetic Data Journal"
+          ],
+          "issued": {
+            "date-parts": [
+              [
+                2023
+              ]
+            ]
+          }
+        }
+      },
+      "truth": "ok",
+      "expected_verdict": "VALID"
+    }
+  ]
+}

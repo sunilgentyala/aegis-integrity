@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+ENV/
+
+# Keep .env.example (template)
+!.env.example
+
+# ML model caches
+.cache/
+~/.cache/huggingface/
+*.pt
+*.bin
+*.onnx
+
+# FAISS / MinHash index (user-generated, not committed)
+aegis_index/
+aegis_reports/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/

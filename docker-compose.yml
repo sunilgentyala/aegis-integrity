@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  aegis:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - aegis_data:/data
+    environment:
+      - AEGIS_INDEX_DIR=/data/index
+      - AEGIS_REPORT_DIR=/data/reports
+      - AEGIS_DEVICE=cpu
+      - AEGIS_CITATION_EMAIL=aegis-check@example.com
+      # - AEGIS_API_KEY=change-me   # required before exposing this beyond localhost
+    restart: unless-stopped
+    # Healthcheck is defined in the Dockerfile (Python-based, no curl needed).
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+
+volumes:
+  aegis_data:

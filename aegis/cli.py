@@ -1,0 +1,646 @@
+"""
+AEGIS command-line interface.
+
+Usage examples:
+
+    # Analyze a single submission (no corpus):
+    aegis analyze paper.pdf
+
+    # Analyze with a corpus directory and prior works:
+    aegis analyze paper.pdf --corpus ./prior_papers/ --prior-works ./my_papers/
+
+    # Build a persistent index from a folder of PDFs:
+    aegis index build ./corpus_dir/ --index-dir ./aegis_index/
+
+    # Add a single document to an existing index:
+    aegis index add paper.pdf --index-dir ./aegis_index/ --label "Smith2023"
+
+    # Show corpus contents:
+    aegis index summary --index-dir ./aegis_index/
+
+    # Direct pairwise comparison (self-plagiarism check):
+    aegis compare journal_version.pdf conference_version.pdf
+
+    # Batch / classroom analysis (essay mill detection):
+    aegis batch ./submissions/ --html batch_report.html
+
+    # Start the REST API server:
+    aegis serve --host 0.0.0.0 --port 8000
+"""
+
+from __future__ import annotations
+import sys
+from pathlib import Path
+
+import click
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich import box
+
+from aegis import __version__ as AEGIS_VERSION
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+console = Console()
+
+RISK_COLORS = {
+    "LOW": "green",
+    "MEDIUM": "yellow",
+    "HIGH": "red",
+    "CRITICAL": "bold red",
+    "UNKNOWN": "dim",
+}
+
+
+@click.group()
+@click.version_option(AEGIS_VERSION, prog_name="aegis")
+def cli():
+    """AEGIS Academic Integrity Checker -- open-source, bias-aware plagiarism analysis.
+
+    New here? Run `aegis ui` to use AEGIS in your browser, or `aegis doctor`
+    to see which checks are ready on this computer.
+    """
+    from aegis.paths import load_env_file
+    load_env_file()
+
+
+# ---------------------------------------------------------------------------
+# analyze
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.argument("submission", type=click.Path(exists=True))
+@click.option("--corpus", "-c", multiple=True, type=click.Path(exists=True),
+              help="File or directory to include in comparison corpus. Repeatable.")
+@click.option("--prior-works", "-p", multiple=True, type=click.Path(exists=True),
+              help="Author's own prior publications for self-plagiarism check. Repeatable.")
+@click.option("--index-dir", default=None, type=click.Path(),
+              help="Persistent index directory (use pre-built index).")
+@click.option("--html", "output_html", default=None, type=click.Path(),
+              help="Write HTML report to this path.")
+@click.option("--no-ai", is_flag=True, help="Skip AI content detection.")
+@click.option("--no-citations", is_flag=True, help="Skip citation integrity check.")
+@click.option("--no-semantic", is_flag=True, help="Skip SBERT semantic search.")
+@click.option("--no-stylometric", is_flag=True, help="Skip stylometric analysis.")
+@click.option("--no-self-plagiarism", is_flag=True, help="Skip self-plagiarism check.")
+@click.option("--no-venue-check", is_flag=True,
+              help="Skip target-publisher verification (IEEE/ACM/Elsevier/IET/IETE/BCS).")
+@click.option("--offline", is_flag=True,
+              help="Make no Crossref/OpenAlex calls at all (citation, citation-network "
+                   "and publisher duplicate-title checks run without network). "
+                   "Does not prevent first-run ML model downloads; combine with "
+                   "--no-ai/--no-semantic or warm the cache with 'aegis doctor --warm-up'.")
+@click.option("--target-publishers", default=None,
+              help="Comma-separated subset of IEEE,ACM,Elsevier,IET,IETE,BCS to check "
+                   "(default: all six).")
+@click.option("--no-math", is_flag=True,
+              help="Skip mathematical formula checking (equation numbering/notation).")
+@click.option("--no-grammar", is_flag=True,
+              help="Skip grammar & language convention checking.")
+@click.option("--guidelines", default=None,
+              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER to run "
+                   "per-venue guideline compliance for, checked SEPARATELY per venue "
+                   "(default: none -- opt-in). Pass 'all' for all six.")
+@click.option("--watermark-mode",
+              type=click.Choice(["disabled", "experimental", "verified_scheme"]),
+              default="experimental", show_default=True,
+              help="disabled=skip; experimental=keyless heuristic, never affects "
+                   "risk score; verified_scheme=requires a known scheme (not yet "
+                   "implemented, reports UNSUPPORTED_CONFIGURATION).")
+@click.option("--device", default="cpu", show_default=True,
+              help="PyTorch device (cpu / cuda).")
+@click.option("--email", default="aegis-check@example.com", show_default=True,
+              envvar="AEGIS_CITATION_EMAIL",
+              help="Email for Crossref polite pool.")
+def analyze(
+    submission, corpus, prior_works, index_dir,
+    output_html, no_ai, no_citations, no_semantic,
+    no_stylometric, no_self_plagiarism, no_venue_check, offline, target_publishers,
+    no_math, no_grammar, guidelines,
+    watermark_mode, device, email,
+):
+    """Run the full AEGIS analysis on SUBMISSION (PDF, DOCX, TEX, TXT, or Markdown)."""
+    from aegis.core.pipeline import AEGISPipeline, PipelineConfig
+    from aegis.corpus.indexer import CorpusIndexer
+    from aegis.detectors.watermark_detector import WatermarkMode
+    from aegis.detectors.publisher_registry import DEFAULT_TARGET_PUBLISHERS
+    from aegis.guidelines.profiles import DEFAULT_GUIDELINE_VENUES
+    from aegis.report.generator import ReportGenerator
+
+    venue_targets = (
+        tuple(p.strip() for p in target_publishers.split(",") if p.strip())
+        if target_publishers else DEFAULT_TARGET_PUBLISHERS
+    )
+    if guidelines and guidelines.strip().lower() == "all":
+        guideline_venues = DEFAULT_GUIDELINE_VENUES
+    elif guidelines:
+        guideline_venues = tuple(v.strip() for v in guidelines.split(",") if v.strip())
+    else:
+        guideline_venues = ()
+
+    cfg = PipelineConfig(
+        device=device,
+        citation_email=email,
+        run_ai_detector=not no_ai,
+        run_citation_check=not no_citations,
+        run_semantic=not no_semantic,
+        run_stylometric=not no_stylometric,
+        run_self_plagiarism=not no_self_plagiarism,
+        run_venue_verification=not no_venue_check,
+        citation_offline=offline,
+        citation_network_offline=offline,
+        venue_offline=offline,
+        venue_target_publishers=venue_targets,
+        run_math_check=not no_math,
+        run_grammar_check=not no_grammar,
+        guideline_venues=guideline_venues,
+        watermark_mode=WatermarkMode(watermark_mode),
+    )
+    pipeline = AEGISPipeline(config=cfg)
+
+    # Load corpus
+    corpus_docs = _collect_docs(corpus)
+    if index_dir and Path(index_dir).exists():
+        console.print(f"Loading pre-built index from [cyan]{index_dir}[/]...")
+        indexer = CorpusIndexer(index_dir, device=device)
+        try:
+            pipeline._ngram = indexer.load_ngram_detector()
+            pipeline._corpus_loaded = True
+        except FileNotFoundError as e:
+            console.print(f"[yellow]Warning:[/] {e}")
+        try:
+            pipeline._semantic = indexer.load_semantic_detector()
+        except (FileNotFoundError, ImportError) as e:
+            console.print(f"[yellow]Warning:[/] {e}")
+    elif corpus_docs:
+        console.print(f"Indexing {len(corpus_docs)} corpus document(s)...")
+        pipeline.load_corpus(corpus_docs)
+
+    # Load prior works
+    prior_docs = _collect_docs(prior_works)
+    if prior_docs:
+        console.print(f"Loading {len(prior_docs)} prior work(s) for self-plagiarism check...")
+        pipeline.load_prior_works(prior_docs)
+
+    console.print(f"\nAnalyzing [bold]{submission}[/]...")
+    report = pipeline.analyze(submission)
+
+    # Print summary
+    risk_color = RISK_COLORS.get(report.overall_risk, "white")
+    console.print(Panel(
+        f"[bold {risk_color}]Overall Risk: {report.overall_risk}[/bold {risk_color}]\n"
+        f"Plagiarism score: {report.plagiarism_score:.2f}  |  "
+        f"AI score: {report.ai_score:.2f}  |  "
+        f"Citation issues: {report.citation_score:.0%}  |  "
+        f"Self-recycling: {report.self_recycle_score*100:.1f}%\n"
+        f"Analysis time: {report.elapsed_seconds}s",
+        title="AEGIS Result",
+    ))
+
+    if report.watermark_result:
+        wr = report.watermark_result
+        badge = " [bold yellow]EXPERIMENTAL[/]" if wr.evidence_status == "experimental" else ""
+        console.print(
+            f"Watermark analysis: [cyan]{wr.mode.value}[/] -> {wr.verdict}{badge} "
+            f"(affects overall risk: {wr.affects_overall_risk})"
+        )
+
+    if report.venue_verification_result:
+        vv = report.venue_verification_result
+        console.print(
+            f"Target-publisher verification ({', '.join(vv.target_publishers)}): "
+            f"{vv.overall_risk} -- "
+            f"{len(vv.prior_publication_matches)} possible duplicate(s) found"
+        )
+
+    if report.math_result:
+        mr = report.math_result
+        console.print(
+            f"Math formula check: {mr.equations_found} equation(s) found "
+            f"({len(mr.all_issues)} issue(s), via {mr.extraction_method})"
+        )
+
+    if report.grammar_result:
+        gr = report.grammar_result
+        console.print(
+            f"Grammar & language check: quality score {gr.quality_score:.2f} "
+            f"({len(gr.issues)} issue categor{'y' if len(gr.issues)==1 else 'ies'} flagged, "
+            f"spelling: {gr.spelling_variant_detected})"
+        )
+
+    if report.guideline_results:
+        console.print("[bold]Guideline compliance (checked separately per venue):[/]")
+        status_colors = {"COMPLIANT": "green", "NEEDS_REVIEW": "yellow", "NOT_ENOUGH_DATA": "dim"}
+        for venue, res in report.guideline_results.items():
+            color = status_colors.get(res.overall_status, "white")
+            console.print(f"  [{color}]{venue}: {res.overall_status}[/] "
+                           f"({res.needs_review_count} item(s) need review)")
+
+    if report.flags:
+        console.print("[bold]Flags:[/]")
+        for flag in report.flags:
+            console.print(f"  [yellow]•[/] {flag}")
+
+    # Write outputs
+    if output_html:
+        rdir = str(Path(output_html).parent)
+        reporter = ReportGenerator(rdir)
+        path = reporter.generate_html(report, Path(output_html).name)
+        console.print(f"\nHTML report: [cyan]{path}[/]")
+
+    # Exit code reflects risk
+    sys.exit(0 if report.overall_risk in ("LOW", "MEDIUM") else 1)
+
+
+# ---------------------------------------------------------------------------
+# guidelines (fast, ML-free math + grammar + per-venue compliance scan)
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.argument("submission", type=click.Path(exists=True))
+@click.option("--venues", default="all", show_default=True,
+              help="Comma-separated subset of IEEE,ACM,BCS,IET,ISACA,ELSEVIER,SPRINGER, or "
+                   "'all'. Each venue is checked SEPARATELY against its own sourced "
+                   "style guidance -- see aegis/guidelines/profiles.py.")
+@click.option("--html", "output_html", default=None, type=click.Path(),
+              help="Write HTML report to this path.")
+def guidelines(submission, venues, output_html):
+    """
+    Fast, offline-only scan: mathematical formula checks + grammar/language
+    checks + per-venue guideline compliance (IEEE/ACM/BCS/IET/ISACA/Elsevier).
+
+    Unlike `analyze`, this runs no ML models (no GPT-2, no SBERT, no
+    Crossref calls) -- just the pure-Python math/grammar/guideline
+    detectors -- so it is fast enough to run on every draft.
+    """
+    from aegis.core.pipeline import AEGISPipeline, PipelineConfig
+    from aegis.guidelines.profiles import DEFAULT_GUIDELINE_VENUES
+    from aegis.report.generator import ReportGenerator
+
+    venue_list = (
+        list(DEFAULT_GUIDELINE_VENUES) if venues.strip().lower() == "all"
+        else [v.strip() for v in venues.split(",") if v.strip()]
+    )
+
+    cfg = PipelineConfig(
+        run_ai_detector=False, run_citation_check=False, run_semantic=False,
+        run_stylometric=False, run_self_plagiarism=False,
+        run_watermark_detector=False, run_citation_network=False,
+        run_coherence_analyzer=False, run_venue_verification=False,
+        run_math_check=True, run_grammar_check=True,
+        guideline_venues=tuple(venue_list),
+    )
+    pipeline = AEGISPipeline(config=cfg)
+
+    console.print(f"\nRunning guideline compliance scan on [bold]{submission}[/] "
+                  f"for: {', '.join(venue_list)}...")
+    report = pipeline.analyze(submission)
+
+    if report.math_result:
+        mr = report.math_result
+        console.print(Panel(
+            f"Equations found: [bold]{mr.equations_found}[/] "
+            f"(extraction: {mr.extraction_method})\n"
+            f"Issues: {len(mr.all_issues)}",
+            title="Mathematical Formula Check",
+        ))
+        for issue in mr.all_issues:
+            console.print(f"  [yellow]•[/] [{issue.severity}] {issue.message}")
+
+    if report.grammar_result:
+        gr = report.grammar_result
+        console.print(Panel(
+            f"Quality score: [bold]{gr.quality_score:.2f}[/]  |  "
+            f"Words: {gr.word_count}  |  "
+            f"Spelling: {gr.spelling_variant_detected}",
+            title="Grammar & Language Check",
+        ))
+        for issue in gr.issues:
+            console.print(f"  [yellow]•[/] [{issue.severity}] {issue.message}")
+
+    status_colors = {"COMPLIANT": "green", "NEEDS_REVIEW": "yellow", "NOT_ENOUGH_DATA": "dim"}
+    for venue, res in report.guideline_results.items():
+        color = status_colors.get(res.overall_status, "white")
+        t = Table(f"{res.display_name}", "Status", "Detail", box=box.SIMPLE)
+        for c in res.checks:
+            t.add_row(c.rule, f"[{status_colors.get(c.status,'white')}]{c.status}[/]", c.detail)
+        console.print(Panel.fit(t, title=f"[{color}]{venue}: {res.overall_status}[/]",
+                                 subtitle=res.source_name))
+
+    if output_html:
+        reporter = ReportGenerator(str(Path(output_html).parent))
+        path = reporter.generate_html(report, Path(output_html).name)
+        console.print(f"\nHTML report: [cyan]{path}[/]")
+
+
+# ---------------------------------------------------------------------------
+# compare (pairwise)
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.argument("doc_a", type=click.Path(exists=True))
+@click.argument("doc_b", type=click.Path(exists=True))
+@click.option("--label-a", default=None)
+@click.option("--label-b", default=None)
+@click.option("--no-sbert", is_flag=True,
+              help="Disable SBERT semantic matching (faster, n-gram only).")
+def compare(doc_a, doc_b, label_a, label_b, no_sbert):
+    """Direct pairwise self-plagiarism comparison between two documents."""
+    from aegis.core.document import DocumentParser
+    from aegis.detectors.self_plagiarism import SelfPlagiarismDetector
+
+    label_a = label_a or Path(doc_a).stem
+    label_b = label_b or Path(doc_b).stem
+
+    parser = DocumentParser()
+    console.print(f"Parsing [cyan]{doc_a}[/]...")
+    text_a = parser.parse(doc_a).full_text
+    console.print(f"Parsing [cyan]{doc_b}[/]...")
+    text_b = parser.parse(doc_b).full_text
+
+    detector = SelfPlagiarismDetector(use_sbert=not no_sbert)
+    console.print("Comparing documents...")
+    result = detector.compare_documents(text_a, label_a, text_b, label_b)
+
+    risk_color = RISK_COLORS.get(result.risk_level, "white")
+    console.print(Panel(
+        f"Overlap: [bold]{result.overall_overlap_pct:.1f}%[/bold]  |  "
+        f"Risk: [bold {risk_color}]{result.risk_level}[/bold {risk_color}]\n\n"
+        f"{result.cope_guidance}",
+        title=f"Self-Plagiarism: {label_a} vs {label_b}",
+    ))
+
+    if result.recycled_passages:
+        t = Table("Type", "Char J", "Word J", "Submission excerpt",
+                  "Prior work excerpt", box=box.SIMPLE)
+        for p in result.recycled_passages[:10]:
+            t.add_row(
+                p.overlap_type,
+                f"{p.char_jaccard:.3f}",
+                f"{p.word_jaccard:.3f}",
+                p.submission_text[:80],
+                p.source_text[:80],
+            )
+        console.print(t)
+
+
+# ---------------------------------------------------------------------------
+# batch
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.argument("directory", type=click.Path(exists=True, file_okay=False))
+@click.option("--pattern", default="*.pdf", show_default=True,
+              help="File glob for documents to include in the batch.")
+@click.option("--no-ai", is_flag=True,
+              help="Skip per-document AI scoring (faster; disables the "
+                   "high-AI-score cluster signal).")
+@click.option("--device", default="cpu", show_default=True,
+              help="PyTorch device for AI scoring (cpu / cuda).")
+@click.option("--html", "output_html", default=None, type=click.Path(),
+              help="Write HTML report to this path.")
+def batch(directory, pattern, no_ai, device, output_html):
+    """Cross-document essay-mill / classroom analysis over all files
+    matching PATTERN in DIRECTORY."""
+    from aegis.core.document import DocumentParser
+    from aegis.detectors.batch_analyzer import BatchAnalyzer
+    from aegis.report.generator import ReportGenerator
+
+    parser = DocumentParser()
+    paths = sorted(Path(directory).rglob(pattern))
+    if len(paths) < 2:
+        console.print(f"[red]Need at least 2 files matching '{pattern}' in "
+                      f"{directory}; found {len(paths)}.[/]")
+        sys.exit(1)
+
+    doc_names, doc_texts = [], []
+    for p in paths:
+        try:
+            doc_names.append(p.stem)
+            doc_texts.append(parser.parse(str(p)).full_text)
+        except Exception as exc:
+            console.print(f"[yellow]Warning:[/] Could not parse {p}: {exc}")
+
+    ai_scores = None
+    if not no_ai:
+        try:
+            from aegis.detectors.ai_detector import AIContentDetector
+            det = AIContentDetector(device=device)
+            console.print(f"Scoring {len(doc_texts)} document(s) for AI content...")
+            ai_scores = [det.detect(t).document_ensemble_score for t in doc_texts]
+        except ImportError:
+            console.print("[yellow]Warning:[/] transformers/torch not installed; "
+                           "skipping AI-score clustering (use --no-ai to silence this).")
+
+    console.print(f"Analyzing {len(doc_texts)} submission(s) as a batch...")
+    result = BatchAnalyzer().analyze(doc_names, doc_texts, ai_scores=ai_scores)
+
+    risk_color = RISK_COLORS.get(result.overall_risk, "white")
+    console.print(Panel(
+        f"[bold {risk_color}]Overall Risk: {result.overall_risk}[/bold {risk_color}]\n"
+        f"Submissions: {result.submission_count}  |  "
+        f"Suspicious pairs: {len(result.suspicious_pairs)}  |  "
+        f"Clusters: {len(result.cluster_groups)}",
+        title="AEGIS Batch Result",
+    ))
+
+    if result.flags:
+        console.print("[bold]Flags:[/]")
+        for flag in result.flags:
+            console.print(f"  [yellow]•[/] {flag}")
+
+    if result.suspicious_pairs:
+        t = Table("Doc A", "Doc B", "N-gram", "Vocab", "Sections", "Combined",
+                  box=box.SIMPLE)
+        for p in result.suspicious_pairs[:15]:
+            t.add_row(p.doc_a, p.doc_b, f"{p.ngram_similarity:.3f}",
+                       f"{p.vocab_overlap:.3f}", f"{p.section_sequence_match:.3f}",
+                       f"{p.combined_score:.3f}")
+        console.print(t)
+
+    if output_html:
+        rdir = str(Path(output_html).parent) if Path(output_html).parent != Path("") else "."
+        reporter = ReportGenerator(rdir)
+        path = reporter.generate_batch_html(result, Path(output_html).name)
+        console.print(f"\nHTML report: [cyan]{path}[/]")
+
+    sys.exit(0 if result.overall_risk in ("LOW", "MEDIUM") else 1)
+
+
+# ---------------------------------------------------------------------------
+# index subcommands
+# ---------------------------------------------------------------------------
+
+@cli.group()
+def index():
+    """Manage the persistent AEGIS corpus index."""
+
+
+@index.command("build")
+@click.argument("directory", type=click.Path(exists=True))
+@click.option("--index-dir", default="./aegis_index", show_default=True)
+@click.option("--pattern", default="*.pdf", show_default=True,
+              help="File glob for documents to index.")
+@click.option("--num-perm", default=128, show_default=True)
+@click.option("--device", default="cpu", show_default=True)
+def index_build(directory, index_dir, pattern, num_perm, device):
+    """Build a new persistent index from all matching files in DIRECTORY."""
+    from aegis.corpus.indexer import CorpusIndexer
+    indexer = CorpusIndexer(index_dir, device=device)
+    labels = indexer.add_directory(directory, pattern=pattern)
+    console.print(f"Added {len(labels)} document(s).")
+    console.print("Building indices...")
+    indexer.build_indices(num_perm=num_perm)
+    console.print(f"[green]Index built:[/] {index_dir}")
+
+
+@index.command("add")
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--index-dir", default="./aegis_index", show_default=True)
+@click.option("--label", default=None)
+@click.option("--rebuild", is_flag=True, help="Rebuild indices after adding.")
+@click.option("--device", default="cpu", show_default=True)
+def index_add(path, index_dir, label, rebuild, device):
+    """Add a single document to the persistent index."""
+    from aegis.corpus.indexer import CorpusIndexer
+    indexer = CorpusIndexer(index_dir, device=device)
+    assigned = indexer.add_document(path, label=label)
+    console.print(f"Added as [cyan]{assigned}[/].")
+    if rebuild:
+        console.print("Rebuilding indices...")
+        indexer.build_indices()
+        console.print("[green]Done.[/]")
+    else:
+        console.print("[yellow]Run 'aegis index build' to update search indices.[/]")
+
+
+@index.command("summary")
+@click.option("--index-dir", default="./aegis_index", show_default=True)
+def index_summary(index_dir):
+    """List all documents in the persistent index."""
+    from aegis.corpus.indexer import CorpusIndexer
+    indexer = CorpusIndexer(index_dir)
+    summary = indexer.corpus_summary()
+    t = Table("Label", "Words", "Added", box=box.SIMPLE)
+    for doc in summary["documents"]:
+        t.add_row(doc["label"], str(doc["word_count"]), doc["added_at"][:10])
+    console.print(t)
+    console.print(f"Total: {summary['document_count']} document(s) in {index_dir}")
+
+
+# ---------------------------------------------------------------------------
+# serve
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.option("--host", default="127.0.0.1", show_default=True)
+@click.option("--port", default=8000, show_default=True)
+@click.option("--reload", is_flag=True, help="Enable hot-reload (development only).")
+def serve(host, port, reload):
+    """Start the AEGIS REST API server."""
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]uvicorn not installed:[/] pip install uvicorn[standard]")
+        sys.exit(1)
+    console.print(f"Starting AEGIS API on [cyan]http://{host}:{port}[/]  "
+                  f"(web app at [cyan]http://{host}:{port}/[/])")
+    uvicorn.run(
+        "aegis.api.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
+
+
+# ---------------------------------------------------------------------------
+# ui (web app in the browser)
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.option("--port", default=8765, show_default=True)
+@click.option("--no-browser", is_flag=True, help="Don't open a browser tab automatically.")
+def ui(port, no_browser):
+    """Open the AEGIS web app: drag in a paper, get a plain-language report.
+
+    Runs only on this computer (127.0.0.1). Press Ctrl+C to stop.
+    """
+    import threading
+    import webbrowser
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]uvicorn not installed:[/] pip install uvicorn[standard]")
+        sys.exit(1)
+    url = f"http://127.0.0.1:{port}/"
+    console.print(Panel.fit(
+        f"AEGIS is running at [bold cyan]{url}[/]\n"
+        "Your documents stay on this computer. Press [bold]Ctrl+C[/] to stop.",
+        title="AEGIS web app"))
+    if not no_browser:
+        threading.Timer(1.5, webbrowser.open, args=(url,)).start()
+    uvicorn.run("aegis.api.app:app", host="127.0.0.1", port=port, log_level="warning")
+
+
+# ---------------------------------------------------------------------------
+# doctor (readiness check)
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.option("--offline", is_flag=True, help="Skip the Crossref connectivity test.")
+@click.option("--plain", is_flag=True, help="Plain-text output (for scripts and AI assistants).")
+@click.option("--warm-up", is_flag=True,
+              help="Download the ML models now so the first real check is fast.")
+def doctor(offline, plain, warm_up):
+    """Show which checks are ready on this computer and how to enable the rest."""
+    from aegis import doctor as doc
+
+    if warm_up:
+        doc.warm_up(log=console.print)
+    checks = doc.run_checks(offline=offline)
+    if plain:
+        click.echo(doc.as_plain_text(checks))
+        return
+    style = {doc.READY: "[green]Ready[/]", doc.LIMITED: "[yellow]Limited[/]",
+             doc.MISSING: "[red]Not installed[/]"}
+    t = Table("Capability", "Status", "Details / how to fix", box=box.SIMPLE, show_lines=True)
+    for c in checks:
+        detail = c.detail + (f"\n[cyan]{c.fix}[/]" if c.fix else "")
+        t.add_row(c.name, style[c.status], detail)
+    console.print(Panel.fit(t, title=f"AEGIS {AEGIS_VERSION}: {doc.summary_line(checks)}"))
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _collect_docs(paths) -> list[tuple[str, str]]:
+    """
+    Given a sequence of file/directory paths, parse each and return
+    (label, text) pairs. Directories are walked for PDF/DOCX/TEX/TXT/MD files.
+    """
+    from aegis.core.document import DocumentParser
+    parser = DocumentParser()
+    docs = []
+    exts = {".pdf", ".docx", ".tex", ".txt", ".md"}
+    for path in paths:
+        p = Path(path)
+        candidates = (
+            [p] if p.is_file() else
+            [f for f in p.rglob("*") if f.suffix.lower() in exts]
+        )
+        for fp in candidates:
+            try:
+                parsed = parser.parse(str(fp))
+                docs.append((fp.stem, parsed.full_text))
+            except Exception as exc:
+                console.print(f"[yellow]Warning:[/] Could not parse {fp}: {exc}")
+    return docs
+
+
+if __name__ == "__main__":
+    cli()

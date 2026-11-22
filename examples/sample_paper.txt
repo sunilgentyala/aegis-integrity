@@ -1,0 +1,18 @@
+A Small Sample Manuscript for Verifying an AEGIS Install
+
+Abstract
+This short synthetic manuscript exists only so that new users can confirm that AEGIS runs on their machine within a minute of installing it. It was written for this repository and contains no third-party text, so it can be copied, edited, and redistributed without any licence concerns. It deliberately includes a handful of ordinary style slips, such as mixed British and American spelling, a contraction, a repeated word, and a sentence that opens with a numeral, so that the offline guideline scan has something concrete to report. The abstract is also sized to fall inside the range that several publishers request, which lets the abstract length check show a passing result next to the failing ones. The scientific content is intentionally empty: there is no real dataset, no experiment, and no claim of any kind, which keeps the file short enough to read in full before you run the tool on it.
+
+Keywords: sample manuscript, install check, style scan, AEGIS
+
+1 Introduction
+We analyse the behavior of a toy classifier on a small synthetic dataset. The the dataset was generated at random and it's only meant for demonstration. 12 samples were drawn from each class, as in Fig. 1.
+
+2 Method
+The classifier labels each sample by comparing it with the class centre. The colour of a point plays no role in the decision.
+
+3 Conclusion
+This sample is dedicated to the public domain under CC0 1.0. Copy, edit, and reuse it freely.
+
+References
+[1] A. Author, "A placeholder reference for demonstration only," Journal of Examples, vol. 1, no. 1, 2026.
