@@ -89,6 +89,37 @@ ready for an Elsevier journal?"), or use the `/integrity-check` and
 open it. In the extension settings, choose the Python where AEGIS is
 installed. Any other MCP client can run the `aegis-mcp` command directly.
 
+**4. In any other MCP client** (Perplexity desktop, Cursor, Cline, Windsurf,
+Continue and similar). Install the package, then add AEGIS as a local stdio
+server in the client's MCP settings:
+```bash
+pip install "aegis-integrity[mcp,ml]"
+```
+```json
+{
+  "mcpServers": {
+    "aegis": {
+      "command": "aegis-mcp"
+    }
+  }
+}
+```
+If the client cannot find `aegis-mcp` on its PATH, give the full path to the
+Python where AEGIS is installed instead (on Windows, for example
+`C:\\path\\to\\.venv\\Scripts\\python.exe`):
+```json
+{
+  "mcpServers": {
+    "aegis": {
+      "command": "C:\\path\\to\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "aegis.mcp_server"]
+    }
+  }
+}
+```
+AEGIS runs on your machine and reads files by local path, so pass the full path
+of the paper in your prompt. It is not offered as a hosted remote server.
+
 **Not sure what works on your machine?** Run `aegis doctor`. It lists every
 capability, whether it's ready, and the one command that fixes it.
 `aegis doctor --warm-up` downloads the AI models ahead of time so your first
